@@ -5,6 +5,8 @@ import battlecode.common.*;
 public abstract class Robot {
     RobotController rc;
     final Random rng = new Random();
+    GreedyPath greedyPath;
+    Exploration exploration;
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -19,6 +21,7 @@ public abstract class Robot {
     public Robot(RobotController rc) {
         this.rc = rc;
         rng.setSeed((long) rc.getID());
+        greedyPath = new GreedyPath(rc);
     }
     abstract void run() throws GameActionException;
 }

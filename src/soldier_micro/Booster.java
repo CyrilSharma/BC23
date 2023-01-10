@@ -69,7 +69,7 @@ public class Booster extends Robot {
 
     // Relies on exploration code.
     void explore() {
-        ;
+        exploration.move();
     }
 
    
