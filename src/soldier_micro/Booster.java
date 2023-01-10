@@ -2,6 +2,7 @@ package soldier_micro;
 import battlecode.common.*;
 
 public class Booster extends Robot {
+    RobotInfo[] enemies;
     enum State {
         ATTACK,
         EXPLORE
@@ -10,7 +11,8 @@ public class Booster extends Robot {
     public Booster(RobotController rc) {
         super(rc);
     }
-    void run() {
+    void run() throws GameActionException {
+        initialize();
         State state = determineState();
         switch (state) {
             case ATTACK:
@@ -22,8 +24,11 @@ public class Booster extends Robot {
         }
     }
 
+    void initialize() throws GameActionException {
+        enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
+    }
+
     State determineState() {
-        RobotInfo[] enemies = rc.senseNearbyRobots();
         if (enemies.length > 0) return State.ATTACK;
         return State.EXPLORE;
     }
@@ -36,8 +41,24 @@ public class Booster extends Robot {
         ;
     }
 
-    AttackTarget getBestTarget() {
-        RobotInfo[] enemies = rc.senseNearbyRobots();
+    MapLocation getTarget() {
+        boolean attacker = false;
+        for (RobotInfo e: enemies) {
+            if (Util.isAttacker(e.getType())) {
+                attacker = true;
+            }
+        }
+        if (!attacker) {
+            AttackTarget at = getBestAttackTarget();
+            follow(at.loc);
+        } else {
+            maneuver();
+            // attack best thing.
+        }
+
+    }
+
+    AttackTarget getBestAttackTarget() {
         AttackTarget best = null;
         for (RobotInfo e: enemies) {
             AttackTarget cur = new AttackTarget(e);
@@ -68,7 +89,7 @@ public class Booster extends Robot {
             if (at == null) return true;
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
-            return at.health <= health;
+            return health <= at.health;
         }
     }
 }
