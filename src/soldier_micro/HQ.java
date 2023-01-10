@@ -5,15 +5,27 @@ public class HQ extends Robot {
     public HQ(RobotController rc) {
         super(rc);
     }
+    enum Build {
+        CARRIER,
+        LAUNCHER,
+        BOOSTER,
+        AMPLIFIER,
+        DESTABILIZER,
+        ANCHOR, 
+        NONE
+    }
     void run() throws GameActionException {
         build();
     }
 
     void build() throws GameActionException {
-        RobotType r = getBuildType();
-        if (r == null) return;
-        rc.setIndicatorString("Trying to build a " + r.toString());
-        if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
+        Build b = getBuildType();
+        rc.setIndicatorString("Trying to build a " + b.toString());
+
+        if (b == Build.NONE) return;
+        RobotType r = buildToRobotType(b);
+        if (b != Build.ANCHOR &&
+            rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
             r.buildCostAdamantium &&
             rc.getResourceAmount(ResourceType.MANA) >=
             r.buildCostMana &&
@@ -23,6 +35,10 @@ public class HQ extends Robot {
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
             }
+        }
+        if (b == Build.ANCHOR &&
+            rc.canBuildAnchor(Anchor.STANDARD)) {
+            rc.buildAnchor(Anchor.STANDARD);
         }
     }
 
@@ -36,9 +52,22 @@ public class HQ extends Robot {
         return best.mloc;
     }
 
-    RobotType getBuildType() {
-        if (rc.getRoundNum()/50 % 2 == 0) return RobotType.CARRIER;
-        return RobotType.LAUNCHER;
+    Build getBuildType() {
+        int mod = rc.getRoundNum()/30 % 3;
+        if (mod == 0) return Build.CARRIER;
+        else if (mod == 1) return Build.LAUNCHER;
+        else return Build.ANCHOR;
+    }
+
+    RobotType buildToRobotType(Build b) {
+        switch (b) {
+            case CARRIER: return RobotType.CARRIER;
+            case LAUNCHER: return RobotType.LAUNCHER;
+            case AMPLIFIER: return RobotType.AMPLIFIER;
+            case BOOSTER: return RobotType.BOOSTER;
+            case DESTABILIZER: return RobotType.DESTABILIZER;
+            default: return null;
+        }
     }
 
     class BuildTarget {
