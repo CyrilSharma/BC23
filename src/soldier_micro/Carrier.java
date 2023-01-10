@@ -10,7 +10,9 @@ public class Carrier extends Robot {
         SEARCHING,
         SEEKING,
         HARVESTING,
-        DELIVERING
+        DELIVERING,
+        FETCH_ANCHOR,
+        DELIVER_ANCHOR
     }
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
@@ -26,10 +28,13 @@ public class Carrier extends Robot {
     }
     void run() throws GameActionException {
         State state = determineState();
+        rc.setIndicatorString(state.toString());
         switch (state) {
             case SEARCHING: search(); break;
             case HARVESTING: harvest(); break;
             case DELIVERING: deliver(); break;
+            case FETCH_ANCHOR: fetch_anchor(); break;
+            case DELIVER_ANCHOR: deliver_anchor(); break;
             default:
         }
     }
@@ -89,5 +94,13 @@ public class Carrier extends Robot {
                     rc.transferResource(home, r, 4);
             }
         }
+    }
+
+    void fetch_anchor() {
+        ;
+    }
+
+    void deliver_anchor() {
+        ;
     }
 }

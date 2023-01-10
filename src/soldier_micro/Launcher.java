@@ -21,6 +21,7 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         initialize();
         State state = determineState();
+        rc.setIndicatorString(state.toString());
         switch (state) {
             case ATTACK:
                 attack();
@@ -87,7 +88,6 @@ public class Launcher extends Robot {
     void maneuver() throws GameActionException {
         MicroTarget[] microtargets = new MicroTarget[9];
         for (Direction d: directions) {
-            System.out.println(d.ordinal());
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
 
