@@ -69,10 +69,12 @@ public class Carrier extends Robot {
 
     void search() {
         exploration.move();
+        exploration.move();
         findTarget();
     }
 
     void seek() {
+        greedyPath.move(wellTarget);
         greedyPath.move(wellTarget);
     }
 
