@@ -42,7 +42,9 @@ public class Launcher extends Robot {
     }
 
     State determineState() {
-        if (enemies.length > 0) return State.ATTACK;
+        for (RobotInfo e : enemies) {
+            if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
+        }
         return State.EXPLORE;
     }
 
