@@ -1,13 +1,6 @@
-package examplefuncsplayer;
-
+package template;
 import battlecode.common.*;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -60,7 +53,7 @@ public strictfp class RobotPlayer {
         // You can also use indicators to save debug notes in replays.
         rc.setIndicatorString("Hello world!");
 
-        Robot robot;
+        Robot robot = null;
         switch (rc.getType()) {
             case HEADQUARTERS: robot = new HQ();  break;
             case CARRIER: robot = new Carrier();   break;
