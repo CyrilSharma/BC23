@@ -3,7 +3,7 @@ import platform
 import random
 import re
 import sys
-
+import timeit
 import pandas as pd
 
 JDK_PATH = None # set to None if u don't care / old test.py was working
@@ -47,6 +47,7 @@ def run_set(a: str, b: str, map: str):
     initialize_gradle_properties(a, b, map)
     run_game()
     a_won, b_won, a_df, b_df = parse_results()
+
     initialize_gradle_properties(b, a, map)
     run_game()
     b_won2, a_won2, a_df2, b_df2 = parse_results()
@@ -65,10 +66,9 @@ def read_maps():
         next(f_iter, None)
         next(f_iter, None)
         for line in f_iter:
-            data = line.rstrip().split()
-            if data:
-                if data[0] == "MAP:":
-                    maps.append(data[1])
+            data = line.rstrip()
+            if (data==""): break;
+            maps.append(data)
     return maps
 
 def initialize_gradle_properties(a: str, b: str, map: str):
@@ -80,7 +80,7 @@ def initialize_gradle_properties(a: str, b: str, map: str):
         f.write(f"maps={map}\n")
         f.write(f"source=src\n")
         f.write(f"profilerEnabled=false\n")
-        f.write(f"outputVerbose=true\n")
+        f.write(f"outputVerbose=false\n")
         if JDK_PATH is not None:
             f.write(f"org.gradle.java.home={JDK_PATH}")
 
