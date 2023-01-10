@@ -1,4 +1,4 @@
-package template;
+package soldier_micro;
 import battlecode.common.*;
 
 public class Amplifier extends Robot {
