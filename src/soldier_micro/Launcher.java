@@ -130,9 +130,13 @@ public class Launcher extends Robot {
             canMove = rc.canMove(dir);
         }
 
-        void addEnemy(RobotInfo r) {
+        void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
+            // account for river.
+            MapLocation nloc = rc.getLocation().add(dir);
+            MapInfo mi = rc.senseMapInfo(nloc);
+            nloc = nloc.add(mi.getCurrentDirection());
             // ignore boosting effects of other units for now.
             if (r.type == RobotType.BOOSTER) {
                 int d = myloc.distanceSquaredTo(m);
