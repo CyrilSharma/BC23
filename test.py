@@ -75,8 +75,6 @@ def initialize_gradle_properties(a: str, b: str, map: str):
     with open("gradle.properties", "w") as f:
         f.write(f"teamA={a}\n")
         f.write(f"teamB={b}\n")
-        f.write(f"packageNameA={a}\n")
-        f.write(f"packageNameB={b}\n")
         f.write(f"maps={map}\n")
         f.write(f"source=src\n")
         f.write(f"profilerEnabled=false\n")
