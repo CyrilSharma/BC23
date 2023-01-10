@@ -19,18 +19,18 @@ public class GreedyPath {
     }
 
     public void move(MapLocation t) {
-        target = t;
-        MoveTarget best = new MoveTarget(directions[0]);
-        for (Direction d: directions) {
-            MoveTarget cur = new MoveTarget(d);
-            if (cur.isBetterThan(best))
-                best = cur;
-        }
         try {
+            target = t;
+            MoveTarget best = new MoveTarget(directions[0]);
+            for (Direction d: directions) {
+                MoveTarget cur = new MoveTarget(d);
+                if (cur.isBetterThan(best))
+                    best = cur;
+            }
             if (rc.canMove(best.dir))
                 rc.move(best.dir);
-        } catch (GameActionException e) {
-            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -39,16 +39,17 @@ public class GreedyPath {
         boolean canMove;
         int d;
         int current_dir;
-        MoveTarget(Direction dir) {
+        MoveTarget(Direction dir) throws GameActionException {
             this.dir = dir;
-            canMove = rc.canMove(dir);
-            MapLocation nloc = rc.getLocation().add(dir);
-            d = nloc.distanceSquaredTo(target);
-            // When I can detect current I will add that as well.
-            
-            //MapInfo mi = rc.senseMapInfo(nloc);
-            // rc.sense
-            //MapInfo mi = rc.senseMapInfo(nloc);
+            if (rc.canMove(dir)) {
+                MapLocation nloc = rc.getLocation().add(dir);
+                MapInfo mi = rc.senseMapInfo(nloc);
+                nloc = nloc.add(mi.getCurrentDirection());
+                d = nloc.distanceSquaredTo(target);
+                canMove = true;
+            } else {
+                canMove = false;
+            }
         }
 
         boolean isBetterThan(MoveTarget mt) {
