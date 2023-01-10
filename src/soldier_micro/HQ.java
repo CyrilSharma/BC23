@@ -12,13 +12,13 @@ public class HQ extends Robot {
     void build() throws GameActionException {
         RobotType r = getBuildType();
         if (r == null) return;
+        rc.setIndicatorString("Trying to build a " + r.toString());
         if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
-            r.buildCostAdamantium || 
+            r.buildCostAdamantium &&
             rc.getResourceAmount(ResourceType.MANA) >=
-            r.buildCostMana ||
+            r.buildCostMana &&
             rc.getResourceAmount(ResourceType.ELIXIR) >=
             r.buildCostElixir) {
-            
             MapLocation loc = getBuildLocation(r);
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
@@ -37,8 +37,8 @@ public class HQ extends Robot {
     }
 
     RobotType getBuildType() {
-        if (rng.nextInt(2) == 0) return RobotType.CARRIER;
-        return RobotType.BOOSTER;
+        if (rc.getRoundNum()/50 % 2 == 0) return RobotType.CARRIER;
+        return RobotType.LAUNCHER;
     }
 
     class BuildTarget {

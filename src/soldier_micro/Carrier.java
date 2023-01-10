@@ -18,6 +18,7 @@ public class Carrier extends Robot {
             MapLocation nloc = rc.getLocation().add(d);
             if (rc.canSenseLocation(rc.getLocation().add(d))) {
                 RobotInfo r = rc.senseRobotAtLocation(nloc);
+                if (r == null) continue;
                 if (r.type == RobotType.HEADQUARTERS)
                     home = nloc;
             }
@@ -63,7 +64,8 @@ public class Carrier extends Robot {
 
     void findTarget() {
         WellInfo[] wells = rc.senseNearbyWells();
-        wellTarget = wells[0].getMapLocation();
+        if (wells.length > 0)
+            wellTarget = wells[0].getMapLocation();
     }
 
     // TODO: add some evasive maneuvers

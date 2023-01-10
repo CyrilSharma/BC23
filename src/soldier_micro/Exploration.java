@@ -26,6 +26,7 @@ public class Exploration {
         height = rc.getMapHeight();
         width = rc.getMapWidth();
         rng.setSeed((long) rc.getID());
+        keypos = new MapLocation[5];
         keypos[0] = new MapLocation(width, 0);
         keypos[1] = new MapLocation(0, height);
         keypos[2] = new MapLocation(width, height);
@@ -34,6 +35,7 @@ public class Exploration {
     }
 
     public void move() {
+        if (target == null) target = generateTarget();
         if (rc.getLocation().distanceSquaredTo(target) <= 9) {
             target = generateTarget();
         }

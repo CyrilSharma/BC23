@@ -16,12 +16,14 @@ public abstract class Robot {
         Direction.SOUTHWEST,
         Direction.WEST,
         Direction.NORTHWEST,
+        Direction.CENTER
     };
 
     public Robot(RobotController rc) {
         this.rc = rc;
         rng.setSeed((long) rc.getID());
         greedyPath = new GreedyPath(rc);
+        exploration = new Exploration(rc);
     }
     abstract void run() throws GameActionException;
 }
