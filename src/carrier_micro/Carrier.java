@@ -199,8 +199,6 @@ public class Carrier extends Robot {
             AttackTarget cur = new AttackTarget(e);
             if (cur.isBetterThan(best)) best = cur;
         }
-        rc.setIndicatorString(""+dps_targetting + " attacked: " + 
-            (dps_targetting >= 0.8 * (double) rc.getHealth()));
         if (dps_targetting >= 0.8 * (double) rc.getHealth()) {
             if (rc.canAttack(best.loc) && 
                 (adamantium + mana + elixir) > 5) {

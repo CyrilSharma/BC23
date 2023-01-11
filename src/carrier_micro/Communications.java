@@ -3,6 +3,7 @@ import battlecode.common.*;
 // TODO: count the numbers of each unit for use in HQ!!
 public class Communications {
     RobotController rc;
+    Util util;
     MapLocation[] HQs = new MapLocation[5];
     int numHQ = 0;
     //constants
@@ -23,12 +24,15 @@ public class Communications {
 
     public Communications(RobotController rc) {
         this.rc = rc;
+        util = new Util(rc);
     }
 
     // all classes call this at the beginning.
     public void initial() throws GameActionException {
         refresh();
         sendMemory();
+        report();
+        broadcastAttackTargets();
     }
 
     public void refresh() throws GameActionException {
@@ -175,20 +179,16 @@ public class Communications {
         }
     }
 
+    public void broadcastAttackTargets() throws GameActionException {
+        RobotInfo r = util.getBestAttackTarget();
+        if (r != null) broadcastAttackTarget(r);
+    }
+
     // Note that because of the reset method memory only lasts 10 turns.
     RobotInfo[] broadcastTargetMemory = new RobotInfo[10];
     public boolean broadcastAttackTarget(RobotInfo r) throws GameActionException {
         int low_health = r.health <= 8 ? 1 : 0;
-        int priority;
-        switch (r.type) {
-            case BOOSTER: priority=4; break;
-            case AMPLIFIER: priority=3; break;
-            case HEADQUARTERS: priority=1; break;
-            case CARRIER: priority=2; break;
-            case LAUNCHER: priority=6; break;
-            case DESTABILIZER: priority=5; break;
-            default: priority=7;
-        }
+        int priority = Util.getPriority(r);
         int message = low_health + (1<<1) * priority + (1<<4) * r.location.x + (1<<10) * r.location.y;
 
         // if message already there, don't post it again.
@@ -239,15 +239,21 @@ public class Communications {
             low_health = (message&1) == 1;
             priority = (message>>1) & (0b111);
             int x = (message>>4) & (0b111111);
-            int y = (message>>4) & (0b111111);
+            int y = (message>>10) & (0b111111);
             m = new MapLocation(x, y);
             d = Util.absDistance(rc.getLocation(), m);
         }
 
         boolean isBetterThan(AttackTarget at) {
             if (at == null) return true;
+            // don't go if its too far away.
+            if (at.d < 15 && d > 15) return false;
+            if (at.d > 15 && d <= 15) return true;
+
+            // if one is significantly closer go there.
             if (at.d + 8 < d) return false;
             if (d + 8 < at.d) return true;
+
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
             if (at.low_health && !low_health) return false;

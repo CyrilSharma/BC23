@@ -1,5 +1,6 @@
 package carrier_micro;
 import battlecode.common.*;
+import carrier_micro.Booster.AttackTarget;
 
 // Control flow.
 // If no targets in range continue exploring, or seeking out some other target.
@@ -20,7 +21,7 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         initialize();
-        communications.report();
+        communications.initial();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         switch (state) {
@@ -42,10 +43,12 @@ public class Launcher extends Robot {
             hurt = true;
     }
 
-    State determineState() {
+    State determineState() throws GameActionException {
         for (RobotInfo e : enemies) {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
+        MapLocation m = communications.findBestAttackTarget();
+        if (m != null) return State.HUNT;
         return State.EXPLORE;
     }
 
@@ -57,18 +60,19 @@ public class Launcher extends Robot {
             }
         }
         // TODO: change attack target if better target is found after moving.
-        AttackTarget at = getBestAttackTarget();
-        if (rc.canAttack(at.loc)) rc.attack(at.loc);
+        RobotInfo r = util.getBestAttackTarget();
+        if (rc.canAttack(r.location)) rc.attack(r.location);
         if (!attacker) {
-            follow(at.loc);
+            follow(r.location);
         } else {
             maneuver();
         }
     }
 
     // Relies on comms.
-    void hunt() {
-        ;
+    void hunt() throws GameActionException {
+        MapLocation huntTarget = communications.findBestAttackTarget();
+        greedyPath.move(huntTarget);
     }
 
     // Relies on exploration code.
@@ -101,15 +105,6 @@ public class Launcher extends Robot {
         }
         if (rc.canMove(best.dir))
             rc.move(best.dir);
-    }
-
-    AttackTarget getBestAttackTarget() {
-        AttackTarget best = null;
-        for (RobotInfo e: enemies) {
-            AttackTarget cur = new AttackTarget(e);
-            if (cur.isBetterThan(best)) best = cur;
-        }
-        return best;
     }
 
     // Choose best candidate for maneuvering in close encounters.
@@ -181,32 +176,6 @@ public class Launcher extends Robot {
                 return minDistToEnemy >= mt.minDistToEnemy;
             else
                 return minDistToEnemy <= mt.minDistToEnemy;
-        }
-    }
-    // Choose best candidate to attack.
-    class AttackTarget {
-        MapLocation loc;
-        int priority;
-        int health;
-
-        AttackTarget(RobotInfo r) {
-            loc = r.location;
-            switch (r.getType()) {
-                case BOOSTER: priority=4; break;
-                case AMPLIFIER: priority=3; break;
-                case HEADQUARTERS: priority=1; break;
-                case CARRIER: priority=2; break;
-                case LAUNCHER: priority=6; break;
-                case DESTABILIZER: priority=5; break;
-            }
-            health = r.health;
-        }
-
-        boolean isBetterThan(AttackTarget at) {
-            if (at == null) return true;
-            if (at.priority > priority) return false;
-            if (at.priority < priority) return true;
-            return health <= at.health;
         }
     }
 
