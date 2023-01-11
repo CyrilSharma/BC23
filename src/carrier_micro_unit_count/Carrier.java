@@ -1,6 +1,7 @@
 package carrier_micro_unit_count;
 import battlecode.common.*;
-import battlecode.world.Inventory;
+
+// TODO some weird errors with Home being confused with nearest HQ.
 
 public class Carrier extends Robot {
     int adamantium, mana, elixir;
@@ -8,15 +9,13 @@ public class Carrier extends Robot {
     MapLocation islandTarget;
     // will eventually be replaced with comms.
     MapLocation home;
-    boolean homeHasAnchor = false;
     boolean hasAnchor = false;
     enum State {
         SEARCHING,
         SEEKING,
         HARVESTING,
         DELIVERING,
-        DELIVER_ANCHOR,
-        WAIT_FOR_ANCHOR
+        DELIVER_ANCHOR
     }
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
@@ -50,7 +49,6 @@ public class Carrier extends Robot {
     State determineState() throws GameActionException {
         grab_anchor();
         if (hasAnchor) return State.DELIVER_ANCHOR;
-        if (homeHasAnchor) return State.WAIT_FOR_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
             mana == 0 && 
@@ -75,24 +73,52 @@ public class Carrier extends Robot {
         findTarget();
     }
 
-    void seek() {
+    void seek() throws GameActionException {
         greedyPath.move(wellTarget);
+        findTarget();
     }
 
     void findTarget() throws GameActionException{
         //TODO: eventually, we should probably have HQ decide and tell the resources it needs
         WellInfo[] wells = rc.senseNearbyWells();
-        if(wells.length > 0){
-            //find closest
-            int dist = 100000000;
+        if (wells.length > 0) {
+            WellTarget best = null;
             for(WellInfo w : wells){
-                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) < dist){
-                    dist = rc.getLocation().distanceSquaredTo(w.getMapLocation());
-                    wellTarget = w.getMapLocation();
+                WellTarget cur = new WellTarget(w);
+                if (cur.isBetterThan(best)) best = cur;
+            }
+            wellTarget = best.loc;
+        }
+        else wellTarget = communications.findBestWell(); //null if nothing found
+    }
+
+    class WellTarget {
+        MapLocation loc;
+        int harvestersNear;
+        int distance;
+        WellTarget(WellInfo w) {
+            loc = w.getMapLocation();
+            distance = loc.distanceSquaredTo(rc.getLocation());
+            harvestersNear = 0;
+            RobotInfo[] robots = rc.senseNearbyRobots();
+            for (RobotInfo r: robots) {
+                if (r.type != RobotType.CARRIER) continue;
+                if (r.location.distanceSquaredTo(loc) <= 4) {
+                    harvestersNear++;
                 }
             }
         }
-        else wellTarget = communications.findBestWell(); //null if nothing found
+
+        boolean crowded() {
+            return harvestersNear>3;
+        }
+
+        boolean isBetterThan(WellTarget wt) {
+            if (wt == null) return true;
+            if (!wt.crowded() && crowded()) return false;
+            if (wt.crowded() && !crowded()) return true;
+            return distance <= wt.distance; 
+        }
     }
 
     // TODO: add some evasive maneuvers
@@ -110,7 +136,6 @@ public class Carrier extends Robot {
     void deliver() throws GameActionException {
         MapLocation depositLoc = null;
         int dist = 1000000;
-        //System.out.println("i see : " + communications.numHQ);
         for(int i = 0; i < communications.numHQ; i++){
             if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
                 depositLoc = communications.HQs[i];
@@ -125,10 +150,6 @@ public class Carrier extends Robot {
                 if (rc.getResourceAmount(r) == 0) continue;
                 if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
-                RobotInfo hq = rc.senseRobotAtLocation(depositLoc);
-                if (hq != null && hq.getNumAnchors(Anchor.STANDARD) > 0) {
-                    homeHasAnchor = true;
-                }
             }
         }
     }
@@ -150,7 +171,6 @@ public class Carrier extends Robot {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
-                System.out.println("hi!");
                 if (rc.canPlaceAnchor()) {
                     rc.placeAnchor();
                     islandTarget = null;
@@ -199,8 +219,6 @@ public class Carrier extends Robot {
             AttackTarget cur = new AttackTarget(e);
             if (cur.isBetterThan(best)) best = cur;
         }
-        rc.setIndicatorString(""+dps_targetting + " attacked: " + 
-            (dps_targetting >= 0.8 * (double) rc.getHealth()));
         if (dps_targetting >= 0.8 * (double) rc.getHealth()) {
             if (rc.canAttack(best.loc) && 
                 (adamantium + mana + elixir) > 5) {

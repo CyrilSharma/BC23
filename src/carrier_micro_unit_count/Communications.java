@@ -3,6 +3,7 @@ import battlecode.common.*;
 // TODO: count the numbers of each unit for use in HQ!!
 public class Communications {
     RobotController rc;
+    Util util;
     MapLocation[] HQs = new MapLocation[5];
     int numHQ = 0;
     int lastReported = -10;
@@ -40,8 +41,12 @@ public class Communications {
 
     // all classes call this at the beginning.
     public void initial() throws GameActionException {
+        findOurHQs();
         refresh();
         sendMemory();
+        report();
+        clearTargets();
+        broadcastAttackTargets();
     }
 
     public void refresh() throws GameActionException {
@@ -218,11 +223,33 @@ public class Communications {
     }
 
     public void findOurHQs() throws GameActionException{
-        for(int i = 0; i < SHARED_ARRAY_SIZE; i++) if((rc.readSharedArray(i) & (0b111)) == HQ_LOCATION){
+        numHQ = 0;
+        for (int i = 0; i < SHARED_ARRAY_SIZE; i++) {
+            if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
             MapLocation hq = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
             HQs[numHQ++] = hq;
         }
+    }
+
+    public MapLocation findClosestHQ() throws GameActionException {
+        MapLocation best = null;
+        int bestD = 100000;
+        for (MapLocation m: HQs) {
+            if (m == null) continue;
+            int d = rc.getLocation().distanceSquaredTo(m);
+            if (d < bestD) {
+                bestD = d;
+                best = m;
+            }
+        }
+        return best;
+    }
+
+    public void broadcastAttackTargets() throws GameActionException {
+        RobotInfo r = util.getBestAttackTarget();
+        if (r != null && r.type != RobotType.HEADQUARTERS) 
+            broadcastAttackTarget(r);
     }
 
     // Note that because of the reset method memory only lasts 10 turns.
@@ -265,6 +292,24 @@ public class Communications {
         } else {
             rc.writeSharedArray(empty_index, message);
             return true;
+        }
+    }
+
+    public void clearTargets() throws GameActionException {
+        for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
+            int message = rc.readSharedArray(i);
+            if (message == 0) continue;
+            int x = (message>>4) & (0b111111);
+            int y = (message>>10) & (0b111111);
+            MapLocation m = new MapLocation(x, y);
+            // TODO: may be bugged because of clouds
+            if (rc.canSenseLocation(m)) {
+                RobotInfo r = rc.senseRobotAtLocation(m);
+                if (r == null) {
+                    if (rc.canWriteSharedArray(i, 0)) rc.writeSharedArray(i, 0);
+                    else ; // add to memory?
+                } 
+            }
         }
     }
 

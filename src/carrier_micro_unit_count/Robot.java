@@ -8,6 +8,7 @@ public abstract class Robot {
     GreedyPath greedyPath;
     Exploration exploration;
     Communications communications;
+    Util util;
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -26,6 +27,7 @@ public abstract class Robot {
         greedyPath = new GreedyPath(rc);
         exploration = new Exploration(rc);
         communications = new Communications(rc);
+        util = new Util(rc);
     }
     abstract void run() throws GameActionException;
 }
