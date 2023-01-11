@@ -17,6 +17,7 @@ public class HQ extends Robot {
     }
     void run() throws GameActionException {
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
+        communications.report();
         build();
     }
 

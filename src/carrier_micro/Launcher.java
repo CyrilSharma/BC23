@@ -20,6 +20,7 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         initialize();
+        communications.report();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         switch (state) {

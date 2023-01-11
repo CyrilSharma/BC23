@@ -21,11 +21,6 @@ public class Carrier extends Robot {
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
-        /*
-        for(int i = 0; i < communications.numHQ; i++) {
-            System.out.println("Found HQ at: " + communications.HQs[i].x + " " + communications.HQs[i].y);
-        }
-        */
         findHome();
     }
 
@@ -113,15 +108,24 @@ public class Carrier extends Robot {
     }
 
     void deliver() throws GameActionException {
-        if (home.distanceSquaredTo(rc.getLocation()) > 1) {
-            greedyPath.move(home);
+        MapLocation depositLoc = null;
+        int dist = 1000000;
+        System.out.println("i see : " + communications.numHQ);
+        for(int i = 0; i < communications.numHQ; i++){
+            if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
+                depositLoc = communications.HQs[i];
+                dist = rc.getLocation().distanceSquaredTo(communications.HQs[i]);
+            }
+        }
+        if (depositLoc.distanceSquaredTo(rc.getLocation()) > 1) {
+            greedyPath.move(depositLoc);
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
             for (ResourceType r: resources) {
                 if (rc.getResourceAmount(r) == 0) continue;
-                if (rc.canTransferResource(home, r, rc.getResourceAmount(r)))
-                    rc.transferResource(home, r, rc.getResourceAmount(r));
-                RobotInfo hq = rc.senseRobotAtLocation(home);
+                if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
+                    rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
+                RobotInfo hq = rc.senseRobotAtLocation(depositLoc);
                 if (hq.getNumAnchors(Anchor.STANDARD) > 0) {
                     homeHasAnchor = true;
                 }

@@ -7,7 +7,7 @@ public class Communications {
     int numHQ = 0;
     //constants
     static final int SHARED_ARRAY_SIZE = 64;
-    static final int MAX_WELLS_FOR_TYPE = 10;
+    static final int MAX_WELLS_FOR_TYPE = 4;
 
     //message types
     static final int HQ_LOCATION = 1;
@@ -16,9 +16,9 @@ public class Communications {
     static final int ELIXIR_WELL = 4;
 
     static final int KEYLOCATIONS = 0;
-    static final int KEYLOCATIONS_WIDTH = 10;
+    static final int KEYLOCATIONS_WIDTH = 15;
 
-    static final int ATTACK_TARGETS = 10;
+    static final int ATTACK_TARGETS = 15;
     static final int ATTACK_TARGETS_WIDTH = 10;
 
     public Communications(RobotController rc) {
@@ -53,15 +53,11 @@ public class Communications {
         int xLoc = loc.x, yLoc = loc.y;
         // 10 so we reserve other space. we can play w this.
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
-            if (rc.readSharedArray(i) == 0) continue;
+            if (rc.readSharedArray(i) != 0) continue;
             int msg = type + (1 << 3) * (xLoc) + (1 << 9) * yLoc;
             if (rc.canWriteSharedArray(i, msg)){
-                //System.out.println("Sent location.");
                 rc.writeSharedArray(i, msg);
                 return true;
-            }
-            else{
-                //System.out.println("Can't send location.");
             }
             break;
         }
