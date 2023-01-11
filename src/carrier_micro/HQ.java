@@ -2,6 +2,7 @@ package carrier_micro;
 import battlecode.common.*;
 
 public class HQ extends Robot {
+    int MAX_MINERS = 20;
     public HQ(RobotController rc) {
         super(rc);
     }

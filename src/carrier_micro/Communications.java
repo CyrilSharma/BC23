@@ -1,6 +1,6 @@
 package carrier_micro;
 import battlecode.common.*;
-
+// TODO: count the numbers of each unit for use in HQ!!
 public class Communications {
     RobotController rc;
     MapLocation[] HQs = new MapLocation[5];
