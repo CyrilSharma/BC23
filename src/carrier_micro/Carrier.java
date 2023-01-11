@@ -9,15 +9,13 @@ public class Carrier extends Robot {
     MapLocation islandTarget;
     // will eventually be replaced with comms.
     MapLocation home;
-    boolean homeHasAnchor = false;
     boolean hasAnchor = false;
     enum State {
         SEARCHING,
         SEEKING,
         HARVESTING,
         DELIVERING,
-        DELIVER_ANCHOR,
-        WAIT_FOR_ANCHOR
+        DELIVER_ANCHOR
     }
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
@@ -51,7 +49,6 @@ public class Carrier extends Robot {
     State determineState() throws GameActionException {
         grab_anchor();
         if (hasAnchor) return State.DELIVER_ANCHOR;
-        if (homeHasAnchor) return State.WAIT_FOR_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
             mana == 0 && 
@@ -139,7 +136,6 @@ public class Carrier extends Robot {
     void deliver() throws GameActionException {
         MapLocation depositLoc = null;
         int dist = 1000000;
-        System.out.println("i see : " + communications.numHQ);
         for(int i = 0; i < communications.numHQ; i++){
             if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
                 depositLoc = communications.HQs[i];
@@ -154,10 +150,6 @@ public class Carrier extends Robot {
                 if (rc.getResourceAmount(r) == 0) continue;
                 if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
-                RobotInfo hq = rc.senseRobotAtLocation(depositLoc);
-                if (hq.getNumAnchors(Anchor.STANDARD) > 0) {
-                    homeHasAnchor = true;
-                }
             }
         }
     }
@@ -179,7 +171,6 @@ public class Carrier extends Robot {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
-                System.out.println("hi!");
                 if (rc.canPlaceAnchor()) {
                     rc.placeAnchor();
                     islandTarget = null;

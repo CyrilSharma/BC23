@@ -48,6 +48,7 @@ public class Launcher extends Robot {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
         MapLocation m = communications.findBestAttackTarget();
+        //System.out.println("" + (m != null));
         if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
         return State.EXPLORE;
     }
@@ -72,6 +73,8 @@ public class Launcher extends Robot {
     // Relies on comms.
     void hunt() throws GameActionException {
         MapLocation huntTarget = communications.findBestAttackTarget();
+        rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
+        rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
         greedyPath.move(huntTarget);
     }
 

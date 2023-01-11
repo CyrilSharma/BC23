@@ -41,14 +41,14 @@ public class Communications {
             rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%10, 0);
 
         // purge memory after x turns to prevent bad updates.
-        broadcastTargetMemory[rc.getRoundNum()%10] = null;
+        broadcastTargetMemory[rc.getRoundNum()%3] = null;
     }
 
     public void sendMemory() throws GameActionException {
         // if u can write one u can write all... right?
         if (!rc.canWriteSharedArray(0, 0)) return;
         // do this for all memories...
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 3; i++) {
             if (broadcastTargetMemory[i] != null)
                 broadcastAttackTarget(broadcastTargetMemory[i]);
         }
@@ -84,9 +84,6 @@ public class Communications {
                     bestWell = w;
                 }
             }
-        }
-        if(bestWell != null) {
-            System.out.println("Read about well on: " + bestWell);
         }
         return bestWell;
     }
@@ -124,7 +121,6 @@ public class Communications {
                        }
                    }
                    if(not_marked > 0) {
-                       System.out.println("Telling about mana well on: " + w.getMapLocation());
                        rc.writeSharedArray(freeSlots[addInd++], msg);
                        cntMana++;
                    }
@@ -141,7 +137,6 @@ public class Communications {
                         }
                     }
                     if(not_marked > 0){
-                        System.out.println("Telling about ada well on: " + w.getMapLocation());
                         rc.writeSharedArray(freeSlots[addInd++], msg);
                         cntAda++;
                     }
@@ -158,7 +153,6 @@ public class Communications {
                         }
                     }
                     if(not_marked > 0) {
-                        System.out.println("Telling about elixir well on: " + w.getMapLocation());
                         rc.writeSharedArray(freeSlots[addInd++], msg);
                         cntElixir++;
                     }
@@ -182,11 +176,12 @@ public class Communications {
 
     public void broadcastAttackTargets() throws GameActionException {
         RobotInfo r = util.getBestAttackTarget();
-        if (r != null) broadcastAttackTarget(r);
+        if (r != null && r.type != RobotType.HEADQUARTERS) 
+            broadcastAttackTarget(r);
     }
 
-    // Note that because of the reset method memory only lasts 10 turns.
-    RobotInfo[] broadcastTargetMemory = new RobotInfo[10];
+    // Note that because of the reset method memory only lasts 3 turns.
+    RobotInfo[] broadcastTargetMemory = new RobotInfo[3];
     public boolean broadcastAttackTarget(RobotInfo r) throws GameActionException {
         int low_health = r.health <= 8 ? 1 : 0;
         int priority = Util.getPriority(r);
@@ -204,16 +199,16 @@ public class Communications {
                 MapLocation m = new MapLocation(x, y);
                 // already there.
                 if (m.equals(r.location)) return true;
-            }
-            if (rc.canWriteSharedArray(i, message)) {
+            } else if (rc.canWriteSharedArray(i, message)) {
                 empty_index = i;
                 write = true;
             }
         }
         if (!write) {
-            broadcastTargetMemory[rc.getRoundNum()%10] = r;
+            broadcastTargetMemory[rc.getRoundNum()%3] = r;
             return false;
         } else {
+            System.out.println("I should've wrote, in theory.");
             rc.writeSharedArray(empty_index, message);
             return true;
         }
@@ -242,7 +237,7 @@ public class Communications {
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
-            AttackTarget cur = new AttackTarget(rc.readSharedArray(i));
+            AttackTarget cur = new AttackTarget(message);
             if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
