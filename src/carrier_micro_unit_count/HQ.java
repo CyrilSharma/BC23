@@ -96,26 +96,22 @@ public class HQ extends Robot {
                 break;
             }
         }
-        if (defend) {
-            if(rc.getResourceAmount(ResourceType.MANA) >= RobotType.LAUNCHER.buildCostMana){
-                return Build.LAUNCHER;
-            }
-        }
-        if(rc.getRoundNum() <= 50) {
-            if (cntCarriers < 8) return Build.CARRIER;
-            if (cntCarriers < 10){
-                if (cntLaunchers * 3 < cntCarriers) return Build.LAUNCHER;
-                else return Build.CARRIER;
-            }
-            if (cntAmplifiers < 2 * cntCarriers) return Build.AMPLIFIER;
-            if (cntCarriers < 20) {
-                if (cntLaunchers * 2 < cntCarriers) return Build.LAUNCHER;
-                else return Build.CARRIER;
-            }
+        if (defend && rc.getResourceAmount(ResourceType.MANA) >= RobotType.LAUNCHER.buildCostMana) {
+            return Build.LAUNCHER;
         }
 
-        if(cntAmplifiers * 3 < cntLaunchers && cntAmplifiers < 20) return Build.AMPLIFIER;
-        if(cntCarriers < 20) return Build.CARRIER;
+        // spam carriers initially.
+        if (rc.getRoundNum() <= 50 && cntCarriers < 8) 
+            return Build.CARRIER;
+
+        // alternate between which things you add, unless ratios go out of wack.
+        int mod = rc.getRoundNum() % 4;
+        if ((mod==0 && cntLaunchers < 2 * cntCarriers) ||
+            cntLaunchers < 10 || cntLaunchers < 4 * cntCarriers) return Build.LAUNCHER;
+        if ((mod==1 && cntAmplifiers * 3 < cntLaunchers) ||
+            cntAmplifiers < 6 * cntLaunchers) return Build.AMPLIFIER;
+        if ((mod==2 && cntCarriers < 20) || 
+            cntCarriers < 8) return Build.CARRIER;
         if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
             rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100 &&
             cntLaunchers > 2 * cntCarriers &&
