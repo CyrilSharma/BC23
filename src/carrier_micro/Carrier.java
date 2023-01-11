@@ -113,7 +113,7 @@ public class Carrier extends Robot {
         }
 
         boolean crowded() {
-            return harvestersNear>4;
+            return harvestersNear>3;
         }
 
         boolean isBetterThan(WellTarget wt) {
