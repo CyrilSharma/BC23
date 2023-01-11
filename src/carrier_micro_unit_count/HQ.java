@@ -19,23 +19,24 @@ public class HQ extends Robot {
     void run() throws GameActionException {
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
-        if(rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
-            cntCarriers = (int) ((0.25 * (double)cntCarriers) + (0.75 * (double)communications.getUnitCount(RobotType.CARRIER)));
-            cntLaunchers = (int) ((0.25 * (double)cntLaunchers) + (0.75 * (double)communications.getUnitCount(RobotType.LAUNCHER)));
-            cntAmplifiers = (int) ((0.25 * (double)cntAmplifiers) + (0.75 * (double)communications.getUnitCount(RobotType.AMPLIFIER)));
+        if(rc.getRoundNum() >= 300) {
+            if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
+                // once comms have been estabished switch to this.
+                cntCarriers = communications.getUnitCount(RobotType.CARRIER);
+                cntLaunchers = communications.getUnitCount(RobotType.LAUNCHER);
+                cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
+            }
+        } else {
+            cntCarriers = communications.readBuild(RobotType.CARRIER);
+            cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
+            cntAmplifiers = communications.readBuild(RobotType.AMPLIFIER);
         }
-        if(rc.getRoundNum() > 0 && rc.getRoundNum() % 5 == 0){
-            if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) communications.resetCounts();
+        if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0){
+            if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
+                communications.resetCounts();
         }
         //communications.initial();
         build();
-    }
-
-    void addCnt(RobotType r) throws GameActionException{
-        //add unit we make to the count
-        if(r == RobotType.CARRIER) cntCarriers++;
-        if(r == RobotType.LAUNCHER) cntLaunchers++;
-        if(r == RobotType.AMPLIFIER) cntAmplifiers++;
     }
 
     void build() throws GameActionException {
@@ -61,7 +62,7 @@ public class HQ extends Robot {
             MapLocation loc = getBuildLocation(r);
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
-                addCnt(r);
+                communications.updateBuild(r);
             }
         }
         // Carrier spam is not helpful, use excesses to upgrade things.

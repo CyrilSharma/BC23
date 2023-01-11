@@ -8,7 +8,8 @@ public class Communications {
     int numHQ = 0;
     int lastReported = -10;
     //constants
-    static final int SHARED_ARRAY_SIZE = 64;
+    // this should never be used in a for loop.
+    // static final int SHARED_ARRAY_SIZE = 64;
     static final int MAX_WELLS_FOR_TYPE = 4;
 
     //message types
@@ -21,12 +22,16 @@ public class Communications {
     static final int KEYLOCATIONS = 0;
     static final int KEYLOCATIONS_WIDTH = 15;
 
-    static final int ATTACK_TARGETS = KEYLOCATIONS_WIDTH;
+    static final int ATTACK_TARGETS = KEYLOCATIONS + KEYLOCATIONS_WIDTH;
     static final int ATTACK_TARGETS_WIDTH = 10;
 
     //for maintaining unit counts
-    static final int UNIT_COUNTS = KEYLOCATIONS_WIDTH + ATTACK_TARGETS_WIDTH;
-    static final int UNIT_COUNTS_WIDTH = 5;
+    static final int UNIT_COUNTS = ATTACK_TARGETS + ATTACK_TARGETS_WIDTH;
+    static final int UNIT_COUNTS_WIDTH = 8;
+
+    static final int BUILD_COUNT = UNIT_COUNTS + UNIT_COUNTS_WIDTH;
+    static final int BUILD_COUNT_WIDTH = 8;
+
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
             RobotType.LAUNCHER,
@@ -47,6 +52,17 @@ public class Communications {
         report();
         clearTargets();
         broadcastAttackTargets();
+    }
+
+    void updateBuild(RobotType r) throws GameActionException {
+        int index = BUILD_COUNT + r.ordinal();
+        int count = rc.readSharedArray(index);
+        rc.writeSharedArray(index, count+1);
+    }
+
+    int readBuild(RobotType r) throws GameActionException {
+        int index = BUILD_COUNT + r.ordinal();
+        return rc.readSharedArray(index);
     }
 
     public void refresh() throws GameActionException {
@@ -74,15 +90,7 @@ public class Communications {
     }
 
     public int getUnitCount(RobotType r) throws GameActionException{
-        int ind = -1;
-        for(int i = 0; i < UNITS.length; i++){
-            if(r == UNITS[i]){
-                ind = i;
-                break;
-            }
-        }
-        assert(ind != -1);
-        return rc.readSharedArray(UNIT_COUNTS + ind);
+        return rc.readSharedArray(UNIT_COUNTS + r.ordinal());
     }
 
     public boolean writeTypeLoc(int type, MapLocation loc) throws GameActionException{
@@ -145,7 +153,7 @@ public class Communications {
                if (cntMana < MAX_WELLS_FOR_TYPE) {
                    int msg = MANA_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
                    int not_marked = 1;
-                   for(int i = 0; i < SHARED_ARRAY_SIZE; i++){
+                   for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                        if(rc.readSharedArray(i) == msg){
                            not_marked = 0;
                            break;
@@ -162,7 +170,7 @@ public class Communications {
                 if (cntAda < MAX_WELLS_FOR_TYPE) {
                     int msg = ADAMANTIUM_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
                     int not_marked = 1;
-                    for(int i = 0; i < SHARED_ARRAY_SIZE; i++){
+                    for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                         if(rc.readSharedArray(i) == msg){
                             not_marked = 0;
                             break;
@@ -179,7 +187,7 @@ public class Communications {
                 if (cntElixir < MAX_WELLS_FOR_TYPE) {
                     int msg = ELIXIR_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
                     int not_marked = 1;
-                    for(int i = 0; i < SHARED_ARRAY_SIZE; i++){
+                    for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                         if(rc.readSharedArray(i) == msg){
                             not_marked = 0;
                             break;
@@ -198,17 +206,9 @@ public class Communications {
     public void reportCount() throws GameActionException{
         if(rc.getType() == RobotType.HEADQUARTERS) return;
         if(!rc.canWriteSharedArray(0, 0)) return;
-        int ind = -1;
-        for(int i = 0; i < UNITS.length; i++){
-            if(rc.getType() == UNITS[i]){
-                ind = i;
-                break;
-            }
-        }
-        assert(ind != -1);
-        int val = rc.readSharedArray(UNIT_COUNTS + ind);
+        int val = rc.readSharedArray(UNIT_COUNTS + rc.getType().ordinal());
         if(lastReported < rc.getRoundNum() - (rc.getRoundNum() % Constants.REPORT_FREQ)) {
-            rc.writeSharedArray(UNIT_COUNTS + ind, val + 1);
+            rc.writeSharedArray(UNIT_COUNTS + rc.getType().ordinal(), val + 1);
             lastReported = rc.getRoundNum();
         }
     }
@@ -220,7 +220,7 @@ public class Communications {
     }
 
     public void findOurHQs() throws GameActionException{
-        for (int i = 0; i < SHARED_ARRAY_SIZE; i++) {
+        for (int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
             if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
             MapLocation hq = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
