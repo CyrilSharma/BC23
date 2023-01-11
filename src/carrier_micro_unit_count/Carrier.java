@@ -7,6 +7,7 @@ public class Carrier extends Robot {
     int adamantium, mana, elixir;
     MapLocation wellTarget;
     MapLocation islandTarget;
+    MapLocation depositLoc = null;
     // will eventually be replaced with comms.
     MapLocation home;
     boolean hasAnchor = false;
@@ -135,7 +136,6 @@ public class Carrier extends Robot {
     }
 
     void deliver() throws GameActionException {
-        MapLocation depositLoc = null;
         int dist = 1000000;
         for(int i = 0; i < communications.numHQ; i++){
             if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
@@ -156,8 +156,9 @@ public class Carrier extends Robot {
     }
 
     void grab_anchor() throws GameActionException {
-        if (rc.canTakeAnchor(home, Anchor.STANDARD)) {
-            rc.takeAnchor(home, Anchor.STANDARD);
+        if (depositLoc == null) return;
+        if (rc.canTakeAnchor(depositLoc, Anchor.STANDARD)) {
+            rc.takeAnchor(depositLoc, Anchor.STANDARD);
             hasAnchor = true;
         }
     }
@@ -186,10 +187,12 @@ public class Carrier extends Robot {
         MapLocation closestTarget = null;
         int d = 100000;
         for (int idx: islands) {
+            if (rc.senseAnchor(idx) != null) continue;
             MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
             for (MapLocation spot: spots) {
-                if (rc.getLocation().distanceSquaredTo(spot) < d)
+                if (rc.getLocation().distanceSquaredTo(spot) < d) {
                     closestTarget = spot;
+                }
             }
         }
         return closestTarget;

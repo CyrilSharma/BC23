@@ -207,7 +207,7 @@ public class Communications {
         }
         assert(ind != -1);
         int val = rc.readSharedArray(UNIT_COUNTS + ind);
-        if(lastReported < rc.getRoundNum() - (rc.getRoundNum() % 5)) {
+        if(lastReported < rc.getRoundNum() - (rc.getRoundNum() % Constants.REPORT_FREQ)) {
             rc.writeSharedArray(UNIT_COUNTS + ind, val + 1);
             lastReported = rc.getRoundNum();
         }

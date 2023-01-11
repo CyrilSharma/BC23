@@ -23,14 +23,23 @@ public class Amplifier extends Robot {
         RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         double avgx=0, avgy=0;
         int count=0;
+        int numAntenna=0;
         for (RobotInfo r: robots) {
             if (r.ID == rc.getID()) continue;
-            if (!Util.isAttacker(r.type)) continue;
+            if (r.type == RobotType.HEADQUARTERS ||
+                r.type == RobotType.AMPLIFIER) {
+                numAntenna++;
+                continue;
+            }
+            if (r.type == RobotType.HEADQUARTERS) continue;
             avgx += r.location.x;
             avgy += r.location.y;
             count++;
         }
         if (count == 0) return false;
+        if (numAntenna > 1) {
+            exploration.move();;
+        }
 
         avgx /= count;
         avgy /= count;

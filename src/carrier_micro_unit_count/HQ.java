@@ -19,10 +19,10 @@ public class HQ extends Robot {
     void run() throws GameActionException {
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
-        if(rc.getRoundNum() % 5 == 0 && rc.getRoundNum() >= 300){
-            cntCarriers = communications.getUnitCount(RobotType.CARRIER);
-            cntLaunchers = communications.getUnitCount(RobotType.LAUNCHER);
-            cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
+        if(rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
+            cntCarriers = (int) ((0.25 * (double)cntCarriers) + (0.75 * (double)communications.getUnitCount(RobotType.CARRIER)));
+            cntLaunchers = (int) ((0.25 * (double)cntLaunchers) + (0.75 * (double)communications.getUnitCount(RobotType.LAUNCHER)));
+            cntAmplifiers = (int) ((0.25 * (double)cntAmplifiers) + (0.75 * (double)communications.getUnitCount(RobotType.AMPLIFIER)));
         }
         if(rc.getRoundNum() > 0 && rc.getRoundNum() % 5 == 0){
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) communications.resetCounts();
@@ -44,30 +44,30 @@ public class HQ extends Robot {
 
         if (b == Build.NONE) return;
         RobotType r = buildToRobotType(b);
-        if (b == Build.ANCHOR &&
-                rc.canBuildAnchor(Anchor.STANDARD)) {
-            rc.buildAnchor(Anchor.STANDARD);
+        if (b == Build.ANCHOR) {
+            if (rc.canBuildAnchor(Anchor.STANDARD)) {
+                rc.buildAnchor(Anchor.STANDARD);
+                System.out.println("Built an anchor");
+            }
             return;
         }
-        for(int i = 0; i < 2; i++) {
-            if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
-                    r.buildCostAdamantium &&
-                    rc.getResourceAmount(ResourceType.MANA) >=
-                            r.buildCostMana &&
-                    rc.getResourceAmount(ResourceType.ELIXIR) >=
-                            r.buildCostElixir) {
-                MapLocation loc = getBuildLocation(r);
-                rc.setIndicatorString("Trying to build a " + b.toString() + " at " + loc);
-                if (rc.canBuildRobot(r, loc)) {
-                    rc.buildRobot(r, loc);
-                    addCnt(r);
-                }
-            }
-            // Carrier spam is not helpful, use excesses to upgrade things.
 
-            // if (r == RobotType.CARRIER) r = RobotType.LAUNCHER;
-            // else if(r == RobotType.LAUNCHER) r = RobotType.CARRIER;
+        if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
+                r.buildCostAdamantium &&
+                rc.getResourceAmount(ResourceType.MANA) >=
+                        r.buildCostMana &&
+                rc.getResourceAmount(ResourceType.ELIXIR) >=
+                        r.buildCostElixir) {
+            MapLocation loc = getBuildLocation(r);
+            if (rc.canBuildRobot(r, loc)) {
+                rc.buildRobot(r, loc);
+                addCnt(r);
+            }
         }
+        // Carrier spam is not helpful, use excesses to upgrade things.
+
+        // if (r == RobotType.CARRIER) r = RobotType.LAUNCHER;
+        // else if(r == RobotType.LAUNCHER) r = RobotType.CARRIER;
     }
 
     MapLocation getBuildLocation(RobotType t) throws GameActionException {
@@ -88,31 +88,38 @@ public class HQ extends Robot {
     Build getBuildType() throws GameActionException{
         //use unit counts to get ratios, unless we are in danger
         RobotInfo[] enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
-        int defend = 0;
+        boolean defend = false;
         for(RobotInfo r : enemies){
             if(r.getType() != RobotType.HEADQUARTERS){
-                defend = 1;
+                defend = true;
                 break;
             }
         }
-        if(defend > 0){
+        if (defend) {
             if(rc.getResourceAmount(ResourceType.MANA) >= RobotType.LAUNCHER.buildCostMana){
                 return Build.LAUNCHER;
             }
         }
-        if(rc.getRoundNum() <= 200) {
+        if(rc.getRoundNum() <= 50) {
             if (cntCarriers < 8) return Build.CARRIER;
             if (cntCarriers < 10){
                 if (cntLaunchers * 3 < cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
+            if (cntAmplifiers < 2 * cntCarriers) return Build.AMPLIFIER;
             if (cntCarriers < 20) {
                 if (cntLaunchers * 2 < cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
         }
+
         if(cntAmplifiers * 3 < cntLaunchers && cntAmplifiers < 20) return Build.AMPLIFIER;
         if(cntCarriers < 20) return Build.CARRIER;
+        if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
+            rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100 &&
+            cntLaunchers > 2 * cntCarriers &&
+            cntLaunchers > 20)
+            return Build.ANCHOR;
         else return Build.LAUNCHER;
     }
 
