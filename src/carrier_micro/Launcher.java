@@ -48,7 +48,7 @@ public class Launcher extends Robot {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
         MapLocation m = communications.findBestAttackTarget();
-        if (m != null) return State.HUNT;
+        if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
         return State.EXPLORE;
     }
 

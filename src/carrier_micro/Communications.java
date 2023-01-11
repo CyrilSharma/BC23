@@ -32,6 +32,7 @@ public class Communications {
         refresh();
         sendMemory();
         report();
+        clearTargets();
         broadcastAttackTargets();
     }
 
@@ -215,6 +216,24 @@ public class Communications {
         } else {
             rc.writeSharedArray(empty_index, message);
             return true;
+        }
+    }
+
+    public void clearTargets() throws GameActionException {
+        for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
+            int message = rc.readSharedArray(i);
+            if (message == 0) continue;
+            int x = (message>>4) & (0b111111);
+            int y = (message>>10) & (0b111111);
+            MapLocation m = new MapLocation(x, y);
+            // TODO: may be bugged because of clouds
+            if (rc.canSenseLocation(m)) {
+                RobotInfo r = rc.senseRobotAtLocation(m);
+                if (r == null) {
+                    if (rc.canWriteSharedArray(i, 0)) rc.writeSharedArray(i, 0);
+                    else ; // add to memory?
+                } 
+            }
         }
     }
 
