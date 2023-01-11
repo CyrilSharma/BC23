@@ -1,6 +1,7 @@
 package carrier_micro;
 import battlecode.common.*;
-import battlecode.world.Inventory;
+
+// TODO some weird errors with Home being confused with nearest HQ.
 
 public class Carrier extends Robot {
     int adamantium, mana, elixir;
