@@ -25,12 +25,28 @@ public class Communications {
         this.rc = rc;
     }
 
+    // all classes call this at the beginning.
+    public void initial() throws GameActionException {
+        refresh();
+        sendMemory();
+    }
+
     public void refresh() throws GameActionException {
         if (rc.getType() == RobotType.HEADQUARTERS)
             rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%10, 0);
 
         // purge memory after x turns to prevent bad updates.
-        broadcastTargetMemory[rc.getRoundNum()%10] = 0;
+        broadcastTargetMemory[rc.getRoundNum()%10] = null;
+    }
+
+    public void sendMemory() throws GameActionException {
+        // if u can write one u can write all... right?
+        if (!rc.canWriteSharedArray(0, 0)) return;
+        // do this for all memories...
+        for (int i = 0; i < 10; i++) {
+            if (broadcastTargetMemory[i] != null)
+                broadcastAttackTarget(broadcastTargetMemory[i]);
+        }
     }
 
     public boolean writeTypeLoc(int type, MapLocation loc) throws GameActionException{
@@ -164,7 +180,7 @@ public class Communications {
     }
 
     // Note that because of the reset method memory only lasts 10 turns.
-    int[] broadcastTargetMemory = new int[10];
+    RobotInfo[] broadcastTargetMemory = new RobotInfo[10];
     public boolean broadcastAttackTarget(RobotInfo r) throws GameActionException {
         int low_health = r.health <= 8 ? 1 : 0;
         int priority;
@@ -198,7 +214,7 @@ public class Communications {
             }
         }
         if (!write) {
-            broadcastTargetMemory[rc.getRoundNum()%10] = message;
+            broadcastTargetMemory[rc.getRoundNum()%10] = r;
             return false;
         } else {
             rc.writeSharedArray(empty_index, message);
