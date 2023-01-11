@@ -12,4 +12,8 @@ public class Util {
         }
         return true;
     }
+
+    public static double absDistance(MapLocation a, MapLocation b) {
+        return Math.sqrt(Math.pow((a.x - b.x),2) + Math.pow((a.y - b.y),2));
+    }
 }
