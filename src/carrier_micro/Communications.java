@@ -163,7 +163,7 @@ public class Communications {
         }
     }
 
-    // Note that because of the reset method
+    // Note that because of the reset method memory only lasts 10 turns.
     int[] broadcastTargetMemory = new int[10];
     public boolean broadcastAttackTarget(RobotInfo r) throws GameActionException {
         int low_health = r.health <= 8 ? 1 : 0;
@@ -178,14 +178,32 @@ public class Communications {
             default: priority=7;
         }
         int message = low_health + (1<<1) * priority + (1<<4) * r.location.x + (1<<10) * r.location.y;
+
+        // if message already there, don't post it again.
+        // otherwise write to an empty_index.
+        boolean write = false;
+        int empty_index = -1;
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
+            int cur = rc.readSharedArray(i);
+            if (cur != 0) {
+                int x = (cur>>4) & 0b111111;
+                int y = (cur>>10) & 0b111111;
+                MapLocation m = new MapLocation(x, y);
+                // already there.
+                if (m.equals(r.location)) return true;
+            }
             if (rc.canWriteSharedArray(i, message)) {
-                rc.writeSharedArray(i, message);
-                return true;
+                empty_index = i;
+                write = true;
             }
         }
-        broadcastTargetMemory[rc.getRoundNum()%10] = message;
-        return false;
+        if (!write) {
+            broadcastTargetMemory[rc.getRoundNum()%10] = message;
+            return false;
+        } else {
+            rc.writeSharedArray(empty_index, message);
+            return true;
+        }
     }
 
     public MapLocation findBestAttackTarget() throws GameActionException {
