@@ -27,7 +27,7 @@ public class HQ extends Robot {
         if(rc.getRoundNum() > 0 && rc.getRoundNum() % 5 == 0){
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) communications.resetCounts();
         }
-        communications.report();
+        communications.initial();
         build();
     }
 
@@ -100,18 +100,18 @@ public class HQ extends Robot {
         }
         if(rc.getRoundNum() <= 200) {
             if (cntCarriers < 8) return Build.CARRIER;
-            if (cntCarriers < 15){
-                if (cntLaunchers * 3 < cntCarriers) return Build.LAUNCHER;
+            if (cntCarriers < 10){
+                if (cntLaunchers < 3 * cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
-            if (cntCarriers < 30) {
-                if (cntLaunchers * 2 < cntCarriers) return Build.LAUNCHER;
+            if (cntCarriers < 20) {
+                if (cntLaunchers < 2 * cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
         }
         if(cntAmplifiers * 3 < cntLaunchers && cntAmplifiers < 20) return Build.AMPLIFIER;
-        if(cntLaunchers < cntCarriers * 2) return Build.LAUNCHER;
-        else return Build.CARRIER;
+        if(cntCarriers < 20) return Build.CARRIER;
+        else return Build.LAUNCHER;
     }
 
     RobotType buildToRobotType(Build b) {

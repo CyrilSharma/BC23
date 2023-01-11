@@ -48,7 +48,6 @@ public class Launcher extends Robot {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
         MapLocation m = communications.findBestAttackTarget();
-        //System.out.println("" + (m != null));
         if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
         return State.EXPLORE;
     }

@@ -225,7 +225,6 @@ public class Communications {
             broadcastTargetMemory[rc.getRoundNum()%3] = r;
             return false;
         } else {
-            System.out.println("I should've wrote, in theory.");
             rc.writeSharedArray(empty_index, message);
             return true;
         }

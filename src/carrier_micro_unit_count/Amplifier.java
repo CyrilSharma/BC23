@@ -54,7 +54,7 @@ public class Amplifier extends Robot {
                 best = targets[d.ordinal()];
         }
 
-        if (rc.canMove(best.dir)) {
+        if (best != null && best.dir != null && rc.canMove(best.dir)) {
             rc.move(best.dir);
         }
         return true;

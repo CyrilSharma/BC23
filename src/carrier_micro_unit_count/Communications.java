@@ -37,6 +37,7 @@ public class Communications {
 
     public Communications(RobotController rc) {
         this.rc = rc;
+        this.util = new Util(rc);
     }
 
     // all classes call this at the beginning.

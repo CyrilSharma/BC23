@@ -132,7 +132,6 @@ public class Carrier extends Robot {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
-                System.out.println("hi!");
                 if (rc.canPlaceAnchor()) {
                     rc.placeAnchor();
                     islandTarget = null;

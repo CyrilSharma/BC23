@@ -20,6 +20,7 @@ public class Booster extends Robot {
     }
     void run() throws GameActionException {
         initialize();
+        communications.initial();
         State state = determineState();
         switch (state) {
             case ATTACK:

@@ -224,6 +224,7 @@ public class Launcher extends Robot {
         }
 
         boolean isBetterThan(ChaseTarget ct) {
+            if (ct == null) return true;
             if (ct.canMove && !canMove) return false;
             if (!ct.canMove && canMove) return true;
             // if sufficently close, do not move closer.
