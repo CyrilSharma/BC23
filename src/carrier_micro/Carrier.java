@@ -76,24 +76,52 @@ public class Carrier extends Robot {
         findTarget();
     }
 
-    void seek() {
+    void seek() throws GameActionException {
         greedyPath.move(wellTarget);
+        findTarget();
     }
 
     void findTarget() throws GameActionException{
         //TODO: eventually, we should probably have HQ decide and tell the resources it needs
         WellInfo[] wells = rc.senseNearbyWells();
-        if(wells.length > 0){
-            //find closest
-            int dist = 100000000;
+        if (wells.length > 0) {
+            WellTarget best = null;
             for(WellInfo w : wells){
-                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) < dist){
-                    dist = rc.getLocation().distanceSquaredTo(w.getMapLocation());
-                    wellTarget = w.getMapLocation();
+                WellTarget cur = new WellTarget(w);
+                if (cur.isBetterThan(best)) best = cur;
+            }
+            wellTarget = best.loc;
+        }
+        else wellTarget = communications.findBestWell(); //null if nothing found
+    }
+
+    class WellTarget {
+        MapLocation loc;
+        int harvestersNear;
+        int distance;
+        WellTarget(WellInfo w) {
+            loc = w.getMapLocation();
+            distance = loc.distanceSquaredTo(rc.getLocation());
+            harvestersNear = 0;
+            RobotInfo[] robots = rc.senseNearbyRobots();
+            for (RobotInfo r: robots) {
+                if (r.type != RobotType.CARRIER) continue;
+                if (r.location.distanceSquaredTo(loc) <= 4) {
+                    harvestersNear++;
                 }
             }
         }
-        else wellTarget = communications.findBestWell(); //null if nothing found
+
+        boolean crowded() {
+            return harvestersNear>4;
+        }
+
+        boolean isBetterThan(WellTarget wt) {
+            if (wt == null) return true;
+            if (!wt.crowded() && crowded()) return false;
+            if (wt.crowded() && !crowded()) return true;
+            return distance <= wt.distance; 
+        }
     }
 
     // TODO: add some evasive maneuvers
