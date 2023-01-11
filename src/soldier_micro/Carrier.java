@@ -1,6 +1,5 @@
 package soldier_micro;
 import battlecode.common.*;
-import battlecode.world.Inventory;
 
 public class Carrier extends Robot {
     int adamantium, mana, elixir;

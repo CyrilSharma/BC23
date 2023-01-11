@@ -112,7 +112,6 @@ public class Launcher extends Robot {
     }
 
     // Choose best candidate for maneuvering in close encounters.
-    // TODO: respond to effects of non-booster classes.
     class MicroTarget {
         Direction dir;
         double dps_received;
@@ -120,38 +119,39 @@ public class Launcher extends Robot {
         double dps_defending;
         int minDistToEnemy;
         boolean canMove;
+        MapLocation nloc;
 
-        MicroTarget(Direction dir) {
+        MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             dps_received = 0;
             dps_targetting = 0;
             dps_defending = 0;
             minDistToEnemy = 10000;
             canMove = rc.canMove(dir);
+            nloc = rc.getLocation().add(dir);
+            MapInfo mi = rc.senseMapInfo(nloc);
+            nloc = nloc.add(mi.getCurrentDirection());
         }
 
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
-            // account for river.
-            MapLocation nloc = rc.getLocation().add(dir);
-            MapInfo mi = rc.senseMapInfo(nloc);
-            nloc = nloc.add(mi.getCurrentDirection());
-            // ignore boosting effects of other units for now.
+            double mult = rc.senseCooldownMultiplier(m);
             if (r.type == RobotType.BOOSTER) {
-                int d = myloc.distanceSquaredTo(m);
+                int d = nloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    dps_received += r.type.damage;
+                    dps_received += r.type.damage * (1.0 / mult);
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage;
+                    dps_targetting += r.type.damage * (1.0 / mult);;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
         }
         
-        void addAlly(RobotInfo r) {
+        void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {
-                dps_defending += r.type.damage;
+                double mult = rc.senseCooldownMultiplier(r.location);
+                dps_defending += r.type.damage * (1.0 / mult);;
             }
         }
 
