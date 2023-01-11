@@ -27,6 +27,7 @@ public class Carrier extends Robot {
         initialize();
         State state = determineState();
         rc.setIndicatorString(state.toString());
+        
         communications.initial();
         handleDeath();
         switch (state) {

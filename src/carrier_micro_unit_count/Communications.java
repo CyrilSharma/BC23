@@ -42,7 +42,6 @@ public class Communications {
 
     // all classes call this at the beginning.
     public void initial() throws GameActionException {
-        findOurHQs();
         refresh();
         sendMemory();
         report();
@@ -52,17 +51,17 @@ public class Communications {
 
     public void refresh() throws GameActionException {
         if (rc.getType() == RobotType.HEADQUARTERS)
-            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%10, 0);
+            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%3, 0);
 
         // purge memory after x turns to prevent bad updates.
-        broadcastTargetMemory[rc.getRoundNum()%10] = null;
+        broadcastTargetMemory[rc.getRoundNum()%3] = null;
     }
 
     public void sendMemory() throws GameActionException {
         // if u can write one u can write all... right?
         if (!rc.canWriteSharedArray(0, 0)) return;
         // do this for all memories...
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 3; i++) {
             if (broadcastTargetMemory[i] != null)
                 broadcastAttackTarget(broadcastTargetMemory[i]);
         }
@@ -116,9 +115,6 @@ public class Communications {
                     bestWell = w;
                 }
             }
-        }
-        if(bestWell != null) {
-            //System.out.println("Read about well on: " + bestWell);
         }
         return bestWell;
     }
@@ -224,7 +220,6 @@ public class Communications {
     }
 
     public void findOurHQs() throws GameActionException{
-        numHQ = 0;
         for (int i = 0; i < SHARED_ARRAY_SIZE; i++) {
             if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
@@ -254,7 +249,7 @@ public class Communications {
     }
 
     // Note that because of the reset method memory only lasts 10 turns.
-    RobotInfo[] broadcastTargetMemory = new RobotInfo[10];
+    RobotInfo[] broadcastTargetMemory = new RobotInfo[3];
     public boolean broadcastAttackTarget(RobotInfo r) throws GameActionException {
         int low_health = r.health <= 8 ? 1 : 0;
         int priority;
@@ -288,7 +283,7 @@ public class Communications {
             }
         }
         if (!write) {
-            broadcastTargetMemory[rc.getRoundNum()%10] = r;
+            broadcastTargetMemory[rc.getRoundNum()%3] = r;
             return false;
         } else {
             rc.writeSharedArray(empty_index, message);

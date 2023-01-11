@@ -15,8 +15,9 @@ public class Booster extends Robot {
         EXPLORE
     }
 
-    public Booster(RobotController rc) {
+    public Booster(RobotController rc) throws GameActionException {
         super(rc);
+        communications.findOurHQs();
     }
     void run() throws GameActionException {
         initialize();

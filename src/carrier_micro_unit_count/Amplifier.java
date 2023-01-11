@@ -2,8 +2,9 @@ package carrier_micro_unit_count;
 import battlecode.common.*;
 
 public class Amplifier extends Robot {
-    public Amplifier(RobotController rc) {
+    public Amplifier(RobotController rc) throws GameActionException {
         super(rc);
+        communications.findOurHQs();
     }
     void run() throws GameActionException {
         communications.initial();

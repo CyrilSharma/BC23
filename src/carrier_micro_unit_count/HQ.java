@@ -27,7 +27,7 @@ public class HQ extends Robot {
         if(rc.getRoundNum() > 0 && rc.getRoundNum() % 5 == 0){
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) communications.resetCounts();
         }
-        communications.initial();
+        //communications.initial();
         build();
     }
 
@@ -40,7 +40,7 @@ public class HQ extends Robot {
 
     void build() throws GameActionException {
         Build b = getBuildType();
-        //rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
+        rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
 
         if (b == Build.NONE) return;
         RobotType r = buildToRobotType(b);
@@ -63,8 +63,10 @@ public class HQ extends Robot {
                     addCnt(r);
                 }
             }
-            if(r == RobotType.CARRIER) r = RobotType.LAUNCHER;
-            else if(r == RobotType.LAUNCHER) r = RobotType.CARRIER;
+            // Carrier spam is not helpful, use excesses to upgrade things.
+
+            // if (r == RobotType.CARRIER) r = RobotType.LAUNCHER;
+            // else if(r == RobotType.LAUNCHER) r = RobotType.CARRIER;
         }
     }
 
@@ -101,11 +103,11 @@ public class HQ extends Robot {
         if(rc.getRoundNum() <= 200) {
             if (cntCarriers < 8) return Build.CARRIER;
             if (cntCarriers < 10){
-                if (cntLaunchers < 3 * cntCarriers) return Build.LAUNCHER;
+                if (cntLaunchers * 3 < cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
             if (cntCarriers < 20) {
-                if (cntLaunchers < 2 * cntCarriers) return Build.LAUNCHER;
+                if (cntLaunchers * 2 < cntCarriers) return Build.LAUNCHER;
                 else return Build.CARRIER;
             }
         }
