@@ -144,7 +144,7 @@ public class Launcher extends Robot {
                 if (d <= r.type.actionRadiusSquared) 
                     dps_received += r.type.damage * (1.0 / mult);
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage * (1.0 / mult);;
+                    dps_targetting += r.type.damage * (1.0 / mult);
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }

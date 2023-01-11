@@ -24,8 +24,11 @@ public class Carrier extends Robot {
 
     void run() throws GameActionException {
         initialize();
+        
         State state = determineState();
         rc.setIndicatorString(state.toString());
+        // before everything so its unaffected by action cooldown.
+        handleDeath();
         switch (state) {
             case SEARCHING: search(); break;
             case SEEKING: seek(); break;
@@ -45,8 +48,8 @@ public class Carrier extends Robot {
     // No Seeking state until we have comms.
     State determineState() throws GameActionException {
         grab_anchor();
+        // handle danger [will wait until comes for this]
         if (hasAnchor) return State.DELIVER_ANCHOR;
-        if (homeHasAnchor) return State.WAIT_FOR_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
             mana == 0 && 
@@ -160,6 +163,61 @@ public class Carrier extends Robot {
                 home = r.location;
                 break;
             }
+        }
+    }
+
+    void handleDeath() throws GameActionException {
+        double dps_targetting = 0.0;
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        AttackTarget best = null;
+        for (RobotInfo e : enemies) {
+            if (!Util.isAttacker(e.type)) continue;
+            MapLocation m = e.location;
+            double mult = rc.senseCooldownMultiplier(m);
+            int d = rc.getLocation().distanceSquaredTo(m);
+            if (d <= e.type.visionRadiusSquared)
+                dps_targetting += e.type.damage * (1.0 / mult);
+            
+            AttackTarget cur = new AttackTarget(e);
+            if (cur.isBetterThan(best)) best = cur;
+        }
+        rc.setIndicatorString(""+dps_targetting + " attacked: " + 
+            (dps_targetting >= 0.8 * (double) rc.getHealth()));
+        if (dps_targetting >= 0.8 * (double) rc.getHealth()) {
+            if (rc.canAttack(best.loc) && 
+                (adamantium + mana + elixir) > 5) {
+                rc.attack(best.loc);
+            }
+        }
+    }
+
+    class AttackTarget {
+        MapLocation loc;
+        boolean inRange;
+        int priority;
+        int health;
+
+        AttackTarget(RobotInfo r) {
+            loc = r.location;
+            switch (r.getType()) {
+                case BOOSTER: priority=4; break;
+                case AMPLIFIER: priority=3; break;
+                case HEADQUARTERS: priority=1; break;
+                case CARRIER: priority=2; break;
+                case LAUNCHER: priority=6; break;
+                case DESTABILIZER: priority=5; break;
+            }
+            health = r.health;
+            inRange = (rc.getLocation().distanceSquaredTo(loc) < rc.getType().actionRadiusSquared);
+        }
+
+        boolean isBetterThan(AttackTarget at) {
+            if (at == null) return true;
+            if (at.inRange && !inRange) return false;
+            if (!at.inRange && inRange) return true;
+            if (at.priority > priority) return false;
+            if (at.priority < priority) return true;
+            return health <= at.health;
         }
     }
 }
