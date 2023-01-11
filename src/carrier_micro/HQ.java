@@ -56,9 +56,10 @@ public class HQ extends Robot {
     }
 
     Build getBuildType() {
-        int mod = rc.getRoundNum()/30 % 3;
+        int mod = (rc.getRoundNum()/20) % 4;
         if (mod == 0) return Build.CARRIER;
         else if (mod == 1) return Build.LAUNCHER;
+        else if (mod == 2) return Build.AMPLIFIER;
         else return Build.ANCHOR;
     }
 

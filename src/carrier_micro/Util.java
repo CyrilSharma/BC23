@@ -12,7 +12,7 @@ public class Util {
             case HEADQUARTERS:
             case CARRIER:
             case AMPLIFIER:
-                return true;
+                return false;
             default:
         }
         return true;
