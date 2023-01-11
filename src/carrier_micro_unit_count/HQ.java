@@ -40,8 +40,7 @@ public class HQ extends Robot {
 
     void build() throws GameActionException {
         Build b = getBuildType();
-        //rc.setIndicatorString("Trying to build a " + b.toString());
-        rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
+        //rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
 
         if (b == Build.NONE) return;
         RobotType r = buildToRobotType(b);
@@ -58,6 +57,7 @@ public class HQ extends Robot {
                     rc.getResourceAmount(ResourceType.ELIXIR) >=
                             r.buildCostElixir) {
                 MapLocation loc = getBuildLocation(r);
+                rc.setIndicatorString("Trying to build a " + b.toString() + " at " + loc);
                 if (rc.canBuildRobot(r, loc)) {
                     rc.buildRobot(r, loc);
                     addCnt(r);
@@ -70,11 +70,11 @@ public class HQ extends Robot {
 
     MapLocation getBuildLocation(RobotType t) throws GameActionException {
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
-        BuildTarget best = new BuildTarget(locs[0]);
+        BuildTarget best = null;
         RobotInfo[] rb = rc.senseNearbyRobots(rc.getType().actionRadiusSquared);
-        for (MapLocation loc: locs) {
+        for (MapLocation loc: locs) if(rc.sensePassability(loc)){
             int ok = 1;
-            for(RobotInfo r : rb) if(r.getLocation() == loc) ok = 0;
+            for(RobotInfo r : rb) if(r.getLocation() == loc ) ok = 0;
             if(ok == 0) continue;
             BuildTarget cur = new BuildTarget(loc);
             best = cur;
