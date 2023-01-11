@@ -6,9 +6,13 @@ public class Amplifier extends Robot {
         super(rc);
     }
     void run() throws GameActionException {
+        communications.initial();
         if (!seekOptimalSpot()) {
-            rc.setIndicatorString("yo.");
-            exploration.move();
+            MapLocation m = communications.findBestAttackTarget();
+            if (m != null) greedyPath.move(m);
+            m = communications.findClosestHQ();
+            if (m != null) greedyPath.move(m);
+            else exploration.move();
         }
     }
 
@@ -37,6 +41,7 @@ public class Amplifier extends Robot {
         }
 
         for (RobotInfo r: robots) {
+            if (Clock.getBytecodesLeft() <= Constants.BYTECODE_AMPLIFY) break;
             if (r.type != RobotType.AMPLIFIER) continue;
             for (AmplifyTarget target: targets) {
                 target.updateAmp(r.location);
@@ -48,6 +53,7 @@ public class Amplifier extends Robot {
             if (targets[d.ordinal()].isBetterThan(best)) 
                 best = targets[d.ordinal()];
         }
+
         if (rc.canMove(best.dir)) {
             rc.move(best.dir);
         }
@@ -60,12 +66,18 @@ public class Amplifier extends Robot {
         boolean canmove;
         int distToNearestAmp;
         int distToAverage;
-        AmplifyTarget(Direction dir, MapLocation avg) {
+        int distToHQ;
+        int distAvgToHQ;
+        AmplifyTarget(Direction dir, MapLocation avg) throws GameActionException {
             this.avg = avg;
             this.dir = dir;
-            this.distToAverage = rc.getLocation().add(dir).distanceSquaredTo(avg);
+            MapLocation nloc = rc.getLocation().add(dir);
+            this.distToAverage = nloc.distanceSquaredTo(avg);
             this.distToNearestAmp = 10000;
             canmove = rc.canMove(dir);
+            MapLocation m = communications.findClosestHQ();
+            distToHQ = m.distanceSquaredTo(nloc);
+            distAvgToHQ = m.distanceSquaredTo(avg);
         }
 
         void updateAmp(MapLocation m) {
@@ -74,19 +86,26 @@ public class Amplifier extends Robot {
                 distToNearestAmp = ampDist;
         }
 
-        boolean isBetterThan(AmplifyTarget at) {
+        // Not all of these are useful probably.
+        boolean isBetterThan(AmplifyTarget at) throws GameActionException {
             if (at == null) return true;
 
             // canmove
             if (at.canmove && !canmove) return false;
             if (!at.canmove && canmove) return true;
 
+            // Locations closer to HQ are better.
+            if ((at.distToHQ <= at.distAvgToHQ) && 
+                !(distToHQ <= at.distAvgToHQ)) return false;
+            if (!(at.distToHQ <= at.distAvgToHQ) && 
+                (distToHQ <= at.distAvgToHQ)) return true;
+
             // stay away from other amplifiers.
-            if (at.distToNearestAmp>9 && distToNearestAmp<=9) return false;
-            if (at.distToNearestAmp<=9 && distToNearestAmp>9) return true;
+            if (at.distToNearestAmp>16 && distToNearestAmp<=16) return false;
+            if (at.distToNearestAmp<=16 && distToNearestAmp>16) return true;
 
             // if close prioritize location that is further away.
-            if (at.distToNearestAmp<=9 && distToNearestAmp<=9)
+            if (at.distToNearestAmp<=16 && distToNearestAmp<=16)
                 return distToNearestAmp>at.distToNearestAmp;
 
             // not too far.

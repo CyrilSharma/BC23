@@ -29,6 +29,7 @@ public class Communications {
 
     // all classes call this at the beginning.
     public void initial() throws GameActionException {
+        findOurHQs();
         refresh();
         sendMemory();
         report();
@@ -167,11 +168,27 @@ public class Communications {
     }
 
     public void findOurHQs() throws GameActionException{
-        for(int i = 0; i < SHARED_ARRAY_SIZE; i++) if((rc.readSharedArray(i) & (0b111)) == HQ_LOCATION){
+        numHQ = 0;
+        for (int i = 0; i < SHARED_ARRAY_SIZE; i++) {
+            if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
             MapLocation hq = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
             HQs[numHQ++] = hq;
         }
+    }
+
+    public MapLocation findClosestHQ() throws GameActionException {
+        MapLocation best = null;
+        int bestD = 100000;
+        for (MapLocation m: HQs) {
+            if (m == null) continue;
+            int d = rc.getLocation().distanceSquaredTo(m);
+            if (d < bestD) {
+                bestD = d;
+                best = m;
+            }
+        }
+        return best;
     }
 
     public void broadcastAttackTargets() throws GameActionException {
