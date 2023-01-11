@@ -81,7 +81,6 @@ public class Carrier extends Robot {
     }
 
     void findTarget() throws GameActionException{
-        //TODO: eventually, we should probably have HQ decide and tell the resources it needs
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length > 0) {
             WellTarget best = null;
@@ -89,7 +88,11 @@ public class Carrier extends Robot {
                 WellTarget cur = new WellTarget(w);
                 if (cur.isBetterThan(best)) best = cur;
             }
-            wellTarget = best.loc;
+            // if its crowded and not a good resource use comms.
+            if (!best.crowded() || best.r == communications.readResourceNeed())
+                wellTarget = best.loc;
+            else
+                wellTarget = communications.findBestWell();
         }
         else wellTarget = communications.findBestWell(); //null if nothing found
     }
@@ -98,6 +101,7 @@ public class Carrier extends Robot {
         MapLocation loc;
         int harvestersNear;
         int distance;
+        ResourceType r;
         WellTarget(WellInfo w) {
             loc = w.getMapLocation();
             distance = loc.distanceSquaredTo(rc.getLocation());
@@ -109,14 +113,21 @@ public class Carrier extends Robot {
                     harvestersNear++;
                 }
             }
+            r = w.getResourceType();
         }
 
         boolean crowded() {
             return harvestersNear>3;
         }
 
-        boolean isBetterThan(WellTarget wt) {
+        boolean bestResource() throws GameActionException {
+            return r == communications.readResourceNeed();
+        }
+
+        boolean isBetterThan(WellTarget wt) throws GameActionException {
             if (wt == null) return true;
+            if (wt.bestResource() && !bestResource()) return false;
+            if (!wt.bestResource() && bestResource()) return true;
             if (!wt.crowded() && crowded()) return false;
             if (wt.crowded() && !crowded()) return true;
             return distance <= wt.distance; 

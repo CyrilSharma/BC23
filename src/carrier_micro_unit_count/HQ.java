@@ -4,6 +4,7 @@ import battlecode.common.*;
 public class HQ extends Robot {
     int MAX_MINERS = 20;
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
+    ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
         super(rc);
     }
@@ -35,7 +36,17 @@ public class HQ extends Robot {
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
                 communications.resetCounts();
         }
-        //communications.initial();
+
+        ResourceType best = null;
+        int smallest = 100000;
+        for (ResourceType r: resources) {
+            if (smallest > rc.getResourceAmount(r)) {
+                smallest = rc.getResourceAmount(r);
+                best = r;
+            }
+        }
+        assert (best != null);
+        communications.setResourceNeed(best);
         build();
     }
 
@@ -105,13 +116,15 @@ public class HQ extends Robot {
             return Build.CARRIER;
 
         // alternate between which things you add, unless ratios go out of wack.
+        // Emergency low.
+        if (cntCarriers < 4) return Build.CARRIER;
+        if (cntLaunchers < 4) return Build.LAUNCHER;
+        if (cntAmplifiers < 2) return Build.AMPLIFIER;
+
         int mod = rc.getRoundNum() % 4;
-        if ((mod==0 && cntLaunchers < 2 * cntCarriers) ||
-            cntLaunchers < 10 || cntLaunchers < 4 * cntCarriers) return Build.LAUNCHER;
-        if ((mod==1 && cntAmplifiers * 3 < cntLaunchers) ||
-            cntAmplifiers < 6 * cntLaunchers) return Build.AMPLIFIER;
-        if ((mod==2 && cntCarriers < 20) || 
-            cntCarriers < 8) return Build.CARRIER;
+        if ((mod==0 && cntCarriers < 20)) return Build.CARRIER;
+        if ((mod==1 && cntLaunchers < 2 * cntCarriers)) return Build.LAUNCHER;
+        if ((mod==2 && cntAmplifiers * 3 < cntLaunchers)) return Build.AMPLIFIER;
         if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
             rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100 &&
             cntLaunchers > 2 * cntCarriers &&

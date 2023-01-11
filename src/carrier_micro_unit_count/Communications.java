@@ -5,6 +5,7 @@ public class Communications {
     RobotController rc;
     Util util;
     MapLocation[] HQs = new MapLocation[5];
+    ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     int numHQ = 0;
     int lastReported = -10;
     //constants
@@ -13,10 +14,10 @@ public class Communications {
     static final int MAX_WELLS_FOR_TYPE = 4;
 
     //message types
-    static final int HQ_LOCATION = 1;
+    static final int ADAMANTIUM_WELL = 0;
+    static final int ELIXIR_WELL = 1;
     static final int MANA_WELL = 2;
-    static final int ADAMANTIUM_WELL = 3;
-    static final int ELIXIR_WELL = 4;
+    static final int HQ_LOCATION = 3;
 
     //stuff like our HQs and resource locations
     static final int KEYLOCATIONS = 0;
@@ -31,6 +32,9 @@ public class Communications {
 
     static final int BUILD_COUNT = UNIT_COUNTS + UNIT_COUNTS_WIDTH;
     static final int BUILD_COUNT_WIDTH = 8;
+
+    static final int RESOURCE_NEED = BUILD_COUNT + BUILD_COUNT_WIDTH;
+    static final int RESOURCE_NEED_WIDTH = 3;
 
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
@@ -71,6 +75,22 @@ public class Communications {
 
         // purge memory after x turns to prevent bad updates.
         broadcastTargetMemory[rc.getRoundNum()%3] = null;
+    }
+
+    // does not need this many channels but whatever.
+    public void setResourceNeed(ResourceType r) throws GameActionException {
+        for (int i = 0; i < 3; i++) {
+            int val = (i==r.ordinal()) ? 1 : 0;
+            rc.writeSharedArray(RESOURCE_NEED + i, val);
+        }
+    }
+
+    public ResourceType readResourceNeed() throws GameActionException {
+        for (int i = 0; i < 3; i++) {
+            int val = rc.readSharedArray(RESOURCE_NEED + i);
+            if (val == 1) return resources[i];
+        }
+        return null;
     }
 
     public void sendMemory() throws GameActionException {
@@ -116,7 +136,8 @@ public class Communications {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             int typ = val & (0b111);
-            if(typ == MANA_WELL || typ == ADAMANTIUM_WELL){
+            if (typ == 3) continue;
+            if(resources[typ] == readResourceNeed()){
                 MapLocation w = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 if(rc.getLocation().distanceSquaredTo(w) < dist){
                     dist = rc.getLocation().distanceSquaredTo(w);
