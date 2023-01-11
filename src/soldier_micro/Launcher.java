@@ -129,8 +129,10 @@ public class Launcher extends Robot {
             minDistToEnemy = 10000;
             canMove = rc.canMove(dir);
             nloc = rc.getLocation().add(dir);
-            MapInfo mi = rc.senseMapInfo(nloc);
-            nloc = nloc.add(mi.getCurrentDirection());
+            if (canMove) {
+                MapInfo mi = rc.senseMapInfo(nloc);
+                nloc = nloc.add(mi.getCurrentDirection());
+            }
         }
 
         void addEnemy(RobotInfo r) throws GameActionException {
