@@ -34,7 +34,7 @@ public class Exploration {
         keypos[4] = new MapLocation(width/2, height/2);
     }
 
-    public void move() {
+    public void move() throws GameActionException{
         if (target == null) target = generateTarget();
         if (rc.getLocation().distanceSquaredTo(target) <= 9) {
             target = generateTarget();

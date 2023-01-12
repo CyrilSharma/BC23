@@ -70,7 +70,7 @@ public class Booster extends Robot {
     }
 
     // Relies on exploration code.
-    void explore() {
+    void explore() throws GameActionException{
         exploration.move();
     }
 

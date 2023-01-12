@@ -1,9 +1,13 @@
 package carrier_micro_unit_count;
 import battlecode.common.*;
 
+import java.util.Map;
+
 public class GreedyPath {
     RobotController rc;
     MapLocation target;
+    int sz = 0;
+    MapLocation[] lastLoc = new MapLocation[11];
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -18,20 +22,35 @@ public class GreedyPath {
         this.rc = rc;
     }
 
-    public void move(MapLocation t) {
-        try {
-            target = t;
-            MoveTarget best = new MoveTarget(directions[0]);
-            for (Direction d: directions) {
-                MoveTarget cur = new MoveTarget(d);
-                if (cur.isBetterThan(best))
-                    best = cur;
-            }
-            if (rc.canMove(best.dir))
-                rc.move(best.dir);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void move(MapLocation goal) throws GameActionException{
+        if(sz < 11){
+            lastLoc[sz] = rc.getLocation();
+            sz++;
         }
+        else{
+            for(int i = 0; i < 10; i++) lastLoc[i] = lastLoc[i + 1];
+            lastLoc[10] = rc.getLocation();
+        }
+        Direction bst = Direction.CENTER;
+        int mn = 10000000;
+        int curDirStart = (int) (Math.random() * directions.length);
+        for (int i = 0; i < 8; i++) {
+            Direction dir = directions[(curDirStart + i) % 8];
+            MapLocation nxt = rc.getLocation().add(dir);
+            int f = 1;
+            for (int j = 0; j < sz; j++)
+                if (lastLoc[j].equals(nxt)) {
+                    f = 0;
+                    break;
+                }
+            if (rc.canMove(dir) && f > 0) {
+                if (goal.distanceSquaredTo(nxt) < mn) {
+                    bst = dir;
+                    mn = goal.distanceSquaredTo(nxt);
+                }
+            }
+        }
+        if(bst != Direction.CENTER && rc.canMove(bst)) rc.move(bst);
     }
 
     class MoveTarget {

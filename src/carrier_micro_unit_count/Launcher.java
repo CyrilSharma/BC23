@@ -76,7 +76,7 @@ public class Launcher extends Robot {
     }
 
     // Relies on exploration code.
-    void explore() {
+    void explore() throws GameActionException{
         exploration.move();
     }
 
