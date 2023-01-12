@@ -115,20 +115,19 @@ public class HQ extends Robot {
         if (rc.getRoundNum() <= 50 && cntCarriers < 8) 
             return Build.CARRIER;
 
-        // alternate between which things you add, unless ratios go out of wack.
+        
         // Emergency low.
         if (cntCarriers < 4) return Build.CARRIER;
         if (cntLaunchers < 4) return Build.LAUNCHER;
         if (cntAmplifiers < 2) return Build.AMPLIFIER;
 
+        // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 4;
         if (mod==0 && (cntCarriers < 20 || cntCarriers < 4 * cntLaunchers)) return Build.CARRIER;
         if ((mod==1 && cntLaunchers < 3 * cntCarriers)) return Build.LAUNCHER;
         if ((mod==2 && cntAmplifiers * 3 < cntLaunchers)) return Build.AMPLIFIER;
         if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
-            rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100 &&
-            cntLaunchers > 2 * cntCarriers &&
-            cntLaunchers > 20)
+            rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100)
             return Build.ANCHOR;
         else return Build.LAUNCHER;
     }

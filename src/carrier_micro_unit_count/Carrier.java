@@ -16,7 +16,8 @@ public class Carrier extends Robot {
         SEEKING,
         HARVESTING,
         DELIVERING,
-        DELIVER_ANCHOR
+        DELIVER_ANCHOR,
+        FLEE
     }
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
@@ -37,6 +38,7 @@ public class Carrier extends Robot {
             case HARVESTING: harvest(); break;
             case DELIVERING: deliver(); break;
             case DELIVER_ANCHOR: deliver_anchor(); break;
+            case FLEE: flee(); break;
             default:
         }
     }
@@ -50,6 +52,11 @@ public class Carrier extends Robot {
     // No Seeking state until we have comms.
     State determineState() throws GameActionException {
         grab_anchor();
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
+            if (Util.isAttacker(r.type)) {
+                return State.FLEE;
+            }
+        }
         if (hasAnchor) return State.DELIVER_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
@@ -68,6 +75,11 @@ public class Carrier extends Robot {
             return State.DELIVERING;
         }
         return State.SEARCHING;
+    }
+
+    void flee() throws GameActionException {
+        greedyPath.move(communications.findClosestHQ());
+        greedyPath.move(communications.findClosestHQ());
     }
 
     void search() throws GameActionException{
