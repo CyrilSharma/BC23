@@ -5,6 +5,7 @@ import battlecode.common.*;
 public class Communications {
     RobotController rc;
     Util util;
+    SymmetryChecker symmetryChecker;
     MapLocation[] HQs = new MapLocation[5];
     MapLocation[] EnemyHQsCache = new MapLocation[5];
     MapLocation[] EnemyHQs = new MapLocation[5];
@@ -48,6 +49,11 @@ public class Communications {
     static final int ENEMY_HQ = RESOURCE_NEED + RESOURCE_NEED_WIDTH;
     static final int ENEMY_HQ_WIDTH = 4;
 
+    static final int H_SYM = ENEMY_HQ + ENEMY_HQ_WIDTH;
+    static final int V_SYM = H_SYM + 1;
+    static final int R_SYM = V_SYM + 1;
+
+
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
             RobotType.LAUNCHER,
@@ -59,6 +65,7 @@ public class Communications {
     public Communications(RobotController rc) {
         this.rc = rc;
         this.util = new Util(rc);
+        symmetryChecker = new SymmetryChecker(rc);
     }
 
     // all classes call this at the beginning.
@@ -68,6 +75,14 @@ public class Communications {
         report();
         clearTargets();
         broadcastAttackTargets();
+    }
+
+    public void last() throws GameActionException {
+        symmetryChecker.updateSymmetry();
+        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        System.out.println("" + symmetryChecker.hSym + 
+            " "  + symmetryChecker.vSym + 
+            " " + symmetryChecker.rSym);
     }
 
     void updateBuild(RobotType r) throws GameActionException {
@@ -520,6 +535,144 @@ public class Communications {
             if (at.low_health && !low_health) return false;
             if (!at.low_health && low_health) return true;
             return d <= at.d;
+        }
+    }
+    // Essentially ported from Xsquare's symmetry checker.
+    // Use getSymmetry to figure out if symmetry is indeterminate,
+    // or which specific symmetry it is.
+    // does not currently account for clouds bc i wrote this offline
+    // and couldn't intuit the api,
+    class SymmetryChecker {
+        class Data {
+            Direction current;
+            int tileType;
+            int isHQ;
+            Data(Direction current, int tileType, int status) {
+                this.current = current;
+                this.tileType = tileType;
+                this.isHQ = status;
+            }
+        }
+
+        int W, H;
+        RobotController rc;
+        Data[][] tiles;
+        boolean ready = false;
+        int curW = 0;
+        boolean[] updates = {false, false, false};
+        boolean hSym, vSym, rSym;
+
+        SymmetryChecker(RobotController rc) {
+            this.rc = rc;
+            W = rc.getMapWidth();
+            H = rc.getMapHeight();
+            tiles = new Data[W][];
+        }
+
+        boolean isReady() {
+            if (ready) return true;
+            while (curW < W) {
+                if (Clock.getBytecodesLeft() < 300) return false;
+                tiles[curW] = new Data[H];
+                curW++;
+            }
+            ready = true;
+            return true;
+        }
+
+        int getSymmetry() {
+            if (hSym && !vSym && !rSym) return 0;
+            if (!hSym && vSym && !rSym) return 1;
+            if (!hSym && !vSym && rSym) return 2;
+            return -1;
+        }
+
+        void updateSymmetry() throws GameActionException {
+            // all default to 1, they have to be eliminated.
+            if (!isReady()) return;
+            hSym = rc.readSharedArray(H_SYM) == 0;
+            vSym = rc.readSharedArray(V_SYM) == 0;
+            rSym = rc.readSharedArray(R_SYM) == 0;
+            MapInfo[] area = rc.senseNearbyMapInfos(-1);
+            for (MapInfo mi: area) {
+                if (Clock.getBytecodesLeft() < 500) return;
+                if (getSymmetry() != -1) return;
+                MapLocation m = mi.getMapLocation();
+                int status;
+                // check needed because of clouds.
+                if (rc.canSenseRobotAtLocation(m)) {
+                    RobotInfo r = rc.senseRobotAtLocation(m);
+                    status = (r == null) ? 0 : 
+                        (r.type == RobotType.HEADQUARTERS) ? 1 : 0;
+                } else {
+                    status = -1;
+                }
+                
+                int tileType = 0;
+                if (rc.senseIsland(m) != -1) tileType = 1;
+                else if (mi.hasCloud()) tileType = 2;
+
+                tiles[m.x][m.y] = new Data(mi.getCurrentDirection(), tileType, status);
+
+                if (hSym) {
+                    MapLocation s = getHSym(m);
+                    Data sym = tiles[s.x][s.y];
+                    if (sym == null) continue;
+                    if (mi.getCurrentDirection().getDeltaX() != sym.current.getDeltaX() ||
+                        mi.getCurrentDirection().getDeltaY() != -1*sym.current.getDeltaY())
+                        hSym = false;
+                    if ((sym.isHQ != -1 && status != -1) && 
+                        sym.isHQ != tiles[m.x][m.y].isHQ) hSym = false;
+                    if (sym.tileType != tileType) hSym = false;
+
+                }
+
+                if (vSym) {
+                    MapLocation s = getVSym(m);
+                    Data sym = tiles[s.x][s.y];
+                    if (sym == null) continue;
+                    if (mi.getCurrentDirection().getDeltaY() != sym.current.getDeltaY() ||
+                        mi.getCurrentDirection().getDeltaX() != -1*sym.current.getDeltaX())
+                        vSym = false;
+                    
+                    if ((sym.isHQ != -1 && status != -1) && 
+                        sym.isHQ != tiles[m.x][m.y].isHQ) vSym = false;
+                    if (sym.tileType != tileType) vSym = false;
+                }
+
+                if (rSym) {
+                    MapLocation s = getRSym(m);
+                    Data sym = tiles[s.x][s.y];
+                    if (sym == null) continue;
+                    if (mi.getCurrentDirection() != sym.current.opposite()) 
+                        rSym = false;
+
+                    if ((sym.isHQ != -1 && status != -1) && 
+                        sym.isHQ != tiles[m.x][m.y].isHQ) rSym = false;
+                    if (sym.tileType != tileType) rSym = false;
+                }
+                if (rc.canWriteSharedArray(H_SYM, 0)) {
+                    if (!hSym || updates[0]) rc.writeSharedArray(H_SYM, 1);
+                    if (!vSym || updates[1]) rc.writeSharedArray(V_SYM, 1);
+                    if (!rSym || updates[2]) rc.writeSharedArray(R_SYM, 1);
+                } else {
+                    updates[0] = !hSym;
+                    updates[1] = !vSym;
+                    updates[2] = !rSym;
+                }
+            }
+        }
+
+        MapLocation getHSym(MapLocation a) {
+            return new MapLocation(a.x, H - a.y - 1);
+        }
+
+        MapLocation getVSym(MapLocation a) {
+            return new MapLocation(W - a.x - 1, a.y);
+        }
+
+        MapLocation getRSym(MapLocation a) {
+            return new MapLocation(W - a.x - 1, H - a.y - 1);
         }
     }
 }

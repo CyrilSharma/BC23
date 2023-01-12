@@ -33,6 +33,7 @@ public class Booster extends Robot {
                 explore();
                 break;
         }
+        communications.last();
     }
 
     void initialize() throws GameActionException {
