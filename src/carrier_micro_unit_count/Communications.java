@@ -73,16 +73,19 @@ public class Communications {
         refresh();
         sendMemory();
         report();
+        checkEnemyHQs();
         clearTargets();
         broadcastAttackTargets();
     }
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
+        /*
         System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
             " " + symmetryChecker.rSym);
+         */
     }
 
     void updateBuild(RobotType r) throws GameActionException {
