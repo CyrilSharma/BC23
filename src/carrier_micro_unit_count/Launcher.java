@@ -12,11 +12,13 @@ public class Launcher extends Robot {
     enum State {
         ATTACK,
         HUNT,
-        EXPLORE
+        EXPLORE,
+        DEFEND
     }
 
-    public Launcher(RobotController rc) {
+    public Launcher(RobotController rc) throws GameActionException {
         super(rc);
+        communications.findOurHQs();
     }
     void run() throws GameActionException {
         initialize();
@@ -24,14 +26,10 @@ public class Launcher extends Robot {
         State state = determineState();
         rc.setIndicatorString(state.toString());
         switch (state) {
-            case ATTACK:
-                attack();
-                break;
-            case HUNT:
-                hunt();
-            case EXPLORE:
-                explore();
-                break;
+            case ATTACK: attack(); break;
+            case HUNT: hunt(); break;
+            case EXPLORE: explore(); break;
+            case DEFEND: defend(); break;
         }
     }
 
@@ -48,6 +46,7 @@ public class Launcher extends Robot {
         }
         MapLocation m = communications.findBestAttackTarget();
         if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
+        if (rc.getLocation().distanceSquaredTo(communications.findClosestHQ()) > 9) return State.DEFEND;
         return State.EXPLORE;
     }
 
@@ -79,6 +78,10 @@ public class Launcher extends Robot {
     // Relies on exploration code.
     void explore() {
         exploration.move();
+    }
+
+    void defend() throws GameActionException {
+        greedyPath.move(communications.findClosestHQ());
     }
 
    
@@ -126,38 +129,42 @@ public class Launcher extends Robot {
         double dps_defending;
         int minDistToEnemy;
         boolean canMove;
+        MapLocation nloc;
 
-        MicroTarget(Direction dir) {
+        MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             dps_received = 0;
             dps_targetting = 0;
             dps_defending = 0;
             minDistToEnemy = 10000;
+            nloc = myloc.add(dir);
             canMove = rc.canMove(dir);
+            if (canMove) {
+                MapInfo mi = rc.senseMapInfo(nloc);
+                nloc.add(mi.getCurrentDirection());
+            }
         }
 
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
-            // account for river.
-            MapLocation nloc = rc.getLocation().add(dir);
-            MapInfo mi = rc.senseMapInfo(nloc);
-            nloc = nloc.add(mi.getCurrentDirection());
+            MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
             if (r.type == RobotType.BOOSTER) {
-                int d = myloc.distanceSquaredTo(m);
+                int d = nloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    dps_received += r.type.damage;
+                    dps_received += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage;
+                    dps_targetting += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
         }
         
-        void addAlly(RobotInfo r) {
+        void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {
-                dps_defending += r.type.damage;
+                MapInfo mi = rc.senseMapInfo(r.location);
+                dps_defending += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam()));
             }
         }
 
@@ -179,6 +186,8 @@ public class Launcher extends Robot {
             if (hurt) {
                 if (mt.dps_targetting < dps_targetting) return false;
                 if (mt.dps_targetting > dps_targetting) return true;
+                // run away!!!!
+                return minDistToEnemy >= mt.minDistToEnemy;
             }
 
             // get as far away from enemies while still being in range.
