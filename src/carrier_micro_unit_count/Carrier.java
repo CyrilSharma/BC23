@@ -78,16 +78,18 @@ public class Carrier extends Robot {
     }
 
     void flee() throws GameActionException {
-        greedyPath.move(communications.findClosestHQ());
-        greedyPath.move(communications.findClosestHQ());
+        wellTarget = null;
+        greedyPath.flee();
     }
 
     void search() throws GameActionException{
+        exploration.move();
         exploration.move();
         findTarget();
     }
 
     void seek() throws GameActionException {
+        greedyPath.move(wellTarget);
         greedyPath.move(wellTarget);
         findTarget();
     }
@@ -129,7 +131,7 @@ public class Carrier extends Robot {
         }
 
         boolean crowded() {
-            return harvestersNear>3;
+            return harvestersNear>6;
         }
 
         boolean bestResource() throws GameActionException {

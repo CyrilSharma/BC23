@@ -5,6 +5,10 @@ public class Communications {
     RobotController rc;
     Util util;
     MapLocation[] HQs = new MapLocation[5];
+    
+    static final int MAX_WELL_STORED = 10;
+    WellInfo[] wellCache = new WellInfo[MAX_WELL_STORED];
+    int numWells = 0;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     int numHQ = 0;
     int lastReported = -10;
@@ -150,6 +154,34 @@ public class Communications {
         return bestWell;
     }
 
+    public void reportWellCache() throws GameActionException{
+        for(int i = 0; i < numWells; i++){
+            boolean marked = false;
+            for(int j = 0; j < KEYLOCATIONS_WIDTH; j++){
+                int val = rc.readSharedArray(j);
+                if(val == 0) continue;
+                MapLocation ex = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                if(wellCache[i].getMapLocation().equals(ex)){
+                    marked = true;
+                    break;
+                }
+            }
+            if(!marked){
+                for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
+                    int val = rc.readSharedArray(j);
+                    if(val != 0) continue;
+                    int msg = MANA_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
+                    if(wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
+                        msg = ADAMANTIUM_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
+                    }
+                    rc.writeSharedArray(j, msg);
+                    break;
+                }
+            }
+        }
+        numWells = 0;
+    }
+
     public void reportWells() throws GameActionException{
         WellInfo[] wells = rc.senseNearbyWells();
         if(wells.length == 0) return;
@@ -168,10 +200,36 @@ public class Communications {
                 freeSlots[ind++] = i;
             }
         }
-        //TODO: add them to our memory if we can't write yet
-        if(!rc.canWriteSharedArray(0, 0)) return;
+        if(!rc.canWriteSharedArray(0, 0)){
+            //remember the wells
+            for(WellInfo w : wells){
+                boolean marked = false;
+                for(int i = 0; i < numWells; i++){
+                    if(w.getMapLocation().equals(wellCache[i].getMapLocation())){
+                        marked = true;
+                        break;
+                    }
+                }
+                //now check in messages
+                for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
+                    int val = rc.readSharedArray(i);
+                    if(val == 0) continue;
+                    MapLocation ex = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                    if(w.getMapLocation().equals(ex)){
+                        marked = true;
+                        break;
+                    }
+                }
+                if(!marked && numWells < MAX_WELL_STORED){
+                    wellCache[numWells++] = w;
+                }
+            }
+            return;
+        }
+        //System.out.println("wells: " + numWells);
+        reportWellCache();
         int addInd = 0;
-        for (WellInfo w : wells) {
+        for (WellInfo w : wells){
             if (w.getResourceType().equals(ResourceType.MANA)) {
                if (cntMana < MAX_WELLS_FOR_TYPE) {
                    int msg = MANA_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);

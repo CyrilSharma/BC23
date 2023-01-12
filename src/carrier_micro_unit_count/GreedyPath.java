@@ -53,6 +53,27 @@ public class GreedyPath {
         if(bst != Direction.CENTER && rc.canMove(bst)) rc.move(bst);
     }
 
+    public void flee() throws GameActionException{
+        Direction bst = Direction.CENTER;
+        int dist = 0;
+        RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
+        for(Direction dir : directions) if(rc.canMove(dir)){
+            MapLocation esc = rc.getLocation().add(dir);
+            int curDist = 0;
+            for(RobotInfo rob : r){
+                curDist += esc.distanceSquaredTo(rob.location) * (Util.isAttacker(rob.type) ? 3 : 1);
+            }
+            if(curDist > dist){
+                bst = dir;
+                dist = curDist;
+            }
+        }
+        if(bst != Direction.CENTER && rc.canMove(bst)){
+            rc.move(bst);
+            move(rc.getLocation().add(bst).add(bst));
+        }
+    }
+
     class MoveTarget {
         Direction dir;
         boolean canMove;

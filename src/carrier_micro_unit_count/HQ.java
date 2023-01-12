@@ -112,18 +112,19 @@ public class HQ extends Robot {
         }
 
         // spam carriers initially.
-        if (rc.getRoundNum() <= 50 && cntCarriers < 8) 
+        if (rc.getRoundNum() <= 50 && cntCarriers < 8 && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium)
             return Build.CARRIER;
 
         
         // Emergency low.
-        if (cntCarriers < 4) return Build.CARRIER;
+        if (cntCarriers < 4 && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium) return Build.CARRIER;
         if (cntLaunchers < 4) return Build.LAUNCHER;
         if (cntAmplifiers < 2) return Build.AMPLIFIER;
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 4;
-        if (mod==0 && (cntCarriers < 20 || cntCarriers < 4 * cntLaunchers)) return Build.CARRIER;
+        if (mod==0 && (cntCarriers < 20 || cntCarriers < 2 * cntLaunchers) &&
+                rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium) return Build.CARRIER;
         if ((mod==1 && cntLaunchers < 3 * cntCarriers)) return Build.LAUNCHER;
         if ((mod==2 && cntAmplifiers * 3 < cntLaunchers)) return Build.AMPLIFIER;
         if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
