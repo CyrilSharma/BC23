@@ -37,13 +37,16 @@ public class GreedyPath {
         for (int i = 0; i < 8; i++) {
             Direction dir = directions[(curDirStart + i) % 8];
             MapLocation nxt = rc.getLocation().add(dir);
+            if (!rc.canMove(dir)) continue;
+            MapInfo mi = rc.senseMapInfo(nxt);
+            nxt = nxt.add(mi.getCurrentDirection());
             int f = 1;
             for (int j = 0; j < sz; j++)
                 if (lastLoc[j].equals(nxt)) {
                     f = 0;
                     break;
                 }
-            if (rc.canMove(dir) && f > 0) {
+            if (f > 0) {
                 if (goal.distanceSquaredTo(nxt) < mn) {
                     bst = dir;
                     mn = goal.distanceSquaredTo(nxt);

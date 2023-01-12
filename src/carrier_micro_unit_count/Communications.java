@@ -485,12 +485,15 @@ public class Communications {
 
     public MapLocation findBestAttackTarget() throws GameActionException {
         AttackTarget best = null;
+        int count = 0;
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
             AttackTarget cur = new AttackTarget(rc.readSharedArray(i));
             if (cur.isBetterThan(best)) best = cur;
+            count++;
         }
+        rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
         else return best.m;
     }
