@@ -38,7 +38,7 @@ public class Booster extends Robot {
     void initialize() throws GameActionException {
         enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         myloc = rc.getLocation();
-        if (rc.getHealth() < 20) 
+        if (rc.getHealth() < 12) 
             hurt = true;
     }
 
@@ -128,24 +128,26 @@ public class Booster extends Robot {
             canMove = rc.canMove(dir);
         }
 
-        void addEnemy(RobotInfo r) {
+        void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
+            MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
             if (r.type == RobotType.BOOSTER) {
                 int d = myloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    dps_received += r.type.damage;
+                    dps_received += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage;
+                    dps_targetting += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
         }
         
-        void addAlly(RobotInfo r) {
+        void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {
-                dps_defending += r.type.damage;
+                MapInfo mi = rc.senseMapInfo(r.location);
+                dps_defending += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam()));
             }
         }
 
