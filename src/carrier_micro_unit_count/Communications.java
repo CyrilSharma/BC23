@@ -1,16 +1,21 @@
 package carrier_micro_unit_count;
 import battlecode.common.*;
+
 // TODO: count the numbers of each unit for use in HQ!!
 public class Communications {
     RobotController rc;
     Util util;
     MapLocation[] HQs = new MapLocation[5];
+    MapLocation[] EnemyHQsCache = new MapLocation[5];
+    MapLocation[] EnemyHQs = new MapLocation[5];
     
     static final int MAX_WELL_STORED = 10;
     WellInfo[] wellCache = new WellInfo[MAX_WELL_STORED];
     int numWells = 0;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     int numHQ = 0;
+    int numEnemyHQCache = 0;
+    int numEnemyHQ = 0;
     int lastReported = -10;
     //constants
     // this should never be used in a for loop.
@@ -39,6 +44,9 @@ public class Communications {
 
     static final int RESOURCE_NEED = BUILD_COUNT + BUILD_COUNT_WIDTH;
     static final int RESOURCE_NEED_WIDTH = 3;
+
+    static final int ENEMY_HQ = RESOURCE_NEED + RESOURCE_NEED_WIDTH;
+    static final int ENEMY_HQ_WIDTH = 4;
 
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
@@ -294,9 +302,94 @@ public class Communications {
         }
     }
 
+    public void reportEnemyHQs() throws GameActionException{
+        RobotInfo[] rb = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
+        for(RobotInfo r : rb) if(r.getType() == RobotType.HEADQUARTERS){
+            if(!rc.canWriteSharedArray(0, 0)){
+                boolean alr = false;
+                for(int i = 0; i < numEnemyHQCache; i++){
+                    if(r.getLocation().equals(EnemyHQsCache[i])){
+                        alr = true;
+                    }
+                }
+                if(!alr){
+                    EnemyHQsCache[numEnemyHQCache++] = r.getLocation();
+                }
+                continue;
+            }
+            int msg = 1 + (1 << 1) * r.getLocation().x + (1 << 7) * r.getLocation().y;
+            boolean marked = false;
+            for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+                int val = rc.readSharedArray(i);
+                if(val == msg){
+                    marked = true;
+                    break;
+                }
+            }
+            if(!marked){
+                for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+                    int val = rc.readSharedArray(i);
+                    if(val == 0){
+                        rc.writeSharedArray(i, msg);
+                        break;
+                    }
+                }
+            }
+        }
+        if(rc.canWriteSharedArray(0, 0)) reportEnemyHQCache();
+    }
+
+    public void reportEnemyHQCache() throws GameActionException{
+        for(int i = 0; i < numEnemyHQCache; i++){
+            int msg = 1 + (1 << 1) * EnemyHQsCache[i].x + (1 << 7) * EnemyHQsCache[i].y;
+            boolean marked = false;
+            for(int j = ENEMY_HQ; j < ENEMY_HQ + ENEMY_HQ_WIDTH; j++){
+                int val = rc.readSharedArray(j);
+                if(val == msg){
+                    marked = true;
+                    break;
+                }
+            }
+            if(!marked){
+                for(int j = ENEMY_HQ; j < ENEMY_HQ + ENEMY_HQ_WIDTH; j++){
+                    int val = rc.readSharedArray(j);
+                    if(val == 0){
+                        rc.writeSharedArray(j, msg);
+                        break;
+                    }
+                }
+            }
+        }
+        numEnemyHQCache = 0;
+    }
+
+    public void checkEnemyHQs() throws GameActionException{
+        for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+            int val = rc.readSharedArray(i);
+            if(val == 0) continue;
+            MapLocation cr = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
+            boolean marked = false;
+            for(int j = 0; j < numEnemyHQ; j++){
+                if(cr.equals(EnemyHQs[j])){
+                    marked = true;
+                    break;
+                }
+            }
+            if(!marked) EnemyHQs[numEnemyHQ++] = cr;
+            /*
+            for(int j = 0; j < numEnemyHQ; j++){
+                System.out.println(EnemyHQs[j]);
+            }
+            System.out.println("-------");
+             */
+        }
+    }
+
     public void report() throws GameActionException{
-        reportWells();
+        //maybe dont report something on amplifiers bcz they are close (or at) bytecode limit
+        if(rc.getType() != RobotType.AMPLIFIER) reportWells();
         reportCount();
+        reportEnemyHQs();
         //TODO: add reporting for other stuff - enemy HQs, enemy units, islands, etc.
     }
 

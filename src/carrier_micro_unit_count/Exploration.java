@@ -20,7 +20,7 @@ public class Exploration {
         Direction.WEST,
         Direction.NORTHWEST,
     };
-    public Exploration(RobotController rc) {
+    public Exploration(RobotController rc){
         this.rc = rc;
         greedyPath = new GreedyPath(rc);
         height = rc.getMapHeight();
@@ -34,6 +34,40 @@ public class Exploration {
         keypos[4] = new MapLocation(width/2, height/2);
     }
 
+    public void moveLauncher(MapLocation[] hqs, int nm) throws GameActionException{
+        if (target == null) target = generateTargetLauncher(hqs, nm);
+        if (rc.getLocation().distanceSquaredTo(target) <= 9) {
+            target = generateTargetLauncher(hqs, nm);
+        }
+        greedyPath.move(target);
+    }
+
+    public MapLocation randomReflect(MapLocation m){
+        int r = rng.nextInt(3);
+        if(r == 0) return new MapLocation(width - m.x - 1, m.y);
+        if(r == 1) return new MapLocation(m.x, height - m.y - 1);
+        return new MapLocation(width - m.x - 1, height - m.y - 1);
+    }
+    public MapLocation generateTargetLauncher(MapLocation[] hqs, int nm) {
+        // we need to compute enemy territory somehow so we don't end up waltzing into enemy territory.
+        int r = rng.nextInt(2);
+        /*
+        if(r == 0) {
+            return keypos[rng.nextInt(5)];
+        }
+        */
+        if(r == 0){
+            return randomReflect(hqs[rng.nextInt(nm)]);
+        }
+        else {
+            MapLocation m = rc.getLocation();
+            while (rc.getLocation().distanceSquaredTo(m) <= 80) {
+                m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
+            }
+            return m;
+        }
+    }
+
     public void move() throws GameActionException{
         if (target == null) target = generateTarget();
         if (rc.getLocation().distanceSquaredTo(target) <= 9) {
@@ -45,7 +79,7 @@ public class Exploration {
     public MapLocation generateTarget() {
         // we need to compute enemy territory somehow so we don't end up waltzing into enemy territory.
         if (rng.nextInt(2) == 0) {
-            return keypos[rng.nextInt(5)];
+            return keypos[rng.nextInt(keypos.length)];
         } else {
             MapLocation m = rc.getLocation();
             while (rc.getLocation().distanceSquaredTo(m) <= 80) {

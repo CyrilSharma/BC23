@@ -23,6 +23,15 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         initialize();
         communications.report();
+        communications.checkEnemyHQs();
+        /*
+        if(communications.numEnemyHQ > 0){
+            for(int i = 0; i < communications.numEnemyHQ; i++){
+                System.out.println(communications.EnemyHQs[i]);
+            }
+            System.out.println("=====");
+        }
+         */
         State state = determineState();
         rc.setIndicatorString(state.toString());
         switch (state) {
@@ -77,14 +86,28 @@ public class Launcher extends Robot {
 
     // Relies on exploration code.
     void explore() throws GameActionException{
-        exploration.move();
+        exploration.moveLauncher(communications.HQs, communications.numHQ);
     }
 
     void defend() throws GameActionException {
-        greedyPath.move(communications.findClosestHQ());
+        RobotInfo[] rb = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam());
+        int sc = 1000000;
+        Direction bst = Direction.CENTER;
+        for(Direction dir : directions) {
+            int curScore = 0;
+            for (RobotInfo r : rb) {
+                curScore += (rc.getLocation().add(dir).distanceSquaredTo(r.location)) / ((Util.isAttacker(r.type)) ? 1 : 2);
+            }
+            if(curScore < sc){
+                bst = dir;
+                sc = curScore;
+            }
+        }
+        if(bst == Direction.CENTER) {
+            greedyPath.move(communications.findClosestHQ());
+        }
+        else greedyPath.move(rc.getLocation().add(bst));
     }
-
-   
 
     void follow(MapLocation m) throws GameActionException {
         ChaseTarget best = null;
