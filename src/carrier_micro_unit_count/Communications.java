@@ -450,8 +450,7 @@ public class Communications {
                 MapLocation m = new MapLocation(x, y);
                 // already there.
                 if (m.equals(r.location)) return true;
-            }
-            if (rc.canWriteSharedArray(i, message)) {
+            } else if (rc.canWriteSharedArray(i, message)) {
                 empty_index = i;
                 write = true;
             }
