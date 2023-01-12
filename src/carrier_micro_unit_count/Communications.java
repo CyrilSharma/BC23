@@ -545,11 +545,11 @@ public class Communications {
     class SymmetryChecker {
         class Data {
             Direction current;
-            boolean isIsland;
+            int tileType;
             int isHQ;
-            Data(Direction current, boolean isIsland, int status) {
+            Data(Direction current, int tileType, int status) {
                 this.current = current;
-                this.isIsland = isIsland;
+                this.tileType = tileType;
                 this.isHQ = status;
             }
         }
@@ -608,9 +608,11 @@ public class Communications {
                     status = -1;
                 }
                 
-                boolean isIsland = rc.senseIsland(m) != -1;
+                int tileType = 0;
+                if (rc.senseIsland(m) != -1) tileType = 1;
+                else if (mi.hasCloud()) tileType = 2;
 
-                tiles[m.x][m.y] = new Data(mi.getCurrentDirection(), isIsland, status);
+                tiles[m.x][m.y] = new Data(mi.getCurrentDirection(), tileType, status);
 
                 if (hSym) {
                     MapLocation s = getHSym(m);
@@ -621,7 +623,7 @@ public class Communications {
                         hSym = false;
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) hSym = false;
-                    if (sym.isIsland != isIsland) hSym = false;
+                    if (sym.tileType != tileType) hSym = false;
 
                 }
 
@@ -635,7 +637,7 @@ public class Communications {
                     
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) vSym = false;
-                    if (sym.isIsland != isIsland) vSym = false;
+                    if (sym.tileType != tileType) vSym = false;
                 }
 
                 if (rSym) {
@@ -647,7 +649,7 @@ public class Communications {
 
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) rSym = false;
-                    if (sym.isIsland != isIsland) rSym = false;
+                    if (sym.tileType != tileType) rSym = false;
                 }
                 if (rc.canWriteSharedArray(H_SYM, 0)) {
                     if (!hSym || updates[0]) rc.writeSharedArray(H_SYM, 1);
