@@ -70,8 +70,10 @@ public class Communications {
     }
 
     public void refresh() throws GameActionException {
-        if (rc.getType() == RobotType.HEADQUARTERS)
-            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%3, 0);
+        if (rc.getType() == RobotType.HEADQUARTERS) {
+            if (rc.getRoundNum()%Constants.ATTACK_REFRESH > ATTACK_TARGETS_WIDTH) return;
+            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%Constants.ATTACK_REFRESH, 0);
+        }
 
         // purge memory after x turns to prevent bad updates.
         broadcastTargetMemory[rc.getRoundNum()%3] = null;

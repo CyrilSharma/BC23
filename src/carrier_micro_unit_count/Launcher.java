@@ -42,10 +42,12 @@ public class Launcher extends Robot {
             hurt = true;
     }
 
-    State determineState() {
+    State determineState() throws GameActionException {
         for (RobotInfo e : enemies) {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
+        MapLocation m = communications.findBestAttackTarget();
+        if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
         return State.EXPLORE;
     }
 
@@ -67,8 +69,11 @@ public class Launcher extends Robot {
     }
 
     // Relies on comms.
-    void hunt() {
-        ;
+    void hunt() throws GameActionException {
+        MapLocation huntTarget = communications.findBestAttackTarget();
+        rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
+        rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
+        greedyPath.move(huntTarget);
     }
 
     // Relies on exploration code.

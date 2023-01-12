@@ -8,6 +8,12 @@ public class Amplifier extends Robot {
     }
     void run() throws GameActionException {
         communications.initial();
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
+            if (Util.isAttacker(r.type)) {
+                greedyPath.move(communications.findClosestHQ());
+                return;
+            }
+        }
         if (!seekOptimalSpot()) {
             MapLocation m = communications.findBestAttackTarget();
             if (m != null) greedyPath.move(m);
