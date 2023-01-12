@@ -22,6 +22,7 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         initialize();
+        communications.initial();
         communications.report();
         communications.checkEnemyHQs();
         /*
@@ -40,6 +41,7 @@ public class Launcher extends Robot {
             case EXPLORE: explore(); break;
             case DEFEND: defend(); break;
         }
+        communications.last();
     }
 
     void initialize() throws GameActionException {

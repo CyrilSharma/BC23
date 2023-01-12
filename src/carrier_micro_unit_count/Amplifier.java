@@ -21,6 +21,7 @@ public class Amplifier extends Robot {
             if (m != null) greedyPath.move(m);
             else exploration.move();
         }
+        communications.last();
     }
 
     // TODO: this would be a lot better if we knew where the enemy is.
