@@ -145,6 +145,7 @@ public class Communications {
         return rc.readSharedArray(RESOURCE_NEED + 2);
     }
 
+    // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
         int mn = 10000000;
         ResourceType r = null;
@@ -564,8 +565,8 @@ public class Communications {
 
         boolean isBetterThan(AttackTarget at) {
             if (at == null) return true;
-            if (at.d + 8 < d) return false;
-            if (d + 8 < at.d) return true;
+            if (at.d + 4 < d) return false;
+            if (d + 4 < at.d) return true;
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
             if (at.low_health && !low_health) return false;
