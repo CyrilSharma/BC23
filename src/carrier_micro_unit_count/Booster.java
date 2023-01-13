@@ -129,6 +129,9 @@ public class Booster extends Robot {
             canMove = rc.canMove(dir);
         }
 
+        //cooldown thing is deprecated i think
+        //we are not using this anyway so i commented
+        /*
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
@@ -151,6 +154,7 @@ public class Booster extends Robot {
                 dps_defending += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam()));
             }
         }
+         */
 
         int safe() {
             if (dps_received > 0) return 1;
