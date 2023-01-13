@@ -65,7 +65,7 @@ public class Carrier extends Robot {
             return State.SEARCHING;
         
         if (wellTarget != null && 
-            rc.getLocation().distanceSquaredTo(wellTarget) > 1)
+            rc.getLocation().distanceSquaredTo(wellTarget) > 2)
             return State.SEEKING;
 
         if (adamantium + mana + elixir < 39 && wellTarget != null) {
@@ -83,18 +83,21 @@ public class Carrier extends Robot {
     }
 
     void search() throws GameActionException{
-        exploration.move();
-        exploration.move();
         findTarget();
+        exploration.move();
+        exploration.move();
     }
 
     void seek() throws GameActionException {
         greedyPath.move(wellTarget);
         greedyPath.move(wellTarget);
-        findTarget();
+        checkBetterTarget();
     }
+    //need to redo this part
 
     void findTarget() throws GameActionException{
+        //basically the idea is, we flip a coin
+        //and based on that, check for certain resources
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length > 0) {
             WellTarget best = null;
@@ -103,12 +106,32 @@ public class Carrier extends Robot {
                 if (cur.isBetterThan(best)) best = cur;
             }
             // if its crowded and not a good resource use comms.
-            if (!best.crowded() || best.r == communications.readResourceNeed())
+            if (!best.crowded()/* || best.r == communications.readResourceNeed()*/)
                 wellTarget = best.loc;
             else
                 wellTarget = communications.findBestWell();
         }
         else wellTarget = communications.findBestWell(); //null if nothing found
+    }
+
+    void checkBetterTarget() throws GameActionException{
+        WellInfo[] wells = rc.senseNearbyWells();
+        //int ada = communications.getAdamantiumReq(), mana = communications.getManaReq();
+        if (wells.length > 0) {
+            MapLocation bst = null;
+            int dist = rc.getLocation().distanceSquaredTo(wellTarget);
+            for(WellInfo w : wells){
+                if(w.getResourceType() != communications.readResourceNeed()) continue;
+                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) < dist){
+                   WellTarget uwu = new WellTarget(w);
+                   if(!uwu.crowded()){
+                       bst = uwu.loc;
+                       dist = rc.getLocation().distanceSquaredTo(uwu.loc);
+                   }
+                }
+            }
+            if (bst != null) wellTarget = bst;
+        }
     }
 
     class WellTarget {
@@ -131,7 +154,7 @@ public class Carrier extends Robot {
         }
 
         boolean crowded() {
-            return harvestersNear>6;
+            return harvestersNear>7;
         }
 
         boolean bestResource() throws GameActionException {

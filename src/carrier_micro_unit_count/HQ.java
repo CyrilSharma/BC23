@@ -36,30 +36,31 @@ public class HQ extends Robot {
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
                 communications.resetCounts();
         }
-
-        ResourceType best = null;
-        int smallest = 100000;
-        for (ResourceType r: resources) {
-            if (smallest > rc.getResourceAmount(r)) {
-                smallest = rc.getResourceAmount(r);
-                best = r;
+        if(rc.getRoundNum() > 2) {
+            if(communications.HQs[0].equals(rc.getLocation())){
+                communications.resetResourceCounts();
+            }
+            communications.updateResources();
+            //rc.setIndicatorString("mana: " + communications.getManaReq() + ", ada: " + communications.getAdamantiumReq());
+            if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) {
+                if ((rc.getRoundNum() <= 50 && cntCarriers < 6) || cntCarriers < 4)
+                    communications.divideResources(ResourceType.ADAMANTIUM, 2);
+                else communications.divideResources(ResourceType.MANA, 2);
             }
         }
-        assert (best != null);
-        communications.setResourceNeed(best);
         build();
     }
 
     void build() throws GameActionException {
         Build b = getBuildType();
-        rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
+        //rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
 
         if (b == Build.NONE) return;
         RobotType r = buildToRobotType(b);
         if (b == Build.ANCHOR) {
             if (rc.canBuildAnchor(Anchor.STANDARD)) {
                 rc.buildAnchor(Anchor.STANDARD);
-                System.out.println("Built an anchor");
+                //System.out.println("Built an anchor");
             }
             return;
         }
@@ -112,7 +113,7 @@ public class HQ extends Robot {
         }
 
         // spam carriers initially.
-        if (rc.getRoundNum() <= 50 && cntCarriers < 8 && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium)
+        if (rc.getRoundNum() <= 50 && cntCarriers < 6 && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium)
             return Build.CARRIER;
 
         

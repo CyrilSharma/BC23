@@ -117,12 +117,45 @@ public class Communications {
         }
     }
 
-    public ResourceType readResourceNeed() throws GameActionException {
-        for (int i = 0; i < 3; i++) {
-            int val = rc.readSharedArray(RESOURCE_NEED + i);
-            if (val == 1) return resources[i];
+    public void resetResourceCounts() throws GameActionException{
+        for(int i = 0; i < 3; i++){
+            rc.writeSharedArray(RESOURCE_NEED + i, 0);
         }
-        return null;
+    }
+    public void updateResources() throws GameActionException{
+        for(int i = 0; i < 3; i++){
+            int val = rc.readSharedArray(RESOURCE_NEED + i);
+            rc.writeSharedArray(RESOURCE_NEED + i, val + rc.getResourceAmount(resources[i]));
+        }
+    }
+
+    public void divideResources(ResourceType r, int f) throws GameActionException{
+        for(int i = 0; i < 3; i++){
+            if(resources[i].equals(r)){
+                int val = rc.readSharedArray(RESOURCE_NEED + i);
+                rc.writeSharedArray(RESOURCE_NEED + i, val / f);
+            }
+        }
+    }
+    public int getAdamantiumReq() throws GameActionException{
+        return rc.readSharedArray(RESOURCE_NEED);
+    }
+
+    public int getManaReq() throws GameActionException{
+        return rc.readSharedArray(RESOURCE_NEED + 2);
+    }
+
+    public ResourceType readResourceNeed() throws GameActionException {
+        int mn = 10000000;
+        ResourceType r = null;
+        for (int i = 0; i < 3; i++) if(i != 1){
+            int val = rc.readSharedArray(RESOURCE_NEED + i);
+            if(val < mn){
+                mn = val;
+                r = resources[i];
+            }
+        }
+        return r;
     }
 
     public void sendMemory() throws GameActionException {
