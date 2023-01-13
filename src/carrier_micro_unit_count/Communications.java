@@ -1,10 +1,13 @@
 package carrier_micro_unit_count;
+import java.util.Random;
+
 import battlecode.common.*;
 
 // TODO: count the numbers of each unit for use in HQ!!
 public class Communications {
     RobotController rc;
     Util util;
+    Random rng = new Random();
     SymmetryChecker symmetryChecker;
     MapLocation[] HQs = new MapLocation[5];
     MapLocation[] EnemyHQsCache = new MapLocation[5];
@@ -43,7 +46,10 @@ public class Communications {
     static final int BUILD_COUNT = UNIT_COUNTS + UNIT_COUNTS_WIDTH;
     static final int BUILD_COUNT_WIDTH = 8;
 
-    static final int RESOURCE_NEED = BUILD_COUNT + BUILD_COUNT_WIDTH;
+    static final int RESOURCE_COUNT = BUILD_COUNT + BUILD_COUNT_WIDTH;
+    static final int RESOURCE_COUNT_WIDTH = 3;
+
+    static final int RESOURCE_NEED = RESOURCE_COUNT + RESOURCE_COUNT_WIDTH;
     static final int RESOURCE_NEED_WIDTH = 3;
 
     static final int ENEMY_HQ = RESOURCE_NEED + RESOURCE_NEED_WIDTH;
@@ -66,6 +72,7 @@ public class Communications {
         this.rc = rc;
         this.util = new Util(rc);
         symmetryChecker = new SymmetryChecker(rc);
+        rng.setSeed((long) rc.getID());
     }
 
     // all classes call this at the beginning.
@@ -109,40 +116,58 @@ public class Communications {
         broadcastTargetMemory[rc.getRoundNum()%3] = null;
     }
 
-    // does not need this many channels but whatever.
-    public void setResourceNeed(ResourceType r) throws GameActionException {
-        for (int i = 0; i < 3; i++) {
-            int val = (i==r.ordinal()) ? 1 : 0;
-            rc.writeSharedArray(RESOURCE_NEED + i, val);
+    // the idea here is the value will be weights.
+    // the weight will be used to sample from a random distribution to determine
+    // the desired resource whilst mantaining a raio.
+    public void setResourceNeed(ResourceType r, int val) throws GameActionException {
+        rc.writeSharedArray(RESOURCE_NEED + r.ordinal(), val);
+    }
+
+    public ResourceType getResourceNeed() throws GameActionException {
+        int sum = 0;
+        int prev=0;
+        int cur;
+        int[] bounds = new int[3];
+        for(int i = 0; i < 3; i++){
+            cur = rc.readSharedArray(i);
+            sum += cur;
+            bounds[i] = prev + cur;
+            prev = bounds[i];
         }
+        if (sum == 0) return resources[rng.nextInt(3)];
+        int val = rng.nextInt(sum);
+        for (int i = 0; i < 3; i++) {
+            if (val < bounds[i]) return resources[i];
+        }
+        return resources[rng.nextInt(3)];
     }
 
     public void resetResourceCounts() throws GameActionException{
         for(int i = 0; i < 3; i++){
-            rc.writeSharedArray(RESOURCE_NEED + i, 0);
+            rc.writeSharedArray(RESOURCE_COUNT + i, 0);
         }
     }
     public void updateResources() throws GameActionException{
         for(int i = 0; i < 3; i++){
-            int val = rc.readSharedArray(RESOURCE_NEED + i);
-            rc.writeSharedArray(RESOURCE_NEED + i, val + rc.getResourceAmount(resources[i]));
+            int val = rc.readSharedArray(RESOURCE_COUNT + i);
+            rc.writeSharedArray(RESOURCE_COUNT + i, val + rc.getResourceAmount(resources[i]));
         }
     }
 
     public void divideResources(ResourceType r, int f) throws GameActionException{
         for(int i = 0; i < 3; i++){
             if(resources[i].equals(r)){
-                int val = rc.readSharedArray(RESOURCE_NEED + i);
-                rc.writeSharedArray(RESOURCE_NEED + i, val / f);
+                int val = rc.readSharedArray(RESOURCE_COUNT + i);
+                rc.writeSharedArray(RESOURCE_COUNT + i, val / f);
             }
         }
     }
     public int getAdamantiumReq() throws GameActionException{
-        return rc.readSharedArray(RESOURCE_NEED);
+        return rc.readSharedArray(RESOURCE_COUNT);
     }
 
     public int getManaReq() throws GameActionException{
-        return rc.readSharedArray(RESOURCE_NEED + 2);
+        return rc.readSharedArray(RESOURCE_COUNT + 2);
     }
 
     // always mines at a 50-50 ratio; may not want that.
@@ -150,7 +175,7 @@ public class Communications {
         int mn = 10000000;
         ResourceType r = null;
         for (int i = 0; i < 3; i++) if(i != 1){
-            int val = rc.readSharedArray(RESOURCE_NEED + i);
+            int val = rc.readSharedArray(RESOURCE_COUNT + i);
             if(val < mn){
                 mn = val;
                 r = resources[i];
