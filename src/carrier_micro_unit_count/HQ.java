@@ -125,7 +125,7 @@ public class HQ extends Robot {
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 4;
-        if (mod==0 && (cntCarriers < 20 || cntCarriers < 2 * cntLaunchers) &&
+        if (mod==0 && (cntCarriers < 20 || cntCarriers < cntLaunchers) &&
                 rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium) return Build.CARRIER;
         if ((mod==1 && cntLaunchers < 3 * cntCarriers)) return Build.LAUNCHER;
         if ((mod==2 && cntAmplifiers * 3 < cntLaunchers)) return Build.AMPLIFIER;

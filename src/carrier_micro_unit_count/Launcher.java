@@ -61,13 +61,45 @@ public class Launcher extends Robot {
 
     void attack() throws GameActionException {
         boolean attacker = false;
-        for (RobotInfo e: enemies) {
+        int cntEn = 0, cntAl = rc.getHealth(), numEn = 0, numAl = 0;
+        int enX = 0, enY = 0;
+        for (RobotInfo e: enemies){
             if (Util.isAttacker(e.getType())) {
                 attacker = true;
+                cntEn += e.health;
+                numEn++;
+                enX += e.location.x;
+                enY += e.location.y;
             }
         }
-        // TODO: change attack target if better target is found after moving.
         AttackTarget at = getBestAttackTarget();
+        if(numEn > 0) {
+            MapLocation enm = new MapLocation(enX / numEn, enY / numEn);
+            RobotInfo[] r = rc.senseNearbyRobots(rc.getType().actionRadiusSquared, rc.getTeam());
+            for (RobotInfo rob : r) {
+                if (Util.isAttacker(rob.type)) {
+                    if (rob.getLocation().distanceSquaredTo(enm) <= rob.getType().visionRadiusSquared){
+                        cntAl += rob.health;
+                    }
+                }
+            }
+            if (cntAl < cntEn) {
+                if (rc.canAttack(at.loc)) rc.attack(at.loc);
+                greedyPath.flee();
+                return;
+            }
+        }
+        /*
+        if(numEn > 0 && numAl > 0){
+            MapLocation a = new MapLocation(enX / numEn, enY / numEn);
+            MapLocation b = new MapLocation(alX / numAl, alY / numAl);
+            if(a.distanceSquaredTo(b) > rc.getType().actionRadiusSquared){
+                greedyPath.flee();
+                return;
+            }
+        }
+         */
+        // TODO: change attack target if better target is found after moving.
         if (rc.canAttack(at.loc)) rc.attack(at.loc);
         if (!attacker) {
             follow(at.loc);
