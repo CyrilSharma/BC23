@@ -43,9 +43,9 @@ public class HQ extends Robot {
             communications.updateResources();
             //rc.setIndicatorString("mana: " + communications.getManaReq() + ", ada: " + communications.getAdamantiumReq());
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) {
-                if ((rc.getRoundNum() <= 50 && cntCarriers < 8) || cntCarriers < 4)
+                /*if ((rc.getRoundNum() <= 50 && cntCarriers < 8) || cntCarriers < 4)
                     communications.divideResources(ResourceType.ADAMANTIUM, 2);
-                else communications.divideResources(ResourceType.MANA, 2);
+                else */communications.divideResources(ResourceType.MANA, 2);
             }
         }
         build();
@@ -54,6 +54,7 @@ public class HQ extends Robot {
     void build() throws GameActionException {
         Build b = getBuildType();
         //rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
+        //rc.setIndicatorString("trying to make " + buildToRobotType(b));
 
         if (b == Build.NONE) return;
         RobotType r = buildToRobotType(b);
@@ -113,7 +114,7 @@ public class HQ extends Robot {
         }
 
         // spam carriers initially.
-        if (rc.getRoundNum() <= 50 && cntCarriers < 8 && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium)
+        if (rc.getRoundNum() <= 50 && cntCarriers < (4 * Math.max(communications.numHQ, 1)) && rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium)
             return Build.CARRIER;
 
         

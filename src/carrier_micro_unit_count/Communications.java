@@ -181,6 +181,7 @@ public class Communications {
                 r = resources[i];
             }
         }
+        if(rc.getRoundNum() <= 50) return ResourceType.MANA;
         return r;
     }
 

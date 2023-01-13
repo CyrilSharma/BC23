@@ -57,6 +57,7 @@ public class Carrier extends Robot {
                 return State.FLEE;
             }
         }
+        //System.out.println("good resource: " + communications.readResourceNeed());
         if (hasAnchor) return State.DELIVER_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
