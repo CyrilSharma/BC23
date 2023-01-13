@@ -6,6 +6,7 @@ import battlecode.common.*;
 public class Exploration {
     RobotController rc;
     GreedyPath greedyPath;
+    Communications communications;
     MapLocation target;
     MapLocation[] keypos;
     int height, width;
@@ -26,6 +27,7 @@ public class Exploration {
         height = rc.getMapHeight();
         width = rc.getMapWidth();
         rng.setSeed((long) rc.getID());
+        communications = new Communications(rc);
         keypos = new MapLocation[5];
         keypos[0] = new MapLocation(width, 0);
         keypos[1] = new MapLocation(0, height);
@@ -76,13 +78,18 @@ public class Exploration {
         greedyPath.move(target);
     }
 
-    public MapLocation generateTarget() {
+    public MapLocation generateTarget() throws GameActionException {
         // we need to compute enemy territory somehow so we don't end up waltzing into enemy territory.
         if (rng.nextInt(2) == 0) {
-            return keypos[rng.nextInt(keypos.length)];
+            MapLocation m = keypos[rng.nextInt(keypos.length)];
+            while (communications.isEnemyTerritory(m)) {
+                m = keypos[rng.nextInt(keypos.length)];
+            }
+            return m;
         } else {
             MapLocation m = rc.getLocation();
-            while (rc.getLocation().distanceSquaredTo(m) <= 80) {
+            while (rc.getLocation().distanceSquaredTo(m) <= 80 ||
+                communications.isEnemyTerritory(m)) {
                 m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
             }
             return m;

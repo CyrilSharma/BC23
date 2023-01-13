@@ -41,6 +41,7 @@ public class Carrier extends Robot {
             case FLEE: flee(); break;
             default:
         }
+        communications.last();
     }
 
     void initialize() {
@@ -103,12 +104,14 @@ public class Carrier extends Robot {
                 if (cur.isBetterThan(best)) best = cur;
             }
             // if its crowded and not a good resource use comms.
-            if (!best.crowded() || best.r == communications.readResourceNeed())
+            if (!best.crowded() || best.r == communications.readResourceNeed()) {
                 wellTarget = best.loc;
-            else
-                wellTarget = communications.findBestWell();
+                return;
+            }
         }
-        else wellTarget = communications.findBestWell(); //null if nothing found
+        MapLocation candidate =  communications.findBestWell(); //null if nothing found;
+        if (candidate == null || communications.isEnemyTerritory(candidate)) return;
+        wellTarget = candidate;
     }
 
     class WellTarget {
