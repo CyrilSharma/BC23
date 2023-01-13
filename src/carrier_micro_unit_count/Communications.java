@@ -543,7 +543,7 @@ public class Communications {
             if (cur.isBetterThan(best)) best = cur;
             count++;
         }
-        rc.setIndicatorString("Number of targets: " + count);
+        //rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
         else return best.m;
     }
@@ -557,7 +557,7 @@ public class Communications {
             low_health = (message&1) == 1;
             priority = (message>>1) & (0b111);
             int x = (message>>4) & (0b111111);
-            int y = (message>>4) & (0b111111);
+            int y = (message>>10) & (0b111111);
             m = new MapLocation(x, y);
             d = Util.absDistance(rc.getLocation(), m);
         }
