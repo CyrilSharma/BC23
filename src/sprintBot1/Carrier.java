@@ -61,7 +61,8 @@ public class Carrier extends Robot {
         }
         if (fleeTurns > 0) {
             fleeTurns--;
-            return State.FLEE;
+            if (adamantium + mana + elixir > 10) return State.DELIVERING;
+            else return State.FLEE;
         }
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (hasAnchor) return State.DELIVER_ANCHOR;

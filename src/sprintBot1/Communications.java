@@ -16,7 +16,7 @@ public class Communications {
     static final int MAX_WELL_STORED = 10;
     WellInfo[] wellCache = new WellInfo[MAX_WELL_STORED];
     int numWells = 0;
-    ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
+    ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.MANA, ResourceType.ELIXIR};
     int numHQ = 0;
     int numEnemyHQCache = 0;
     int numEnemyHQ = 0;
@@ -83,6 +83,11 @@ public class Communications {
         checkEnemyHQs();
         clearTargets();
         broadcastAttackTargets();
+        // more complex logic later.
+        if (rc.getType() == RobotType.HEADQUARTERS) {
+            setResourceNeed(ResourceType.MANA, 3);
+            setResourceNeed(ResourceType.ADAMANTIUM, 2);
+        }
     }
 
     public void last() throws GameActionException {
@@ -129,17 +134,20 @@ public class Communications {
         int cur;
         int[] bounds = new int[3];
         for(int i = 0; i < 3; i++){
-            cur = rc.readSharedArray(i);
+            cur = rc.readSharedArray(RESOURCE_NEED + i);
             sum += cur;
             bounds[i] = prev + cur;
+            System.out.println(bounds[i]);
             prev = bounds[i];
         }
-        if (sum == 0) return resources[rng.nextInt(3)];
+        ResourceType[] res = ResourceType.values();
+        if (sum == 0) return res[rng.nextInt(3)];
         int val = rng.nextInt(sum);
+        
         for (int i = 0; i < 3; i++) {
-            if (val < bounds[i]) return resources[i];
+            if (val < bounds[i]) return res[i];
         }
-        return resources[rng.nextInt(3)];
+        return res[rng.nextInt(3)];
     }
 
     public void resetResourceCounts() throws GameActionException{
@@ -173,11 +181,9 @@ public class Communications {
     // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
         if(rc.getRoundNum() <= 50) return ResourceType.MANA;
-        if (rc.getType() == RobotType.HEADQUARTERS) {
-            setResourceNeed(ResourceType.MANA, 3);
-            setResourceNeed(ResourceType.ADAMANTIUM, 2);
-        }
-        return getResourceNeed();
+        ResourceType r = getResourceNeed();
+        System.out.println(r);
+        return r;
     }
 
     public void sendMemory() throws GameActionException {

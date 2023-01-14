@@ -58,7 +58,7 @@ public class Launcher extends Robot {
         }
         MapLocation m = communications.findBestAttackTarget();
         if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
-        if (rc.getLocation().distanceSquaredTo(communications.findClosestHQ()) > 9) return State.DEFEND;
+        if (rc.getLocation().distanceSquaredTo(communications.findClosestHQ()) >= 49) return State.DEFEND;
         return State.EXPLORE;
     }
 
