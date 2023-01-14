@@ -23,22 +23,16 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         initialize();
         communications.initial();
-        /*
-        if(communications.numEnemyHQ > 0){
-            for(int i = 0; i < communications.numEnemyHQ; i++){
-                System.out.println(communications.EnemyHQs[i]);
-            }
-            System.out.println("=====");
-        }
-         */
         State state = determineState();
         rc.setIndicatorString(state.toString());
+        doAttack(true);
         switch (state) {
             case ATTACK: attack(); break;
             case HUNT: hunt(); break;
             case EXPLORE: explore(); break;
             case DEFEND: defend(); break;
         }
+        doAttack(false);
         communications.last();
     }
 
@@ -47,6 +41,14 @@ public class Launcher extends Robot {
         myloc = rc.getLocation();
         if (rc.getHealth() < 20) 
             hurt = true;
+    }
+
+    void doAttack(boolean attackers) throws GameActionException {
+        RobotInfo r = util.getBestAttackTarget();
+        if (r == null) return;
+        if (attackers && !Util.isAttacker(r.type)) return;
+        if (r != null && rc.canAttack(r.location)) 
+            rc.attack(r.location);
     }
 
     State determineState() throws GameActionException {
@@ -61,48 +63,14 @@ public class Launcher extends Robot {
 
     void attack() throws GameActionException {
         boolean attacker = false;
-        int cntEn = 0, cntAl = rc.getHealth(), numEn = 0, numAl = 0;
-        int enX = 0, enY = 0;
-        for (RobotInfo e: enemies){
+        for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
                 attacker = true;
-                cntEn += e.health;
-                numEn++;
-                enX += e.location.x;
-                enY += e.location.y;
             }
         }
-        AttackTarget at = getBestAttackTarget();
-        if(numEn > 0) {
-            MapLocation enm = new MapLocation(enX / numEn, enY / numEn);
-            RobotInfo[] r = rc.senseNearbyRobots(rc.getType().actionRadiusSquared, rc.getTeam());
-            for (RobotInfo rob : r) {
-                if (Util.isAttacker(rob.type)) {
-                    if (rob.getLocation().distanceSquaredTo(enm) <= rob.getType().visionRadiusSquared){
-                        cntAl += rob.health;
-                    }
-                }
-            }
-            if (cntAl < cntEn) {
-                if (rc.canAttack(at.loc)) rc.attack(at.loc);
-                greedyPath.flee();
-                return;
-            }
-        }
-        /*
-        if(numEn > 0 && numAl > 0){
-            MapLocation a = new MapLocation(enX / numEn, enY / numEn);
-            MapLocation b = new MapLocation(alX / numAl, alY / numAl);
-            if(a.distanceSquaredTo(b) > rc.getType().actionRadiusSquared){
-                greedyPath.flee();
-                return;
-            }
-        }
-         */
-        // TODO: change attack target if better target is found after moving.
-        if (rc.canAttack(at.loc)) rc.attack(at.loc);
         if (!attacker) {
-            follow(at.loc);
+            RobotInfo r = util.getBestAttackTarget();
+            follow(r.location);
         } else {
             maneuver();
         }
@@ -141,6 +109,14 @@ public class Launcher extends Robot {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
 
+        for (RobotInfo r: rc.senseNearbyRobots()) {
+            if (Clock.getBytecodesLeft() < 500) break;
+            for (Direction d: directions) {
+                if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
+                else microtargets[d.ordinal()].addEnemy(r);
+            }
+        }
+
         MicroTarget best = microtargets[0];
         for (int i = 0; i < 9; i++) {
             if (microtargets[i].isBetterThan(best))
@@ -160,7 +136,6 @@ public class Launcher extends Robot {
     }
 
     // Choose best candidate for maneuvering in close encounters.
-    // TODO: respond to effects of non-booster classes.
     class MicroTarget {
         Direction dir;
         double dps_received;
@@ -183,18 +158,19 @@ public class Launcher extends Robot {
                 nloc.add(mi.getCurrentDirection());
             }
         }
-        /*
+        
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
+            double cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
             if (r.type == RobotType.BOOSTER) {
                 int d = nloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    dps_received += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));
+                    dps_received += r.type.damage * (1.0 / cooldown);
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));;
+                    dps_targetting += r.type.damage * (1.0 / cooldown);;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
@@ -203,10 +179,11 @@ public class Launcher extends Robot {
         void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {
                 MapInfo mi = rc.senseMapInfo(r.location);
-                dps_defending += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam()));
+                double cooldown = mi.getCooldownMultiplier(rc.getTeam());
+                dps_defending += r.type.damage * (1.0 / cooldown);
             }
         }
-        */
+       
 
         int safe() {
             if (dps_received > 0) return 1;
