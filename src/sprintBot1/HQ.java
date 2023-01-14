@@ -18,6 +18,7 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
+        rc.setIndicatorString("" + cntCarriers);
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
         if(rc.getRoundNum() >= 50) {
@@ -41,11 +42,9 @@ public class HQ extends Robot {
                 communications.resetResourceCounts();
             }
             communications.updateResources();
-            //rc.setIndicatorString("mana: " + communications.getManaReq() + ", ada: " + communications.getAdamantiumReq());
+
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) {
-                /*if ((rc.getRoundNum() <= 50 && cntCarriers < 8) || cntCarriers < 4)
-                    communications.divideResources(ResourceType.ADAMANTIUM, 2);
-                else */communications.divideResources(ResourceType.MANA, 2);
+                communications.divideResources(ResourceType.MANA, 2);
             }
         }
         if(rc.getRoundNum() > 2){
@@ -56,48 +55,50 @@ public class HQ extends Robot {
 
     void build() throws GameActionException {
         Build b = getBuildType();
-        //rc.setIndicatorString("carry: " + cntCarriers + ", " + "launch: " + cntLaunchers + ", " + "amplify: " + cntAmplifiers);
-        //rc.setIndicatorString("trying to make " + buildToRobotType(b));
-
         if (b == Build.NONE) return;
-        RobotType r = buildToRobotType(b);
+        
         if (b == Build.ANCHOR) {
             if (rc.canBuildAnchor(Anchor.STANDARD)) {
                 rc.buildAnchor(Anchor.STANDARD);
-                //System.out.println("Built an anchor");
             }
             return;
         }
 
+        RobotType needed = buildToRobotType(b);
+        buildIfCan(needed);
+        for (RobotType r: RobotType.values()) {
+            // Replace with a needs array.
+            // i.e set globally what troops we want.
+            // only build troops we want.
+            if (r == RobotType.CARRIER &&
+                cntCarriers > 20) continue;
+            if (r == RobotType.AMPLIFIER &&
+                cntAmplifiers * 3 >= cntLaunchers) continue;
+            buildIfCan(r);
+        }
+    }
+
+    void buildIfCan(RobotType r) throws GameActionException{
         if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
                 r.buildCostAdamantium &&
-                rc.getResourceAmount(ResourceType.MANA) >=
-                        r.buildCostMana &&
-                rc.getResourceAmount(ResourceType.ELIXIR) >=
-                        r.buildCostElixir) {
+            rc.getResourceAmount(ResourceType.MANA) >=
+                    r.buildCostMana &&
+            rc.getResourceAmount(ResourceType.ELIXIR) >=
+                    r.buildCostElixir) {
             MapLocation loc = getBuildLocation(r);
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
                 communications.updateBuild(r);
             }
         }
-        // Carrier spam is not helpful, use excesses to upgrade things.
-
-        // if (r == RobotType.CARRIER) r = RobotType.LAUNCHER;
-        // else if(r == RobotType.LAUNCHER) r = RobotType.CARRIER;
     }
 
     MapLocation getBuildLocation(RobotType t) throws GameActionException {
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
         BuildTarget best = null;
-        RobotInfo[] rb = rc.senseNearbyRobots(rc.getType().actionRadiusSquared);
-        for (MapLocation loc: locs) if(rc.sensePassability(loc)){
-            int ok = 1;
-            for(RobotInfo r : rb) if(r.getLocation() == loc ) ok = 0;
-            if(ok == 0) continue;
+        for (MapLocation loc: locs) {
             BuildTarget cur = new BuildTarget(loc);
-            best = cur;
-            break;
+            if (cur.isBetterThan(best)) best = cur;
         }
         return best.mloc;
     }
@@ -128,13 +129,10 @@ public class HQ extends Robot {
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 4;
-        if (mod==0 && (cntCarriers < 20 || cntCarriers < cntLaunchers) &&
-                rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium) return Build.CARRIER;
-        if ((mod==1 && cntLaunchers < 3 * cntCarriers)) return Build.LAUNCHER;
-        if ((mod==2 && cntAmplifiers * 3 < cntLaunchers)) return Build.AMPLIFIER;
-        if (rc.getResourceAmount(ResourceType.MANA) >= 100 &&
-            rc.getResourceAmount(ResourceType.ADAMANTIUM) >= 100)
-            return Build.ANCHOR;
+        if (mod==0 && cntCarriers < 20) return Build.CARRIER;
+        if (mod==1 && cntLaunchers < 3 * cntCarriers) return Build.LAUNCHER;
+        if (mod==2 && cntAmplifiers * 3 < cntLaunchers) return Build.AMPLIFIER;
+        if (mod==3) return Build.ANCHOR;
         else return Build.LAUNCHER;
     }
 
@@ -156,13 +154,15 @@ public class HQ extends Robot {
         BuildTarget(MapLocation mloc) {
             this.mloc = mloc;
             try {
-                placeable = rc.sensePassability(mloc);
+                placeable = rc.sensePassability(mloc) &&
+                    !rc.isLocationOccupied(mloc);
             } catch (GameActionException e) {
                 System.out.println(e.getMessage());
             }
         }
 
         boolean isBetterThan(BuildTarget bt) {
+            if (bt == null) return true;
             if (bt.placeable && !placeable) return false;
             if (!bt.placeable && placeable) return true;
             return true;
