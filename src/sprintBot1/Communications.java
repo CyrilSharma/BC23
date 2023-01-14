@@ -83,9 +83,13 @@ public class Communications {
         checkEnemyHQs();
         clearTargets();
         broadcastAttackTargets();
-        // more complex logic later.
+        setMineRatio();
+    }
+
+    public void setMineRatio() throws GameActionException {
+        // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            setResourceNeed(ResourceType.MANA, 3);
+            setResourceNeed(ResourceType.MANA, 4);
             setResourceNeed(ResourceType.ADAMANTIUM, 2);
         }
     }
@@ -182,7 +186,6 @@ public class Communications {
     public ResourceType readResourceNeed() throws GameActionException {
         if(rc.getRoundNum() <= 50) return ResourceType.MANA;
         ResourceType r = getResourceNeed();
-        System.out.println(r);
         return r;
     }
 
