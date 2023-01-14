@@ -55,7 +55,7 @@ public class Carrier extends Robot {
         grab_anchor();
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (Util.isAttacker(r.type)) {
-                fleeTurns = 3x;
+                fleeTurns = 3;
                 return State.FLEE;
             }
         }
