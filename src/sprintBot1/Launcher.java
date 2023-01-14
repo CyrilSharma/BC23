@@ -47,6 +47,7 @@ public class Launcher extends Robot {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null) return;
         if (attackers && !Util.isAttacker(r.type)) return;
+        rc.setIndicatorString("Attacking: " + r.location);
         if (r != null && rc.canAttack(r.location)) 
             rc.attack(r.location);
     }

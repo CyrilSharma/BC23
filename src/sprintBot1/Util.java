@@ -53,6 +53,7 @@ public class Util {
         MapLocation loc;
         int priority;
         int health;
+        boolean canAttack;
         RobotInfo r;
 
         AttackTarget(RobotInfo r) {
@@ -60,10 +61,13 @@ public class Util {
             priority = Util.getPriority(r);
             health = r.health;
             this.r = r;
+            canAttack = rc.canAttack(loc);
         }
 
         boolean isBetterThan(AttackTarget at) {
             if (at == null) return true;
+            if (at.canAttack && !canAttack) return false;
+            if (!at.canAttack && canAttack) return true;
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
             return health <= at.health;
