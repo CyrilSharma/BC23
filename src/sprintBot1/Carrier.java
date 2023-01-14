@@ -32,7 +32,7 @@ public class Carrier extends Robot {
         rc.setIndicatorString(state.toString());
         
         communications.initial();
-        handleDeath();
+        attack();
         switch (state) {
             case SEARCHING: search(); break;
             case SEEKING: seek(); break;
@@ -264,26 +264,14 @@ public class Carrier extends Robot {
         }
     }
 
-    void handleDeath() throws GameActionException {
-        double dps_targetting = 0.0;
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-        AttackTarget best = null;
-        for (RobotInfo e : enemies) {
-            if (!Util.isAttacker(e.type)) continue;
-            MapLocation m = e.location;
-            double mult = rc.senseCooldownMultiplier(m);
-            int d = rc.getLocation().distanceSquaredTo(m);
-            if (d <= e.type.visionRadiusSquared)
-                dps_targetting += e.type.damage * (1.0 / mult);
-            
-            AttackTarget cur = new AttackTarget(e);
-            if (cur.isBetterThan(best)) best = cur;
-        }
-        if (dps_targetting >= 0.8 * (double) rc.getHealth()) {
-            if (rc.canAttack(best.loc) && 
-                (adamantium + mana + elixir) > 5) {
-                rc.attack(best.loc);
-            }
+    void attack() throws GameActionException {
+        RobotInfo best = util.getBestAttackTarget();
+        if (best == null) return;
+        if (!Util.isAttacker(best.type)) return;
+        if (rc.canAttack(best.location)) {
+            int total = adamantium + mana + elixir;
+            if (total > 5 && total < 20)
+                rc.attack(best.location);
         }
     }
 

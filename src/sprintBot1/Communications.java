@@ -141,7 +141,6 @@ public class Communications {
             cur = rc.readSharedArray(RESOURCE_NEED + i);
             sum += cur;
             bounds[i] = prev + cur;
-            System.out.println(bounds[i]);
             prev = bounds[i];
         }
         ResourceType[] res = ResourceType.values();
@@ -608,8 +607,6 @@ public class Communications {
     // Essentially ported from Xsquare's symmetry checker.
     // Use getSymmetry to figure out if symmetry is indeterminate,
     // or which specific symmetry it is.
-    // does not currently account for clouds bc i wrote this offline
-    // and couldn't intuit the api,
     class SymmetryChecker {
         class Data {
             Direction current;
