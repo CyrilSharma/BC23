@@ -219,12 +219,13 @@ public class Communications {
         MapLocation bestWell = null;
         int dist = 1000000;
         //TODO: later on, go to elixir too (we don't seem to need it now)
+        ResourceType r = readResourceNeed();
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             int typ = val & (0b111);
             if (typ == 3) continue;
-            if(resources[typ] == readResourceNeed()){
+            if(resources[typ] == r){
                 MapLocation w = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 if(rc.getLocation().distanceSquaredTo(w) < dist){
                     dist = rc.getLocation().distanceSquaredTo(w);
