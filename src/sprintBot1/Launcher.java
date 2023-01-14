@@ -110,7 +110,7 @@ public class Launcher extends Robot {
         }
 
         for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 500) break;
+            if (Clock.getBytecodesLeft() < 1000) break;
             for (Direction d: directions) {
                 if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
                 else microtargets[d.ordinal()].addEnemy(r);

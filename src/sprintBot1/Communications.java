@@ -172,17 +172,12 @@ public class Communications {
 
     // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
-        int mn = 10000000;
-        ResourceType r = null;
-        for (int i = 0; i < 3; i++) if(i != 1){
-            int val = rc.readSharedArray(RESOURCE_COUNT + i);
-            if(val < mn){
-                mn = val;
-                r = resources[i];
-            }
-        }
         if(rc.getRoundNum() <= 50) return ResourceType.MANA;
-        return r;
+        if (rc.getType() == RobotType.HEADQUARTERS) {
+            setResourceNeed(ResourceType.MANA, 3);
+            setResourceNeed(ResourceType.ADAMANTIUM, 2);
+        }
+        return getResourceNeed();
     }
 
     public void sendMemory() throws GameActionException {

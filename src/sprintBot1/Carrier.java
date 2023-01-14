@@ -9,6 +9,7 @@ public class Carrier extends Robot {
     MapLocation islandTarget;
     MapLocation depositLoc = null;
     // will eventually be replaced with comms.
+    int fleeTurns = 0;
     MapLocation home;
     boolean hasAnchor = false;
     enum State {
@@ -54,8 +55,13 @@ public class Carrier extends Robot {
         grab_anchor();
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (Util.isAttacker(r.type)) {
+                fleeTurns = 3;
                 return State.FLEE;
             }
+        }
+        if (fleeTurns > 0) {
+            fleeTurns--;
+            return State.FLEE;
         }
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (hasAnchor) return State.DELIVER_ANCHOR;
@@ -79,7 +85,7 @@ public class Carrier extends Robot {
     }
 
     void flee() throws GameActionException {
-        wellTarget = null;
+        findTarget();
         greedyPath.flee();
     }
 
@@ -107,7 +113,7 @@ public class Carrier extends Robot {
                 if (cur.isBetterThan(best)) best = cur;
             }
             // if its crowded and not a good resource use comms.
-            if (!best.crowded())// && best.r == communications.readResourceNeed())
+            if (!best.crowded() && best.r == communications.readResourceNeed())
                 wellTarget = best.loc;
             else
                 wellTarget = communications.findBestWell();
