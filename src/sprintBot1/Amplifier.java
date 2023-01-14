@@ -10,7 +10,8 @@ public class Amplifier extends Robot {
         communications.initial();
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (Util.isAttacker(r.type)) {
-                greedyPath.move(communications.findClosestHQ());
+                //greedyPath.move(communications.findClosestHQ());
+                greedyPath.flee();
                 return;
             }
         }
@@ -38,7 +39,6 @@ public class Amplifier extends Robot {
                 numAntenna++;
                 continue;
             }
-            if (r.type == RobotType.HEADQUARTERS) continue;
             avgx += r.location.x;
             avgy += r.location.y;
             count++;
@@ -111,12 +111,6 @@ public class Amplifier extends Robot {
             if (at.canmove && !canmove) return false;
             if (!at.canmove && canmove) return true;
 
-            // Locations closer to HQ are better.
-            if ((at.distToHQ <= at.distAvgToHQ) && 
-                !(distToHQ <= at.distAvgToHQ)) return false;
-            if (!(at.distToHQ <= at.distAvgToHQ) && 
-                (distToHQ <= at.distAvgToHQ)) return true;
-
             // stay away from other amplifiers.
             if (at.distToNearestAmp>16 && distToNearestAmp<=16) return false;
             if (at.distToNearestAmp<=16 && distToNearestAmp>16) return true;
@@ -124,6 +118,12 @@ public class Amplifier extends Robot {
             // if close prioritize location that is further away.
             if (at.distToNearestAmp<=16 && distToNearestAmp<=16)
                 return distToNearestAmp>at.distToNearestAmp;
+
+            // Locations closer to HQ are better.
+            if ((at.distToHQ <= at.distAvgToHQ) &&
+                    !(distToHQ <= at.distAvgToHQ)) return false;
+            if (!(at.distToHQ <= at.distAvgToHQ) &&
+                    (distToHQ <= at.distAvgToHQ)) return true;
 
             // not too far.
             int visrad = RobotType.AMPLIFIER.visionRadiusSquared;

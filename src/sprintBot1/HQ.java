@@ -48,6 +48,9 @@ public class HQ extends Robot {
                 else */communications.divideResources(ResourceType.MANA, 2);
             }
         }
+        if(rc.getRoundNum() > 2){
+            communications.initial();
+        }
         build();
     }
 
