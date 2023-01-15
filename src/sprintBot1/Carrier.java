@@ -187,6 +187,7 @@ public class Carrier extends Robot {
         if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
             rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
             wellTarget = null;
+            communications.resourceNeeded = null;
         } else if (rc.canCollectResource(wellTarget, -1)) {
             rc.collectResource(wellTarget, -1);
         }
@@ -205,10 +206,7 @@ public class Carrier extends Robot {
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
             for (ResourceType r: resources) {
-                if (rc.getResourceAmount(r) == 0){
-                    wellTarget = null;
-                    continue;
-                }
+                if (rc.getResourceAmount(r) == 0) continue;
                 if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
             }

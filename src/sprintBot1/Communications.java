@@ -12,6 +12,7 @@ public class Communications {
     MapLocation[] HQs = new MapLocation[5];
     MapLocation[] EnemyHQsCache = new MapLocation[5];
     MapLocation[] EnemyHQs = new MapLocation[5];
+    ResourceType resourceNeeded = null;
     
     static final int MAX_WELL_STORED = 10;
     WellInfo[] wellCache = new WellInfo[MAX_WELL_STORED];
@@ -184,8 +185,8 @@ public class Communications {
     // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
         if(rc.getRoundNum() <= 50) return ResourceType.MANA;
-        ResourceType r = getResourceNeed();
-        return r;
+        if(resourceNeeded == null) resourceNeeded = getResourceNeed();
+        return resourceNeeded;
     }
 
     public void sendMemory() throws GameActionException {
