@@ -116,7 +116,7 @@ public class HQ extends Robot {
         if (cntAmplifiers < 4) return Build.AMPLIFIER;
         if (cntCarriers < 4) return Build.CARRIER;
         if (cntLaunchers < 4) return Build.LAUNCHER;
-
+        if(rc.getRoundNum() >= 1800) return Build.ANCHOR;
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 4;
         if (mod==0 && cntCarriers < 20) return Build.CARRIER;

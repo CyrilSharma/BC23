@@ -108,8 +108,8 @@ public class Carrier extends Robot {
             seek();
             return;
         }
-        exploration.move();
-        exploration.move();
+        exploration.move(communications.HQs, communications.numHQ);
+        exploration.move(communications.HQs, communications.numHQ);
     }
 
     void seek() throws GameActionException {
@@ -243,7 +243,7 @@ public class Carrier extends Robot {
         if (islandTarget == null) {
             islandTarget = findIslandTarget();
             if (islandTarget == null) 
-                exploration.move();
+                exploration.move(communications.HQs, communications.numHQ);
         }
         if (islandTarget != null) {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {

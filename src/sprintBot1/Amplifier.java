@@ -20,7 +20,7 @@ public class Amplifier extends Robot {
             if (m != null) greedyPath.move(m);
             m = communications.findClosestHQ();
             if (m != null) greedyPath.move(m);
-            else exploration.move();
+            else exploration.move(communications.HQs, communications.numHQ);
         }
         communications.last();
     }

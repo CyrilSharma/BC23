@@ -70,17 +70,17 @@ public class Exploration {
         }
     }
 
-    public void move() throws GameActionException {
-        if (target == null) target = generateTarget();
+    public void move(MapLocation[] hqs, int num) throws GameActionException {
+        if (target == null) target = generateTarget(hqs, num);
         if (rc.getLocation().distanceSquaredTo(target) <= 9) {
-            target = generateTarget();
+            target = generateTarget(hqs, num);
         }
         greedyPath.move(target);
     }
 
-    public MapLocation generateTarget() throws GameActionException {
+    public MapLocation generateTarget(MapLocation[] hqs, int num) throws GameActionException {
         MapLocation m = rc.getLocation();
-        while (rc.getLocation().distanceSquaredTo(m) <= 80 || communications.isEnemyTerritory(m)) {
+        while (rc.getLocation().distanceSquaredTo(m) <= 80 || communications.isEnemyTerritory(m, hqs, num)) {
             m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
         }
         return m;
