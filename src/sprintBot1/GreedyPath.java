@@ -31,6 +31,8 @@ public class GreedyPath {
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
     public void move(MapLocation loc) throws GameActionException {
+        if (rc.getType() == RobotType.LAUNCHER &&
+            rc.getRoundNum()%2 == 0) return;
         if (!loc.equals(destination)) {
             destination = loc;
             bestSoFar = 99999;

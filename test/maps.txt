@@ -4,6 +4,16 @@ AllElements
 DefaultMap
 SmallElements
 maptestsmall
+zzCornerTrouble
+zzConcentricEvil
+zzRingAroundTheRosie
+zzDuels
+zzMinimalism
+zzItsATrap
+zzOverload
+zzBuggyForest
+zzHighwayToHell
+zzzHyperRush
 
 BUILD SUCCESSFUL in 1s
 1 actionable task: 1 executed

@@ -63,7 +63,6 @@ public class Launcher extends Robot {
     }
 
     void attack() throws GameActionException {
-        if (rc.getRoundNum()%2 == 0) return;
         boolean attacker = false;
         for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
@@ -83,7 +82,10 @@ public class Launcher extends Robot {
         MapLocation huntTarget = communications.findBestAttackTarget();
         rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
         rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
-        greedyPath.move(huntTarget);
+        if (rc.getLocation().distanceSquaredTo(huntTarget) > (rc.getType().visionRadiusSquared + 20))
+            greedyPath.move(huntTarget);
+        else if (rc.getRoundNum()%2 == 0) 
+            greedyPath.move(huntTarget);
     }
 
     // Relies on exploration code.
