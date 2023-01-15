@@ -32,11 +32,8 @@ public class Amplifier extends Robot {
         double avgx=0, avgy=0;
         int count=0;
         for (RobotInfo r: robots) {
-            if (r.ID == rc.getID()) continue;
-            if (r.type == RobotType.HEADQUARTERS ||
-                r.type == RobotType.AMPLIFIER) {
-                continue;
-            }
+            if (r.type == RobotType.AMPLIFIER || 
+                r.type == RobotType.HEADQUARTERS) continue;
             avgx += r.location.x;
             avgy += r.location.y;
             count++;
@@ -74,6 +71,7 @@ public class Amplifier extends Robot {
 
     class AmplifyTarget {
         MapLocation avg;
+        MapLocation nloc;
         Direction dir;
         boolean canmove;
         int distToNearestAmp;
@@ -83,7 +81,7 @@ public class Amplifier extends Robot {
         AmplifyTarget(Direction dir, MapLocation avg) throws GameActionException {
             this.avg = avg;
             this.dir = dir;
-            MapLocation nloc = rc.getLocation().add(dir);
+            nloc = rc.getLocation().add(dir);
             this.distToAverage = nloc.distanceSquaredTo(avg);
             this.distToNearestAmp = 10000;
             canmove = rc.canMove(dir);
@@ -93,7 +91,7 @@ public class Amplifier extends Robot {
         }
 
         void updateAmp(MapLocation m) {
-            int ampDist = rc.getLocation().distanceSquaredTo(m);
+            int ampDist = nloc.distanceSquaredTo(m);
             if (ampDist < distToNearestAmp)
                 distToNearestAmp = ampDist;
         }
@@ -102,13 +100,14 @@ public class Amplifier extends Robot {
         boolean isBetterThan(AmplifyTarget at) throws GameActionException {
             if (at == null) return true;
 
+            System.out.println("" + distToNearestAmp + " " + at.distToNearestAmp);
             // canmove
             if (at.canmove && !canmove) return false;
             if (!at.canmove && canmove) return true;
 
             // stay away from other amplifiers.
-            if (at.distToNearestAmp>4 && distToNearestAmp<=4) return false;
-            if (at.distToNearestAmp<=4 && distToNearestAmp>4) return true;
+            if (at.distToNearestAmp>9 && distToNearestAmp<=9) return false;
+            if (at.distToNearestAmp<=9 && distToNearestAmp>9) return true;
 
             return distToAverage <= at.distToAverage;
         }
