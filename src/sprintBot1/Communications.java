@@ -97,12 +97,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        /*
         System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
             " " + symmetryChecker.rSym);
-         */
     }
 
     void updateBuild(RobotType r) throws GameActionException {
@@ -627,10 +625,12 @@ public class Communications {
         class Data {
             Direction current;
             int tileType;
+            int wellType;
             int isHQ;
-            Data(Direction current, int tileType, int status) {
+            Data(Direction current, int tileType, int wellType, int status) {
                 this.current = current;
                 this.tileType = tileType;
+                this.wellType = wellType;
                 this.isHQ = status;
             }
         }
@@ -661,19 +661,28 @@ public class Communications {
             return true;
         }
 
-        int getSymmetry() {
+        int getSymmetry() throws GameActionException {
+            hSym = rc.readSharedArray(H_SYM) == 0;
+            vSym = rc.readSharedArray(V_SYM) == 0;
+            rSym = rc.readSharedArray(R_SYM) == 0;
             if (hSym && !vSym && !rSym) return 0;
             if (!hSym && vSym && !rSym) return 1;
             if (!hSym && !vSym && rSym) return 2;
             return -1;
         }
 
+        void pushUpdates() throws GameActionException {
+            if (rc.canWriteSharedArray(H_SYM, 0)) {
+                if (updates[0]) rc.writeSharedArray(H_SYM, 1);
+                if (updates[1]) rc.writeSharedArray(V_SYM, 1);
+                if (updates[2]) rc.writeSharedArray(R_SYM, 1);
+            }
+        }
+
         void updateSymmetry() throws GameActionException {
             // all default to 1, they have to be eliminated.
             if (!isReady()) return;
-            hSym = rc.readSharedArray(H_SYM) == 0;
-            vSym = rc.readSharedArray(V_SYM) == 0;
-            rSym = rc.readSharedArray(R_SYM) == 0;
+            pushUpdates();
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
             for (MapInfo mi: area) {
                 if (Clock.getBytecodesLeft() < 500) return;
@@ -688,12 +697,24 @@ public class Communications {
                 } else {
                     status = -1;
                 }
+                int wellType = -1;
+                if (rc.canSenseLocation(m)) {
+                    WellInfo w = rc.senseWell(m);
+                    if (w != null) {
+                        boolean hasA = w.getResource(ResourceType.ADAMANTIUM) > 0;
+                        boolean hasM = w.getResource(ResourceType.MANA) > 0;
+                        if (hasA && !hasM) wellType = 1;
+                        if (!hasA && hasM) wellType = 2;
+                    } else {
+                        wellType = 0;
+                    }
+                }
                 
                 int tileType = 0;
                 if (rc.senseIsland(m) != -1) tileType = 1;
                 else if (mi.hasCloud()) tileType = 2;
 
-                tiles[m.x][m.y] = new Data(mi.getCurrentDirection(), tileType, status);
+                tiles[m.x][m.y] = new Data(mi.getCurrentDirection(), tileType, wellType, status);
 
                 if (hSym) {
                     MapLocation s = getHSym(m);
@@ -705,7 +726,8 @@ public class Communications {
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) hSym = false;
                     if (sym.tileType != tileType) hSym = false;
-
+                    if ((sym.wellType != -1 && wellType != -1) && 
+                        sym.wellType != tiles[m.x][m.y].wellType) hSym = false;
                 }
 
                 if (vSym) {
@@ -719,6 +741,8 @@ public class Communications {
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) vSym = false;
                     if (sym.tileType != tileType) vSym = false;
+                    if ((sym.wellType != -1 && wellType != -1) && 
+                        sym.wellType != tiles[m.x][m.y].wellType) vSym = false;
                 }
 
                 if (rSym) {
@@ -731,15 +755,17 @@ public class Communications {
                     if ((sym.isHQ != -1 && status != -1) && 
                         sym.isHQ != tiles[m.x][m.y].isHQ) rSym = false;
                     if (sym.tileType != tileType) rSym = false;
+                    if ((sym.wellType != -1 && wellType != -1) && 
+                        sym.wellType != tiles[m.x][m.y].wellType) rSym = false;
                 }
                 if (rc.canWriteSharedArray(H_SYM, 0)) {
-                    if (!hSym || updates[0]) rc.writeSharedArray(H_SYM, 1);
-                    if (!vSym || updates[1]) rc.writeSharedArray(V_SYM, 1);
-                    if (!rSym || updates[2]) rc.writeSharedArray(R_SYM, 1);
+                    if (!hSym) rc.writeSharedArray(H_SYM, 1);
+                    if (!vSym) rc.writeSharedArray(V_SYM, 1);
+                    if (!rSym) rc.writeSharedArray(R_SYM, 1);
                 } else {
-                    updates[0] = !hSym;
-                    updates[1] = !vSym;
-                    updates[2] = !rSym;
+                    if (!hSym) updates[0] = true;
+                    if (!vSym) updates[1] = true;
+                    if (!rSym) updates[2] = true;
                 }
             }
         }

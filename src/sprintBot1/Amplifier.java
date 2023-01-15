@@ -31,12 +31,10 @@ public class Amplifier extends Robot {
         RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         double avgx=0, avgy=0;
         int count=0;
-        int numAntenna=0;
         for (RobotInfo r: robots) {
             if (r.ID == rc.getID()) continue;
             if (r.type == RobotType.HEADQUARTERS ||
                 r.type == RobotType.AMPLIFIER) {
-                numAntenna++;
                 continue;
             }
             avgx += r.location.x;
@@ -44,9 +42,6 @@ public class Amplifier extends Robot {
             count++;
         }
         if (count == 0) return false;
-        if (numAntenna > 1) {
-            exploration.move();
-        }
 
         avgx /= count;
         avgy /= count;
@@ -112,29 +107,8 @@ public class Amplifier extends Robot {
             if (!at.canmove && canmove) return true;
 
             // stay away from other amplifiers.
-            if (at.distToNearestAmp>16 && distToNearestAmp<=16) return false;
-            if (at.distToNearestAmp<=16 && distToNearestAmp>16) return true;
-
-            // if close prioritize location that is further away.
-            if (at.distToNearestAmp<=16 && distToNearestAmp<=16)
-                return distToNearestAmp>at.distToNearestAmp;
-
-            // Locations closer to HQ are better.
-            if ((at.distToHQ <= at.distAvgToHQ) &&
-                    !(distToHQ <= at.distAvgToHQ)) return false;
-            if (!(at.distToHQ <= at.distAvgToHQ) &&
-                    (distToHQ <= at.distAvgToHQ)) return true;
-
-            // not too far.
-            int visrad = RobotType.AMPLIFIER.visionRadiusSquared;
-            if (at.distToAverage <= visrad &&
-                distToAverage > visrad) return false;
-            if (at.distToAverage > visrad &&
-                distToAverage <= visrad) return true;   
-            
-            // not too close.
-            if (at.distToAverage > 9 && distToAverage <= 9) return false;
-            if (at.distToAverage <= 9 && distToAverage >= 9) return true;   
+            if (at.distToNearestAmp>4 && distToNearestAmp<=4) return false;
+            if (at.distToNearestAmp<=4 && distToNearestAmp>4) return true;
 
             return distToAverage <= at.distToAverage;
         }
