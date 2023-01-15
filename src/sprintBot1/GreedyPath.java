@@ -38,6 +38,7 @@ public class GreedyPath {
             clockwise = Math.random() < 0.5;
             startDirMissingInARow = 0;
         }
+        if(rc.getLocation().equals(loc)) return;
 
         int dist = hybridDistance(rc.getLocation(), destination);
         if (dist < bestSoFar) {

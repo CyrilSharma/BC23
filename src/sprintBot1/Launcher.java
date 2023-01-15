@@ -123,8 +123,7 @@ public class Launcher extends Robot {
             if (microtargets[i].isBetterThan(best))
                 best = microtargets[i];
         }
-        if (rc.canMove(best.dir))
-            rc.move(best.dir);
+        if (rc.canMove(best.dir)) rc.move(best.dir);
     }
 
     AttackTarget getBestAttackTarget() {

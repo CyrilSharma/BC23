@@ -93,6 +93,10 @@ public class Carrier extends Robot {
 
     void search() throws GameActionException{
         findTarget();
+        if(wellTarget != null){
+            seek();
+            return;
+        }
         exploration.move();
         exploration.move();
     }
