@@ -26,9 +26,6 @@ public class Launcher extends Robot {
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
-        if(communications.symmetryChecker.getSymmetry() != -1 && communications.symmetryChecker.readSymmetry() == -1){
-            greedyPath.move(communications.findClosestHQ());
-        }
         switch (state) {
             case ATTACK: attack(); break;
             case HUNT: hunt(); break;
@@ -66,6 +63,7 @@ public class Launcher extends Robot {
     }
 
     void attack() throws GameActionException {
+        if (rc.getRoundNum()%2 == 0) return;
         boolean attacker = false;
         for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
