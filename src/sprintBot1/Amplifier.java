@@ -99,8 +99,7 @@ public class Amplifier extends Robot {
         // Not all of these are useful probably.
         boolean isBetterThan(AmplifyTarget at) throws GameActionException {
             if (at == null) return true;
-
-            System.out.println("" + distToNearestAmp + " " + at.distToNearestAmp);
+            
             // canmove
             if (at.canmove && !canmove) return false;
             if (!at.canmove && canmove) return true;
