@@ -83,7 +83,6 @@ public class Launcher extends Robot {
     // Relies on comms.
     void hunt() throws GameActionException {
         MapLocation huntTarget = communications.findBestAttackTarget();
-        if (rc.canActLocation(huntTarget)) rc.attack(huntTarget);
         rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
         rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
         greedyPath.move(huntTarget);
@@ -142,19 +141,16 @@ public class Launcher extends Robot {
     // Choose best candidate for maneuvering in close encounters.
     class MicroTarget {
         Direction dir;
-        double dps_received;
-        double dps_targetting;
-        double dps_defending;
-        int minDistToEnemy;
+        double net_dps = 0;
+        double dps_targetting = 0;
+        double dps_defending = 0;
+        int minDistToEnemy = 100000;
         boolean canMove;
         MapLocation nloc;
 
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
-            dps_received = 0;
-            dps_targetting = 0;
-            dps_defending = 0;
-            minDistToEnemy = 10000;
+            net_dps -= ((double) rc.getType().damage) * (1.0 / rc.senseCooldownMultiplier(myloc));
             nloc = myloc.add(dir);
             canMove = rc.canMove(dir);
             if (canMove) {
@@ -172,9 +168,9 @@ public class Launcher extends Robot {
             if (r.type == RobotType.BOOSTER) {
                 int d = nloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    dps_received += r.type.damage * (1.0 / cooldown);
+                    net_dps += (double) r.type.damage * (1.0 / cooldown);
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += r.type.damage * (1.0 / cooldown);;
+                    dps_targetting += (double) r.type.damage * (1.0 / cooldown);;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
@@ -184,13 +180,12 @@ public class Launcher extends Robot {
             if (Util.isAttacker(r.type)) {
                 MapInfo mi = rc.senseMapInfo(r.location);
                 double cooldown = mi.getCooldownMultiplier(rc.getTeam());
-                dps_defending += r.type.damage * (1.0 / cooldown);
+                dps_defending += (double) r.type.damage * (1.0 / cooldown);
             }
         }
        
-
         int safe() {
-            if (dps_received > 0) return 1;
+            if (net_dps > 0) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
         }

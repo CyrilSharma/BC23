@@ -595,6 +595,27 @@ public class Communications {
         else return best.m;
     }
 
+    public boolean isEnemyTerritory(MapLocation m) throws GameActionException {
+        if (symmetryChecker.getSymmetry() == -1) return false;
+        int minDistEnemy = 100000;
+        int minDistAlly = 100000;
+        for (MapLocation h: HQs) {
+            if (h == null) continue;
+            int d1 = h.distanceSquaredTo(m);
+            MapLocation s = null;
+            switch (symmetryChecker.getSymmetry()) {
+                case 0: s = symmetryChecker.getHSym(m);
+                case 1: s = symmetryChecker.getVSym(m);
+                case 2: s = symmetryChecker.getRSym(m);
+                default:
+            }
+            int d2 = h.distanceSquaredTo(s);
+            if (d1 < minDistAlly) minDistAlly = d1;
+            if (d2 < minDistEnemy) minDistEnemy = d2;
+        }
+        return minDistEnemy <= minDistAlly;
+    }
+
     class AttackTarget {
         boolean low_health;
         int priority;
