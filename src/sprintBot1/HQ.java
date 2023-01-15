@@ -140,12 +140,14 @@ public class HQ extends Robot {
     class BuildTarget {
         MapLocation mloc;
         boolean placeable;
+        int d;
         // when we have comms make it spawn towards goals and stuff.
         BuildTarget(MapLocation mloc) {
             this.mloc = mloc;
             try {
                 placeable = rc.sensePassability(mloc) &&
                     !rc.isLocationOccupied(mloc);
+                d = mloc.distanceSquaredTo(new MapLocation(rc.getMapHeight()/2, rc.getMapWidth()/2));
             } catch (GameActionException e) {
                 System.out.println(e.getMessage());
             }
@@ -155,7 +157,7 @@ public class HQ extends Robot {
             if (bt == null) return true;
             if (bt.placeable && !placeable) return false;
             if (!bt.placeable && placeable) return true;
-            return true;
+            return d <= bt.d;
         }
     }
 }
