@@ -63,7 +63,7 @@ public class Launcher extends Robot {
     }
 
     void attack() throws GameActionException {
-        if (rc.getRoundNum()%2 == 0) {System.out.println("ayo"); return;}
+        if (rc.getRoundNum()%2 == 0) return;
         boolean attacker = false;
         for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
