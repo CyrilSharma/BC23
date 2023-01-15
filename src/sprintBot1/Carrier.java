@@ -12,6 +12,7 @@ public class Carrier extends Robot {
     int fleeTurns = 0;
     MapLocation home;
     boolean hasAnchor = false;
+    private boolean shouldDeliver = false;
     enum State {
         SEARCHING,
         SEEKING,
@@ -60,24 +61,33 @@ public class Carrier extends Robot {
                 return State.FLEE;
             }
         }
+
+        // fleeing but current seeing no enemies, deposit ur stuff.
+        if (shouldDeliver) return State.DELIVERING;
         if (fleeTurns > 0) {
             fleeTurns--;
-            if (adamantium + mana + elixir > 10) return State.DELIVERING;
+            if (adamantium + mana + elixir > 10) {
+                shouldDeliver = true;
+            }
             else return State.FLEE;
         }
+
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (hasAnchor) return State.DELIVER_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
             mana == 0 && 
-            elixir == 0)
+            elixir == 0) {
             return State.SEARCHING;
+        }
         
         if (wellTarget != null && 
-            rc.getLocation().distanceSquaredTo(wellTarget) > 2)
+            rc.getLocation().distanceSquaredTo(wellTarget) > 2) {
             return State.SEEKING;
+        }
 
-        if (adamantium + mana + elixir < 39 && wellTarget != null) {
+        if ((adamantium + mana + elixir) < 39 && 
+            wellTarget != null) {
             return State.HARVESTING;
         }
         if (adamantium + mana + elixir > 0) {
@@ -212,8 +222,10 @@ public class Carrier extends Robot {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
             for (ResourceType r: resources) {
                 if (rc.getResourceAmount(r) == 0) continue;
-                if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
+                if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r))) {
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
+                    shouldDeliver = false;
+                }
             }
         }
     }
@@ -277,8 +289,10 @@ public class Carrier extends Robot {
         if (!Util.isAttacker(best.type)) return;
         if (rc.canAttack(best.location)) {
             int total = adamantium + mana + elixir;
-            if (total > 5 && total < 20)
+            if (total > 5 && total < 20) {
                 rc.attack(best.location);
+                shouldDeliver = false;
+            }
         }
     }
 

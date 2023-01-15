@@ -80,6 +80,7 @@ public class Launcher extends Robot {
     // Relies on comms.
     void hunt() throws GameActionException {
         MapLocation huntTarget = communications.findBestAttackTarget();
+        if (rc.canActLocation(huntTarget)) rc.attack(huntTarget);
         rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
         rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
         greedyPath.move(huntTarget);

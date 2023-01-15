@@ -55,6 +55,7 @@ public class Util {
         int health;
         boolean canAttack;
         RobotInfo r;
+        int d;
 
         AttackTarget(RobotInfo r) {
             loc = r.location;
@@ -62,6 +63,8 @@ public class Util {
             health = r.health;
             this.r = r;
             canAttack = rc.canAttack(loc);
+            // allows us to agree on who to attack.
+            d = r.location.distanceSquaredTo(new MapLocation(0, 0));
         }
 
         boolean isBetterThan(AttackTarget at) {
@@ -70,7 +73,9 @@ public class Util {
             if (!at.canAttack && canAttack) return true;
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
-            return health <= at.health;
+            if (at.health < health) return false;
+            if (at.health > health) return true;
+            return d <= at.d;
         }
     }
 }
