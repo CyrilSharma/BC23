@@ -37,16 +37,6 @@ public class HQ extends Robot {
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
                 communications.resetCounts();
         }
-        if(rc.getRoundNum() > 2) {
-            if(communications.HQs[0].equals(rc.getLocation())){
-                communications.resetResourceCounts();
-            }
-            communications.updateResources();
-
-            if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) {
-                communications.divideResources(ResourceType.MANA, 2);
-            }
-        }
         if(rc.getRoundNum() > 2){
             communications.initial();
         }

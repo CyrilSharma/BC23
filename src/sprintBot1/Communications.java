@@ -146,7 +146,7 @@ public class Communications {
         ResourceType[] res = ResourceType.values();
         if (sum == 0) return res[rng.nextInt(3)];
         int val = rng.nextInt(sum);
-        
+
         for (int i = 0; i < 3; i++) {
             if (val < bounds[i]) return res[i];
         }

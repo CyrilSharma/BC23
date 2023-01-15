@@ -78,14 +78,10 @@ public class Exploration {
 
     public MapLocation generateTarget() {
         // we need to compute enemy territory somehow so we don't end up waltzing into enemy territory.
-        if (rng.nextInt(2) == 0) {
-            return keypos[rng.nextInt(keypos.length)];
-        } else {
-            MapLocation m = rc.getLocation();
-            while (rc.getLocation().distanceSquaredTo(m) <= 80) {
-                m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
-            }
-            return m;
+        MapLocation m = rc.getLocation();
+        while (rc.getLocation().distanceSquaredTo(m) <= 80) {
+            m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
         }
+        return m;
     }
 }

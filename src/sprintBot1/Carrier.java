@@ -32,6 +32,7 @@ public class Carrier extends Robot {
         rc.setIndicatorString(state.toString());
         
         communications.initial();
+        //rc.setIndicatorString("need: " + communications.getResourceNeed());
         attack();
         switch (state) {
             case SEARCHING: search(); break;
@@ -204,7 +205,10 @@ public class Carrier extends Robot {
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
             for (ResourceType r: resources) {
-                if (rc.getResourceAmount(r) == 0) continue;
+                if (rc.getResourceAmount(r) == 0){
+                    wellTarget = null;
+                    continue;
+                }
                 if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r)))
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
             }

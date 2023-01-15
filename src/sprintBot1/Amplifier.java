@@ -45,7 +45,7 @@ public class Amplifier extends Robot {
         }
         if (count == 0) return false;
         if (numAntenna > 1) {
-            exploration.move();;
+            exploration.move();
         }
 
         avgx /= count;
