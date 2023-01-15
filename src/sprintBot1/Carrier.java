@@ -44,6 +44,7 @@ public class Carrier extends Robot {
             case FLEE: flee(); break;
             default:
         }
+        communications.last();
     }
 
     void initialize() {

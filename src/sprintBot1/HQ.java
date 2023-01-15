@@ -18,6 +18,7 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
+        //if(rc.getRoundNum() == 1000) rc.resign();
         rc.setIndicatorString("" + cntCarriers);
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
@@ -41,6 +42,8 @@ public class HQ extends Robot {
             communications.initial();
         }
         build();
+        communications.last();
+        rc.setIndicatorString("symmetry is " + communications.symmetryChecker.getSymmetry());
     }
 
     void build() throws GameActionException {

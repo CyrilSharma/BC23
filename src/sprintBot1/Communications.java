@@ -97,10 +97,12 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
+        /*
         System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
             " " + symmetryChecker.rSym);
+         */
     }
 
     void updateBuild(RobotType r) throws GameActionException {
@@ -671,6 +673,16 @@ public class Communications {
             return -1;
         }
 
+        int readSymmetry() throws GameActionException{
+            boolean hSym1 = rc.readSharedArray(H_SYM) == 0;
+            boolean vSym1 = rc.readSharedArray(V_SYM) == 0;
+            boolean rSym1 = rc.readSharedArray(R_SYM) == 0;
+            if (hSym1 && !vSym1 && !rSym1) return 0;
+            if (!hSym1 && vSym1 && !rSym1) return 1;
+            if (!hSym1 && !vSym1 && rSym1) return 2;
+            return -1;
+        }
+
         void pushUpdates() throws GameActionException {
             if (rc.canWriteSharedArray(H_SYM, 0)) {
                 if (updates[0]) rc.writeSharedArray(H_SYM, 1);
@@ -684,8 +696,11 @@ public class Communications {
             if (!isReady()) return;
             pushUpdates();
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
+            for(int i = 0; i < numHQ; i++){
+                tiles[HQs[i].x][HQs[i].y] = new Data(Direction.CENTER, 0, 0, 1);
+            }
             for (MapInfo mi: area) {
-                if (Clock.getBytecodesLeft() < 500) return;
+                if (Clock.getBytecodesLeft() < 1000) return;
                 if (getSymmetry() != -1) return;
                 MapLocation m = mi.getMapLocation();
                 int status;
