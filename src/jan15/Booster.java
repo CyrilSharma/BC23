@@ -1,22 +1,21 @@
-package sprintBot1;
+package jan15;
 import battlecode.common.*;
 
 // Control flow.
 // If no targets in range continue exploring, or seeking out some other target.
 // If there are enemies, but they're all nice, path towards them aggresively.
 // If there are attacking enemies, run attack micro.
-public class Launcher extends Robot {
+public class Booster extends Robot {
     RobotInfo[] enemies;
     MapLocation myloc;
     boolean hurt = false;
     enum State {
         ATTACK,
         HUNT,
-        EXPLORE,
-        DEFEND
+        EXPLORE
     }
 
-    public Launcher(RobotController rc) throws GameActionException {
+    public Booster(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
     }
@@ -24,76 +23,59 @@ public class Launcher extends Robot {
         initialize();
         communications.initial();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
-        doAttack(true);
         switch (state) {
-            case ATTACK: attack(); break;
-            case HUNT: hunt(); break;
-            case EXPLORE: explore(); break;
-            case DEFEND: defend(); break;
+            case ATTACK:
+                attack();
+                break;
+            case HUNT:
+                hunt();
+            case EXPLORE:
+                explore();
+                break;
         }
-        doAttack(false);
         communications.last();
     }
 
     void initialize() throws GameActionException {
         enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         myloc = rc.getLocation();
-        if (rc.getHealth() < 20) 
+        if (rc.getHealth() < 12) 
             hurt = true;
     }
 
-    void doAttack(boolean attackers) throws GameActionException {
-        RobotInfo r = util.getBestAttackTarget();
-        if (r == null) return;
-        if (attackers && !Util.isAttacker(r.type)) return;
-        rc.setIndicatorString("Attacking: " + r.location);
-        if (r != null && rc.canAttack(r.location)) 
-            rc.attack(r.location);
-    }
-
-    State determineState() throws GameActionException {
-        for (RobotInfo e : enemies) {
-            if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
-        }
-        MapLocation m = communications.findBestAttackTarget();
-        if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
-        if (rc.getLocation().distanceSquaredTo(communications.findClosestHQ()) >= 49) return State.DEFEND;
+    State determineState() {
+        if (enemies.length > 0) return State.ATTACK;
         return State.EXPLORE;
     }
 
     void attack() throws GameActionException {
-        if (rc.getRoundNum()%2 == 0) {System.out.println("ayo"); return;}
         boolean attacker = false;
         for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
                 attacker = true;
             }
         }
+        // TODO: change attack target if better target is found after moving.
+        AttackTarget at = getBestAttackTarget();
+        if (rc.canAttack(at.loc)) rc.attack(at.loc);
         if (!attacker) {
-            RobotInfo r = util.getBestAttackTarget();
-            follow(r.location);
+            follow(at.loc);
         } else {
             maneuver();
         }
     }
 
     // Relies on comms.
-    void hunt() throws GameActionException {
-        MapLocation huntTarget = communications.findBestAttackTarget();
-        rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
-        rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
-        greedyPath.move(huntTarget);
+    void hunt() {
+        ;
     }
 
     // Relies on exploration code.
     void explore() throws GameActionException{
-        exploration.moveLauncher(communications.HQs, communications.numHQ);
+        exploration.move();
     }
 
-    void defend() throws GameActionException {
-        greedyPath.move(communications.findClosestHQ());
-    }
+   
 
     void follow(MapLocation m) throws GameActionException {
         ChaseTarget best = null;
@@ -110,21 +92,13 @@ public class Launcher extends Robot {
         for (Direction d: directions) {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
-
-        for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 1000) break;
-            for (Direction d: directions) {
-                if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
-                else microtargets[d.ordinal()].addEnemy(r);
-            }
-        }
-
         MicroTarget best = microtargets[0];
         for (int i = 0; i < 9; i++) {
             if (microtargets[i].isBetterThan(best))
                 best = microtargets[i];
         }
-        if (rc.canMove(best.dir)) rc.move(best.dir);
+        if (rc.canMove(best.dir))
+            rc.move(best.dir);
     }
 
     AttackTarget getBestAttackTarget() {
@@ -137,38 +111,38 @@ public class Launcher extends Robot {
     }
 
     // Choose best candidate for maneuvering in close encounters.
+    // TODO: respond to effects of non-booster classes.
     class MicroTarget {
         Direction dir;
-        double net_dps = 0;
-        double dps_targetting = 0;
-        double dps_defending = 0;
-        int minDistToEnemy = 100000;
+        double dps_received;
+        double dps_targetting;
+        double dps_defending;
+        int minDistToEnemy;
         boolean canMove;
-        MapLocation nloc;
 
-        MicroTarget(Direction dir) throws GameActionException {
+        MicroTarget(Direction dir) {
             this.dir = dir;
-            net_dps -= ((double) rc.getType().damage) * (1.0 / rc.senseCooldownMultiplier(myloc));
-            nloc = myloc.add(dir);
+            dps_received = 0;
+            dps_targetting = 0;
+            dps_defending = 0;
+            minDistToEnemy = 10000;
             canMove = rc.canMove(dir);
-            if (canMove) {
-                MapInfo mi = rc.senseMapInfo(nloc);
-                nloc.add(mi.getCurrentDirection());
-            }
         }
-        
+
+        //cooldown thing is deprecated i think
+        //we are not using this anyway so i commented
+        /*
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
-            double cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
             if (r.type == RobotType.BOOSTER) {
-                int d = nloc.distanceSquaredTo(m);
+                int d = myloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
-                    net_dps += (double) r.type.damage * (1.0 / cooldown);
+                    dps_received += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));
                 if (d <= r.type.visionRadiusSquared)
-                    dps_targetting += (double) r.type.damage * (1.0 / cooldown);;
+                    dps_targetting += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam().opponent()));;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
@@ -177,13 +151,13 @@ public class Launcher extends Robot {
         void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {
                 MapInfo mi = rc.senseMapInfo(r.location);
-                double cooldown = mi.getCooldownMultiplier(rc.getTeam());
-                dps_defending += (double) r.type.damage * (1.0 / cooldown);
+                dps_defending += r.type.damage * (1 / mi.getCooldownMuliplier(rc.getTeam()));
             }
         }
-       
+         */
+
         int safe() {
-            if (net_dps > 0) return 1;
+            if (dps_received > 0) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
         }
@@ -200,8 +174,6 @@ public class Launcher extends Robot {
             if (hurt) {
                 if (mt.dps_targetting < dps_targetting) return false;
                 if (mt.dps_targetting > dps_targetting) return true;
-                // run away!!!!
-                return minDistToEnemy >= mt.minDistToEnemy;
             }
 
             // get as far away from enemies while still being in range.
@@ -220,11 +192,11 @@ public class Launcher extends Robot {
         AttackTarget(RobotInfo r) {
             loc = r.location;
             switch (r.getType()) {
-                case BOOSTER: priority=4; break;
+                case BOOSTER: priority=6; break;
                 case AMPLIFIER: priority=3; break;
                 case HEADQUARTERS: priority=1; break;
                 case CARRIER: priority=2; break;
-                case LAUNCHER: priority=6; break;
+                case LAUNCHER: priority=4; break;
                 case DESTABILIZER: priority=5; break;
             }
             health = r.health;
@@ -252,7 +224,6 @@ public class Launcher extends Robot {
         }
 
         boolean isBetterThan(ChaseTarget ct) {
-            if (ct == null) return true;
             if (ct.canMove && !canMove) return false;
             if (!ct.canMove && canMove) return true;
             // if sufficently close, do not move closer.

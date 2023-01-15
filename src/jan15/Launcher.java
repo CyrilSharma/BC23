@@ -1,4 +1,4 @@
-package sprintBot1;
+package jan15;
 import battlecode.common.*;
 
 // Control flow.
@@ -63,7 +63,6 @@ public class Launcher extends Robot {
     }
 
     void attack() throws GameActionException {
-        if (rc.getRoundNum()%2 == 0) {System.out.println("ayo"); return;}
         boolean attacker = false;
         for (RobotInfo e: enemies) {
             if (Util.isAttacker(e.getType())) {
