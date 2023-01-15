@@ -32,7 +32,7 @@ public class Carrier extends Robot {
         rc.setIndicatorString(state.toString());
         
         communications.initial();
-        //rc.setIndicatorString("need: " + communications.getResourceNeed());
+        //rc.setIndicatorString("need: " + communications.readResourceNeed());
         attack();
         switch (state) {
             case SEARCHING: search(); break;
@@ -131,11 +131,12 @@ public class Carrier extends Robot {
             int dist = rc.getLocation().distanceSquaredTo(wellTarget);
             for(WellInfo w : wells){
                 if(w.getResourceType() != communications.readResourceNeed()) continue;
-                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) < dist){
+                int d = w.getMapLocation().distanceSquaredTo(communications.findClosestHQto(w.getMapLocation()));
+                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) + d < dist){
                    WellTarget uwu = new WellTarget(w);
                    if(!uwu.crowded()){
                        bst = uwu.loc;
-                       dist = rc.getLocation().distanceSquaredTo(uwu.loc);
+                       dist = rc.getLocation().distanceSquaredTo(uwu.loc) + d;
                    }
                 }
             }
@@ -148,9 +149,9 @@ public class Carrier extends Robot {
         int harvestersNear;
         int distance;
         ResourceType r;
-        WellTarget(WellInfo w) {
+        WellTarget(WellInfo w) throws GameActionException{
             loc = w.getMapLocation();
-            distance = loc.distanceSquaredTo(rc.getLocation());
+            distance = loc.distanceSquaredTo(rc.getLocation()) + loc.distanceSquaredTo(communications.findClosestHQto(loc));
             harvestersNear = 0;
             RobotInfo[] robots = rc.senseNearbyRobots();
             for (RobotInfo r: robots) {

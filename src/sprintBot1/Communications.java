@@ -29,8 +29,8 @@ public class Communications {
 
     //message types
     static final int ADAMANTIUM_WELL = 0;
-    static final int ELIXIR_WELL = 1;
-    static final int MANA_WELL = 2;
+    static final int MANA_WELL = 1;
+    static final int ELIXIR_WELL = 2;
     static final int HQ_LOCATION = 3;
 
     //stuff like our HQs and resource locations
@@ -236,12 +236,13 @@ public class Communications {
             if (typ == 3) continue;
             if(resources[typ] == r){
                 MapLocation w = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
-                if(rc.getLocation().distanceSquaredTo(w) < dist){
+                if(rc.getLocation().distanceSquaredTo(w) + w.distanceSquaredTo(findClosestHQto(w)) < dist){
                     dist = rc.getLocation().distanceSquaredTo(w);
                     bestWell = w;
                 }
             }
         }
+        //System.out.println("location of well is " + bestWell);
         return bestWell;
     }
 
@@ -491,6 +492,20 @@ public class Communications {
         for (MapLocation m: HQs) {
             if (m == null) continue;
             int d = rc.getLocation().distanceSquaredTo(m);
+            if (d < bestD) {
+                bestD = d;
+                best = m;
+            }
+        }
+        return best;
+    }
+
+    public MapLocation findClosestHQto(MapLocation g) throws GameActionException {
+        MapLocation best = null;
+        int bestD = 100000;
+        for (MapLocation m: HQs) {
+            if (m == null) continue;
+            int d = g.distanceSquaredTo(m);
             if (d < bestD) {
                 bestD = d;
                 best = m;
