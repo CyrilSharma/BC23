@@ -210,6 +210,7 @@ public class Carrier extends Robot {
     }
 
     void deliver() throws GameActionException {
+        rc.setIndicatorString("HI THERE");
         int dist = 1000000;
         for(int i = 0; i < communications.numHQ; i++){
             if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
@@ -263,6 +264,7 @@ public class Carrier extends Robot {
         MapLocation closestTarget = null;
         int d = 100000;
         for (int idx: islands) {
+            if (Clock.getBytecodesLeft() < 1000) break;
             if (rc.senseAnchor(idx) != null) continue;
             MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
             for (MapLocation spot: spots) {

@@ -63,6 +63,7 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         // if we're going to move, see where everyone else has moved since last time.
+        if (rc.getHealth() < 12) hurt = true;
         communications.initial();
         if (rc.getRoundNum()%2 == 1) updateNeighbors();
         State state = determineState();
@@ -71,7 +72,7 @@ public class Launcher extends Robot {
         switch (state) {
             case WAIT: break;
             case RENDEVOUS: rendevous(); break;
-            case CHASE: chase();
+            case CHASE: chase(); break;
             case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
             case IMPROVE_VISION: improve_vision(); break;
@@ -132,10 +133,10 @@ public class Launcher extends Robot {
 
         // waiting for squad.
         if (rc.getRoundNum() <= 7) return State.WAIT;
-        if (!rendevous && !hasEnemy) return State.RENDEVOUS;
+        if (!rendevous && !hasEnemy && previousEnemy == null) return State.RENDEVOUS;
 
-        if (hasEnemy) return State.ATTACK;
         if (bestNeighborDir != Direction.CENTER) return State.ADVANCE;
+        if (hasEnemy) return State.ATTACK;
         // chase enemy only if you're not already chasing one with the group.
         if (previousEnemy != null) return State.CHASE;
         // if (hasHq) return State.SUFFOCATE; // ignore for now.
@@ -152,8 +153,9 @@ public class Launcher extends Robot {
 
         int count = 0;
         // only act on local movement.
-        RobotInfo[] robots = rc.senseNearbyRobots(9, rc.getTeam().opponent());
+        RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
         for (RobotInfo r: robots) {
+            if (Clock.getBytecodesLeft() < 5000) break;
             if (neighbors.containsKey(r.ID)) {
                 RobotInfo prev = neighbors.get(r.ID);
                 // if a unit moved away from me, follow him.
@@ -178,16 +180,19 @@ public class Launcher extends Robot {
                 best = targets[d.ordinal()];
         }
         bestNeighborDir = best.dir;
+        System.out.println(Clock.getBytecodesLeft());
     }
 
     void rendevous() throws GameActionException {
         MapLocation r = communications.getBestRendevous();
-        if (rc.getLocation().distanceSquaredTo(r) > 4) greedyPath.move(r);
-        else rendevous = true;
+        if (rc.canSenseLocation(r)) {
+            MapInfo mi = rc.senseMapInfo(r);
+        }
+        greedyPath.move(r);
     }
 
     void advance() throws GameActionException {
-        rc.setIndicatorString("" + bestNeighborDir);
+        //rc.setIndicatorString("" + bestNeighborDir);
         Direction d = bestNeighborDir;
         if (d != Direction.CENTER && rc.canMove(d) && rc.getRoundNum()%2==1) 
             rc.move(d);
@@ -226,13 +231,14 @@ public class Launcher extends Robot {
     }
 
     void maneuver() throws GameActionException {
+        rc.setIndicatorString("Maneuvering");
         MicroTarget[] microtargets = new MicroTarget[9];
         for (Direction d: directions) {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
 
         for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 1000) break;
+            if (Clock.getBytecodesLeft() < 5000) break;
             for (Direction d: directions) {
                 if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
                 else microtargets[d.ordinal()].addEnemy(r);
@@ -306,7 +312,8 @@ public class Launcher extends Robot {
             MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
             double cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
-            if (r.type == RobotType.BOOSTER) {
+
+            if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(m);
                 if (d <= r.type.actionRadiusSquared) 
                     net_dps += (double) r.type.damage * (1.0 / cooldown);
@@ -334,6 +341,7 @@ public class Launcher extends Robot {
         boolean isBetterThan(MicroTarget mt) {
             if (mt.canMove && !canMove) return false;
             if (!mt.canMove && canMove) return true;
+
             
             // the idea here is attack first, then move out of range.
             if (mt.safe() > safe()) return false;
@@ -348,10 +356,13 @@ public class Launcher extends Robot {
             }
 
             // get as far away from enemies while still being in range.
-            if (minDistToEnemy <= rc.getType().actionRadiusSquared)
-                return minDistToEnemy >= mt.minDistToEnemy;
-            else
+            if (minDistToEnemy >= rc.getType().actionRadiusSquared &&
+                mt.minDistToEnemy >= rc.getType().actionRadiusSquared)
                 return minDistToEnemy <= mt.minDistToEnemy;
+            if (minDistToEnemy <= rc.getType().actionRadiusSquared &&
+                mt.minDistToEnemy <= rc.getType().actionRadiusSquared)
+                return minDistToEnemy >= mt.minDistToEnemy;
+            return minDistToEnemy <= mt.minDistToEnemy;
         }
     }
 
