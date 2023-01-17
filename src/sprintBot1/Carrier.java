@@ -28,6 +28,7 @@ public class Carrier extends Robot {
     }
 
     void run() throws GameActionException {
+        //rc.disintegrate();
         initialize();
         State state = determineState();
         rc.setIndicatorString(state.toString());
@@ -117,7 +118,6 @@ public class Carrier extends Robot {
         greedyPath.move(wellTarget);
         checkBetterTarget();
     }
-    //need to redo this part
 
     void findTarget() throws GameActionException{
         //basically the idea is, we flip a coin

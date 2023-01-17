@@ -19,19 +19,13 @@ public class HQ extends Robot {
     }
     void run() throws GameActionException {
         //if(rc.getRoundNum() == 1000) rc.resign();
-        rc.setIndicatorString("" + cntCarriers);
+        rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
-        if(rc.getRoundNum() >= 50) {
-            if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
-                // once comms have been estabished switch to this.
-                cntCarriers = communications.getUnitCount(RobotType.CARRIER);
-                cntLaunchers = communications.getUnitCount(RobotType.LAUNCHER);
-                cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
-            }
-        } else {
-            cntCarriers = communications.readBuild(RobotType.CARRIER);
-            cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
+        if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
+            // we're trying to go Comms-less, so for now just use these.
+            cntCarriers = communications.getUnitCount(RobotType.CARRIER);
+            cntLaunchers = communications.getUnitCount(RobotType.LAUNCHER);
             cntAmplifiers = communications.readBuild(RobotType.AMPLIFIER);
         }
         if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0){
@@ -43,7 +37,7 @@ public class HQ extends Robot {
         }
         build();
         communications.last();
-        rc.setIndicatorString("symmetry is " + communications.symmetryChecker.getSymmetry());
+        //rc.setIndicatorString("Symmetry is " + communications.symmetryChecker.getSymmetry());
     }
 
     void build() throws GameActionException {
@@ -60,13 +54,10 @@ public class HQ extends Robot {
         RobotType needed = buildToRobotType(b);
         buildIfCan(needed);
         for (RobotType r: RobotType.values()) {
-            // Replace with a needs array.
-            // i.e set globally what troops we want.
-            // only build troops we want.
             if (r == RobotType.CARRIER &&
-                cntCarriers > 20) continue;
-            if (r == RobotType.AMPLIFIER &&
-                cntAmplifiers * 3 >= cntLaunchers) continue;
+                cntCarriers > 30) continue;
+            // use in late game, but for now just don't make any.
+            if (r == RobotType.AMPLIFIER) continue;
             buildIfCan(r);
         }
     }
@@ -82,6 +73,7 @@ public class HQ extends Robot {
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
                 communications.updateBuild(r);
+                rc.setIndicatorString("Built: " + r);
             }
         }
     }
@@ -109,21 +101,19 @@ public class HQ extends Robot {
         if (defend) return Build.LAUNCHER;
 
         // spam carriers initially.
-        if (rc.getRoundNum() <= 50 && cntCarriers < (4 * Math.max(communications.numHQ, 1)))
+        if (rc.getRoundNum() <= 3)
             return Build.CARRIER;
-
-        // Emergency low.
-        if (cntAmplifiers < 4) return Build.AMPLIFIER;
-        if (cntCarriers < 4) return Build.CARRIER;
-        if (cntLaunchers < 4) return Build.LAUNCHER;
+        
+        // Game is probably over, build anchors.
+        if (rc.getRoundNum() > 1000 && rc.canBuildAnchor(Anchor.STANDARD)) 
+            return Build.ANCHOR;
+        else if (rc.getRoundNum() > 1000)
+            return Build.NONE;
 
         // alternate between which things you add, unless ratios go out of wack.
-        int mod = rc.getRoundNum() % 4;
-        if (mod==0 && cntCarriers < 20) return Build.CARRIER;
-        if (mod==1 && cntLaunchers < 3 * cntCarriers) return Build.LAUNCHER;
-        if (mod==2 && cntAmplifiers * 3 < cntLaunchers) return Build.AMPLIFIER;
-        if (mod==3) return Build.ANCHOR;
-        else return Build.LAUNCHER;
+        int mod = rc.getRoundNum() % 2;
+        if (mod==0 && cntCarriers < 30) return Build.CARRIER;
+        return Build.LAUNCHER;
     }
 
     RobotType buildToRobotType(Build b) {

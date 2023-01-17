@@ -596,7 +596,9 @@ public class Communications {
     }
 
     public MapLocation getBestRendevous() throws GameActionException {
-        return null;
+        // This could be made better if it accounted for the actual positions of HQs,
+        // and the number of HQs, i.e make central points to consecutive pairs of HQs
+        return new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2);
     }
 
     public boolean isEnemyTerritory(MapLocation m) throws GameActionException {
