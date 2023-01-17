@@ -46,7 +46,6 @@ public class Launcher extends Robot {
     int prevEnemyRound = -1;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
-    HashSet<Integer> squadIDs = new HashSet<Integer>();
     boolean okToStray;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
@@ -68,7 +67,6 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
         if (rc.getHealth() < 12) hurt = true;
-        if (rc.getRoundNum() == 8) updateSquadIDs();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         communications.initial();
         if (rc.getRoundNum()%2 == 1) updateNeighbors();
@@ -88,16 +86,6 @@ public class Launcher extends Robot {
         updateEnemy();
         communications.last();
         previousPos = rc.getLocation();
-    }
-
-    void updateSquadIDs() throws GameActionException {
-        int i = 0;
-        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
-            if (i == 3) break;
-            if (r.type != RobotType.LAUNCHER) continue;
-            squadIDs.add(r.ID);
-            i++;
-        }
     }
 
     void updateEnemy() throws GameActionException {
