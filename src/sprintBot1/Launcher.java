@@ -47,6 +47,7 @@ public class Launcher extends Robot {
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
     HashSet<Integer> squadIDs = new HashSet<Integer>();
+    boolean okToStray;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     Direction bestNeighborDir;
@@ -65,7 +66,7 @@ public class Launcher extends Robot {
         communications.findOurHQs();
     }
     void run() throws GameActionException {
-        // if we're going to move, see where everyone else has moved since last time.
+        okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
         if (rc.getHealth() < 12) hurt = true;
         if (rc.getRoundNum() == 8) updateSquadIDs();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
@@ -152,9 +153,8 @@ public class Launcher extends Robot {
         // waiting for squad.
         if (rc.getRoundNum() <= 7) return State.WAIT;
         // initially, only rendevous until you encounter an enemy.
-        // eventually, rendevous with less strect criteria so we stay where the enemy is.
         if (!rendevous && !hasEnemy && previousEnemy == null &&
-            (bestNeighborDir == Direction.CENTER || rc.getRoundNum() > 100)) 
+            (bestNeighborDir == Direction.CENTER || okToStray))
             return State.RENDEVOUS;
 
         if (bestNeighborDir != Direction.CENTER) return State.ADVANCE;
@@ -184,8 +184,7 @@ public class Launcher extends Robot {
                 if (prev != null && prev.location != r.location
                     && r.type == RobotType.LAUNCHER && 
                     r.location.distanceSquaredTo(rc.getLocation()) >
-                    prev.location.distanceSquaredTo(rc.getLocation()) &&
-                    (!squadIDs.contains(r.ID) || rc.getRoundNum() > 20)) {
+                    prev.location.distanceSquaredTo(rc.getLocation())) {
                     for (ClusterTarget t: targets) t.updateAlly(r);
                     count++;
                 }
