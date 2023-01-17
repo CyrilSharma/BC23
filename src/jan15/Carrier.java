@@ -28,6 +28,7 @@ public class Carrier extends Robot {
     }
 
     void run() throws GameActionException {
+        //rc.disintegrate();
         initialize();
         State state = determineState();
         rc.setIndicatorString(state.toString());
@@ -140,6 +141,7 @@ public class Carrier extends Robot {
 
     void checkBetterTarget() throws GameActionException{
         WellInfo[] wells = rc.senseNearbyWells();
+        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
         //int ada = communications.getAdamantiumReq(), mana = communications.getManaReq();
         if (wells.length > 0) {
             MapLocation bst = null;
@@ -149,6 +151,10 @@ public class Carrier extends Robot {
                 int d = w.getMapLocation().distanceSquaredTo(communications.findClosestHQto(w.getMapLocation()));
                 if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) + d < dist){
                    WellTarget uwu = new WellTarget(w);
+                   for (RobotInfo r: friends) {
+                        if (r.type != RobotType.CARRIER) continue;
+                        uwu.updateRobot(r);
+                   }
                    if(!uwu.crowded()){
                        bst = uwu.loc;
                        dist = rc.getLocation().distanceSquaredTo(uwu.loc) + d;
@@ -168,14 +174,13 @@ public class Carrier extends Robot {
             loc = w.getMapLocation();
             distance = loc.distanceSquaredTo(rc.getLocation()) + loc.distanceSquaredTo(communications.findClosestHQto(loc));
             harvestersNear = 0;
-            RobotInfo[] robots = rc.senseNearbyRobots();
-            for (RobotInfo r: robots) {
-                if (r.type != RobotType.CARRIER) continue;
-                if (r.location.distanceSquaredTo(loc) <= 4) {
-                    harvestersNear++;
-                }
-            }
             r = w.getResourceType();
+        }
+
+        void updateRobot(RobotInfo r) {
+            if (r.location.distanceSquaredTo(loc) <= 4) {
+                harvestersNear++;
+            }
         }
 
         boolean crowded() {

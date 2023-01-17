@@ -190,7 +190,7 @@ public class Communications {
 
     // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
-        if(rc.getRoundNum() <= 40) return ResourceType.MANA;
+        if(rc.getRoundNum() <= 25) return ResourceType.MANA;
         if(resourceNeeded == null) resourceNeeded = getResourceNeed();
         return resourceNeeded;
     }
@@ -601,6 +601,20 @@ public class Communications {
         else return best.m;
     }
 
+    public MapLocation getBestRendevous() throws GameActionException {
+        // This could be made better if it accounted for the actual positions of HQs,
+        // and the number of HQs, i.e make central points to consecutive pairs of HQs
+        
+        return symmetryChecker.getRSym(findClosestHQ());
+    }
+
+    public MapLocation getBestRendevous() throws GameActionException {
+        // This could be made better if it accounted for the actual positions of HQs,
+        // and the number of HQs, i.e make central points to consecutive pairs of HQs
+        
+        return symmetryChecker.getRSym(findClosestHQ());
+    }
+
     public boolean isEnemyTerritory(MapLocation m, MapLocation[] HQS, int numHQQ) throws GameActionException {
         if (symmetryChecker.getSymmetry() == -1) return false;
         int minDistEnemy = 100000;
@@ -727,7 +741,7 @@ public class Communications {
                 tiles[HQs[i].x][HQs[i].y] = new Data(Direction.CENTER, 0, 0, 1);
             }
             for (MapInfo mi: area) {
-                if (Clock.getBytecodesLeft() < 1000) return;
+                if (Clock.getBytecodesLeft() < 2000) return;
                 if (getSymmetry() != -1) return;
                 MapLocation m = mi.getMapLocation();
                 int status;
