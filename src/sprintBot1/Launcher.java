@@ -180,7 +180,6 @@ public class Launcher extends Robot {
                 best = targets[d.ordinal()];
         }
         bestNeighborDir = best.dir;
-        System.out.println(Clock.getBytecodesLeft());
     }
 
     void rendevous() throws GameActionException {
