@@ -1,5 +1,6 @@
 package sprintBot1;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import battlecode.common.*;
 
@@ -45,6 +46,7 @@ public class Launcher extends Robot {
     int prevEnemyRound = -1;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
+    HashSet<Integer> squadIDs = new HashSet<Integer>();
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     Direction bestNeighborDir;
@@ -65,6 +67,7 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         // if we're going to move, see where everyone else has moved since last time.
         if (rc.getHealth() < 12) hurt = true;
+        if (rc.getRoundNum() == 8) updateSquadIDs();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         communications.initial();
         if (rc.getRoundNum()%2 == 1) updateNeighbors();
@@ -84,6 +87,16 @@ public class Launcher extends Robot {
         updateEnemy();
         communications.last();
         previousPos = rc.getLocation();
+    }
+
+    void updateSquadIDs() throws GameActionException {
+        int i = 0;
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (i == 3) break;
+            if (r.type != RobotType.LAUNCHER) continue;
+            squadIDs.add(r.ID);
+            i++;
+        }
     }
 
     void updateEnemy() throws GameActionException {
@@ -138,7 +151,11 @@ public class Launcher extends Robot {
 
         // waiting for squad.
         if (rc.getRoundNum() <= 7) return State.WAIT;
-        if (!rendevous && !hasEnemy && previousEnemy == null) return State.RENDEVOUS;
+        // initially, only rendevous until you encounter an enemy.
+        // eventually, rendevous with less strect criteria so we stay where the enemy is.
+        if (!rendevous && !hasEnemy && previousEnemy == null &&
+            (bestNeighborDir == Direction.CENTER || rc.getRoundNum() > 100)) 
+            return State.RENDEVOUS;
 
         if (bestNeighborDir != Direction.CENTER) return State.ADVANCE;
         if (hasEnemy) return State.ATTACK;
@@ -167,7 +184,8 @@ public class Launcher extends Robot {
                 if (prev != null && prev.location != r.location
                     && r.type == RobotType.LAUNCHER && 
                     r.location.distanceSquaredTo(rc.getLocation()) >
-                    prev.location.distanceSquaredTo(rc.getLocation())) {
+                    prev.location.distanceSquaredTo(rc.getLocation()) &&
+                    (!squadIDs.contains(r.ID) || rc.getRoundNum() > 20)) {
                     for (ClusterTarget t: targets) t.updateAlly(r);
                     count++;
                 }
