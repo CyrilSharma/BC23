@@ -608,13 +608,6 @@ public class Communications {
         return symmetryChecker.getRSym(findClosestHQ());
     }
 
-    public MapLocation getBestRendevous() throws GameActionException {
-        // This could be made better if it accounted for the actual positions of HQs,
-        // and the number of HQs, i.e make central points to consecutive pairs of HQs
-        
-        return symmetryChecker.getRSym(findClosestHQ());
-    }
-
     public boolean isEnemyTerritory(MapLocation m, MapLocation[] HQS, int numHQQ) throws GameActionException {
         if (symmetryChecker.getSymmetry() == -1) return false;
         int minDistEnemy = 100000;
