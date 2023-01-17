@@ -24,6 +24,35 @@ public class Util {
         return Math.sqrt(Math.pow((a.x - b.x),2) + Math.pow((a.y - b.y),2));
     }
 
+    public static Direction getClosestDirection(double dx, double dy) {
+        double absx = Math.abs(dx);
+        double absy = Math.abs(dy);
+        if (absx < 0.5 && absy < 0.5) return Direction.CENTER;
+        if (absx > absy) {
+            double half = absx * 0.4142;
+            if (dx > 0) {
+                if (dy > half) return Direction.NORTHEAST;
+                if (dy < -half) return Direction.SOUTHEAST;
+                return Direction.EAST;
+            } else {
+                if (dy > half) return Direction.NORTHWEST;
+                if (dy < -half) return Direction.SOUTHWEST;
+                return Direction.WEST;
+            }
+        } else {
+            double half = absy * 0.4142;
+            if (dy > 0) {
+                if (dx > half) return Direction.NORTHEAST;
+                if (dx < -half) return Direction.NORTHWEST;
+                return Direction.NORTH;
+            } else {
+                if (dx > half) return Direction.SOUTHEAST;
+                if (dx < -half) return Direction.SOUTHWEST;
+                return Direction.SOUTH;
+            }
+        }
+    }
+
     public static int getPriority(RobotInfo r) {
         int priority;
         switch (r.getType()) {

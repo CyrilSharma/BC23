@@ -595,6 +595,10 @@ public class Communications {
         else return best.m;
     }
 
+    public MapLocation getBestRendevous() throws GameActionException {
+        return null;
+    }
+
     public boolean isEnemyTerritory(MapLocation m) throws GameActionException {
         if (symmetryChecker.getSymmetry() == -1) return false;
         int minDistEnemy = 100000;

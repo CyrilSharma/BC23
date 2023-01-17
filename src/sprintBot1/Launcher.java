@@ -1,19 +1,56 @@
 package sprintBot1;
+import java.util.HashMap;
+
 import battlecode.common.*;
 
-// Control flow.
-// If no targets in range continue exploring, or seeking out some other target.
-// If there are enemies, but they're all nice, path towards them aggresively.
-// If there are attacking enemies, run attack micro.
+// xSquare Control flow.
+// If your squad is not formed, wait.
+// If you have not reached first rendevous, go there.
+// If your homie moves, and you can't see his target, move with him. 
+// -> this takes precedence over attack micro, 
+// -> it's better to move as a group then to greedily maximize your interests.
+// If you see an enemy, use attack micro.
+// If you see an enemy HQ, suffocate it.
+// Also does some stuff with amplifiers but I will ignore that for now.
+
+// Notes:
+// Launchers always arrive with their squad.
+// In essence, HQs should place launchers near each other so the form a cluster.
+// While that cluster is unfinished Launchers should just wait.
+// Turn order is based on spawn order, so HQs should spawn the front of the 
+// Cluster first, then the back of the cluster, so that it can move as a unit.
+// Note the above logic depends on the direction the cluster is intended to go.
+// Also, maybe only one robot should be sent the meetup location, and the rest should just be followers.
+// That's harder to implement though, so I will save off on doing that for now.
+
+// Moving in the same direction as those who moved may actually be kind of stupid.
+// If your cluster gets broken apart, then you will never try to reform it.
+// Instead, move towards the average location of the robots who moved.
+// OR. employ some heuristic, select from the eight direction and choose the square which
+// minimizes the distance to robots who moved. <- [Probably the better option]
+// OR. minimize distance to robots period. but only if you can't see anything to attack.
+// Still stupid because now you're just gonna want to sit in one spot all the time.
+
+// Two potential targets. At first robots path towards some central location.
+// In fact, robots continue to do this unless they see enemies throughout the game.
+// Once they reach their destination, they head to an enemy HQ if it's available (they memorize it at the beginning)
+// Also they don't just stand at HQs, they actively rotate around it, although not sure how important that is.
+// Squads are only informed of one enemy HQ, and they just head to that one.
+
+// Everything attacks outside of clouds if at all possible.
+// Spam rc.canAttack() for all tiles in vision radius ig.
 public class Launcher extends Robot {
     RobotInfo[] enemies;
     MapLocation myloc;
     boolean hurt = false;
+    boolean rendevous = false;
+    // may want to replace this with a custom implementation.
+    HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
+    Direction netComradeDir;
     enum State {
+        RENDEVOUS,
+        ADVANCE,
         ATTACK,
-        HUNT,
-        EXPLORE,
-        DEFEND
     }
 
     public Launcher(RobotController rc) throws GameActionException {
@@ -21,26 +58,17 @@ public class Launcher extends Robot {
         communications.findOurHQs();
     }
     void run() throws GameActionException {
-        initialize();
         communications.initial();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
+            case RENDEVOUS: rendevous(); break;
+            case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
-            case HUNT: hunt(); break;
-            case EXPLORE: explore(); break;
-            case DEFEND: defend(); break;
         }
         doAttack(false);
         communications.last();
-    }
-
-    void initialize() throws GameActionException {
-        enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
-        myloc = rc.getLocation();
-        if (rc.getHealth() < 20) 
-            hurt = true;
     }
 
     void doAttack(boolean attackers) throws GameActionException {
@@ -53,13 +81,50 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
+        if (!rendevous) return State.RENDEVOUS;
+        boolean comradeMoved = updateNeighbors();
+        if (comradeMoved) return State.ADVANCE;
         for (RobotInfo e : enemies) {
             if (e.type != RobotType.HEADQUARTERS) return State.ATTACK;
         }
-        MapLocation m = communications.findBestAttackTarget();
-        if (m != null && !rc.canSenseLocation(m)) return State.HUNT;
-        if (rc.getLocation().distanceSquaredTo(communications.findClosestHQ()) >= 49) return State.DEFEND;
-        return State.EXPLORE;
+    }
+
+
+    boolean updateNeighbors() throws GameActionException {
+        double dx = 0;
+        double dy = 0;
+        int count = 0;
+        RobotInfo[] robots = rc.senseNearbyRobots();
+        for (RobotInfo r: robots) {
+            if (neighbors.containsKey(r.ID)) {
+                RobotInfo prev = neighbors.get(r.ID);
+                // if you have a teammate who moved, add him to the average.
+                if (r.team == rc.getTeam() && prev != null && prev.location != r.location) {
+                    Direction diff = prev.location.directionTo(r.location);
+                    dx += (double) diff.getDeltaX();
+                    dy += (double) diff.getDeltaY();
+                    count++;
+                }
+                neighbors.remove(r.ID);
+            }
+            neighbors.put(r.ID, r);
+        }
+        if (count == 0) return false;
+        netComradeDir = Util.getClosestDirection(dx/count, dy/count);
+        return true;
+    }
+
+    void rendevous() throws GameActionException {
+        MapLocation r = communications.getBestRendevous();
+        if (myloc.distanceSquaredTo(r) > 4) greedyPath.move(r);
+        else rendevous = false;
+    }
+
+    void advance() throws GameActionException {
+        Direction d = netComradeDir;
+        if (rc.canMove(d)) rc.move(d);
+        if (rc.canMove(d.rotateLeft())) rc.move(d.rotateLeft());
+        if (rc.canMove(d.rotateRight())) rc.move(d.rotateRight());
     }
 
     void attack() throws GameActionException {
@@ -75,26 +140,6 @@ public class Launcher extends Robot {
         } else {
             maneuver();
         }
-    }
-
-    // Relies on comms.
-    void hunt() throws GameActionException {
-        MapLocation huntTarget = communications.findBestAttackTarget();
-        rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
-        rc.setIndicatorLine(rc.getLocation(), huntTarget, 0, 0, 0);
-        if (rc.getLocation().distanceSquaredTo(huntTarget) > (rc.getType().visionRadiusSquared + 20))
-            greedyPath.move(huntTarget);
-        else if (rc.getRoundNum()%2 == 0) 
-            greedyPath.move(huntTarget);
-    }
-
-    // Relies on exploration code.
-    void explore() throws GameActionException{
-        exploration.moveLauncher(communications.HQs, communications.numHQ);
-    }
-
-    void defend() throws GameActionException {
-        greedyPath.move(communications.findClosestHQ());
     }
 
     void follow(MapLocation m) throws GameActionException {
