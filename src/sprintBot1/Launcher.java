@@ -42,6 +42,7 @@ import battlecode.common.*;
 public class Launcher extends Robot {
     boolean hurt = false;
     boolean rendevous = false;
+    int prevEnemyRound = -1;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
     // may want to replace this with a custom implementation.
@@ -64,6 +65,7 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         // if we're going to move, see where everyone else has moved since last time.
         if (rc.getHealth() < 12) hurt = true;
+        if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         communications.initial();
         if (rc.getRoundNum()%2 == 1) updateNeighbors();
         State state = determineState();
@@ -96,7 +98,10 @@ public class Launcher extends Robot {
                 }
             }
         }
-        if (best != null) previousEnemy = best;
+        if (best != null) {
+            previousEnemy = best;
+            prevEnemyRound = rc.getRoundNum()%5;
+        }
     }
 
     void improve_vision() throws GameActionException {
