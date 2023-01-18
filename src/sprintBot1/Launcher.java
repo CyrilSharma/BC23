@@ -50,6 +50,7 @@ public class Launcher extends Robot {
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     Direction bestNeighborDir;
+    private MapLocation enemyHQLoc;
     enum State {
         WAIT,
         RENDEVOUS,
@@ -80,7 +81,7 @@ public class Launcher extends Robot {
             case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
             case IMPROVE_VISION: improve_vision(); break;
-            case SUFFOCATE: break;
+            case SUFFOCATE: suffocate();
         }
         doAttack(false);
         updateEnemy();
@@ -104,6 +105,10 @@ public class Launcher extends Robot {
             previousEnemy = best;
             prevEnemyRound = rc.getRoundNum()%5;
         }
+    }
+
+    void suffocate() throws GameActionException {
+        greedyPath.move(enemyHQLoc);
     }
 
     void improve_vision() throws GameActionException {
@@ -135,7 +140,10 @@ public class Launcher extends Robot {
         boolean hasEnemy = false;
         for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (e.type != RobotType.HEADQUARTERS) hasEnemy = true;
-            else hasHq = true;
+            else {
+                hasHq = true;
+                enemyHQLoc = e.location;
+            }
         }
 
         // waiting for squad.
@@ -152,6 +160,7 @@ public class Launcher extends Robot {
         // if (hasHq) return State.SUFFOCATE; // ignore for now.
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         if (mi.hasCloud()) return State.IMPROVE_VISION;
+        if (hasHq) return State.SUFFOCATE;
         return State.WAIT;
     }
 
@@ -194,9 +203,6 @@ public class Launcher extends Robot {
 
     void rendevous() throws GameActionException {
         MapLocation r = communications.getBestRendevous();
-        if (rc.canSenseLocation(r)) {
-            MapInfo mi = rc.senseMapInfo(r);
-        }
         greedyPath.move(r);
     }
 
@@ -210,7 +216,10 @@ public class Launcher extends Robot {
     void chase() throws GameActionException {
         if (rc.getLocation().distanceSquaredTo(previousEnemy) > 4)
             greedyPath.move(previousEnemy);
-        else previousEnemy = null;
+        else if (rc.canSenseLocation(previousEnemy)) {
+            RobotInfo r = rc.senseRobotAtLocation(previousEnemy);
+            if (r == null) previousEnemy = null;
+        }
     }   
 
     void attack() throws GameActionException {

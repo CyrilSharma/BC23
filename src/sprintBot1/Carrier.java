@@ -162,11 +162,13 @@ public class Carrier extends Robot {
     class WellTarget {
         MapLocation loc;
         int harvestersNear;
-        int distance;
+        int distHQ;
+        double dist;
         ResourceType r;
         WellTarget(WellInfo w) throws GameActionException{
             loc = w.getMapLocation();
-            distance = loc.distanceSquaredTo(rc.getLocation()) + loc.distanceSquaredTo(communications.findClosestHQto(loc));
+            dist = Util.absDistance(loc, rc.getLocation());
+            distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
             harvestersNear = 0;
             RobotInfo[] robots = rc.senseNearbyRobots();
             for (RobotInfo r: robots) {
@@ -192,7 +194,9 @@ public class Carrier extends Robot {
             if (!wt.bestResource() && bestResource()) return true;
             if (!wt.crowded() && crowded()) return false;
             if (wt.crowded() && !crowded()) return true;
-            return distance <= wt.distance; 
+            if (wt.dist + 12 < dist) return false;
+            if (dist + 12 < wt.dist) return true;
+            return distHQ <= wt.distHQ; 
         }
     }
 
