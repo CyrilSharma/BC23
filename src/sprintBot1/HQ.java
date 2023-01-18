@@ -104,6 +104,13 @@ public class HQ extends Robot {
         // spam carriers initially.
         if (rc.getRoundNum() <= 3)
             return Build.CARRIER;
+
+        // We probably are somewhat secure, build an amplifier.
+        if (rc.getRoundNum() >= 200 && cntAmplifiers == 0 && 
+            RobotType.AMPLIFIER.buildCostMana <= rc.getResourceAmount(ResourceType.MANA)) {
+            return Build.AMPLIFIER;
+        } else if (rc.getRoundNum() >= 200 && cntAmplifiers == 0)
+            return Build.NONE;
         
         // Game is probably over, build anchors.
         if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD)) 

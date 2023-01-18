@@ -17,3 +17,4 @@ Carrier Code is ok this is kind of redundant
 - They should broadcast locations of enemies.
 
 Also, we need to build amplifiers late game!
+Also, we have no idea how to deal with clouds.

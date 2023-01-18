@@ -52,6 +52,12 @@ public class GreedyPath {
             for (int i = 0; i < 8; i++) {
                 MapLocation next = rc.adjacentLocation(directions[dir]);
                 if (rc.onTheMap(next) && rc.canMove(directions[dir])){
+                    for (int iter = 0; iter < 2; iter++) {
+                        if (!rc.canSenseLocation(next)) break;
+                        MapInfo mi = rc.senseMapInfo(next);
+                        next = next.add(mi.getCurrentDirection());
+                        if (rc.getType() != RobotType.LAUNCHER) break;
+                    }
                     int nextDist = hybridDistance(next, destination);
                     if (firstDist == -1) {
                         firstDist = nextDist;
@@ -71,6 +77,12 @@ public class GreedyPath {
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             MapLocation next = rc.adjacentLocation(directions[dir]);
+            for (int iter = 0; iter < 2; iter++) {
+                if (!rc.canSenseLocation(next)) break;
+                MapInfo mi = rc.senseMapInfo(next);
+                next = next.add(mi.getCurrentDirection());
+                if (rc.getType() != RobotType.LAUNCHER) break;
+            }
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
@@ -175,31 +187,6 @@ public class GreedyPath {
         if(bst != Direction.CENTER && rc.canMove(bst)){
             rc.move(bst);
             move(rc.getLocation().add(bst).add(bst));
-        }
-    }
-
-    class MoveTarget {
-        Direction dir;
-        boolean canMove;
-        int d;
-        int current_dir;
-        MoveTarget(Direction dir) throws GameActionException {
-            this.dir = dir;
-            if (rc.canMove(dir)) {
-                MapLocation nloc = rc.getLocation().add(dir);
-                MapInfo mi = rc.senseMapInfo(nloc);
-                nloc = nloc.add(mi.getCurrentDirection());
-                d = nloc.distanceSquaredTo(target);
-                canMove = true;
-            } else {
-                canMove = false;
-            }
-        }
-
-        boolean isBetterThan(MoveTarget mt) {
-            if (mt.canMove && !canMove) return false;
-            if (!mt.canMove && canMove) return true;
-            return d <= mt.d;
         }
     }
 }

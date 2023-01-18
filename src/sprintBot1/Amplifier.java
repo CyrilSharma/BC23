@@ -32,8 +32,7 @@ public class Amplifier extends Robot {
         double avgx=0, avgy=0;
         int count=0;
         for (RobotInfo r: robots) {
-            if (r.type == RobotType.AMPLIFIER || 
-                r.type == RobotType.HEADQUARTERS) continue;
+            if (!Util.isAttacker(r.type)) continue;
             avgx += r.location.x;
             avgy += r.location.y;
             count++;

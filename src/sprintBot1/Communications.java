@@ -90,7 +90,11 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum() >= 50 && rc.getRoundNum() <= 150){
+            if (rc.getRoundNum() <= 150) {
+                setResourceNeed(ResourceType.MANA, 2);
+                setResourceNeed(ResourceType.ADAMANTIUM, 2);
+            }
+            else if (rc.getRoundNum() <= 250){
                 setResourceNeed(ResourceType.MANA, 4);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             }
@@ -188,11 +192,8 @@ public class Communications {
         return rc.readSharedArray(RESOURCE_COUNT + 2);
     }
 
-    // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
-        if(rc.getRoundNum() <= 15) return ResourceType.MANA;
-        if(resourceNeeded == null) resourceNeeded = getResourceNeed();
-        return resourceNeeded;
+        return getResourceNeed();
     }
 
     public void sendMemory() throws GameActionException {
@@ -595,13 +596,15 @@ public class Communications {
         }
         //rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
+        if (best.d > 15) return null;
         else return best.m;
     }
 
     public MapLocation getBestRendevous() throws GameActionException {
         // This could be made better if it accounted for the actual positions of HQs,
         // and the number of HQs, i.e make central points to consecutive pairs of HQs
-        
+        MapLocation m = findBestAttackTarget();
+        if (m != null) return m;
         return symmetryChecker.getRSym(findClosestHQ());
     }
 

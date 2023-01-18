@@ -76,15 +76,14 @@ public class Carrier extends Robot {
             return State.FLEE;
         }
 
-        // fleeing but current seeing no enemies, deposit ur stuff.
-        if (shouldDeliver) return State.DELIVERING;
         if (fleeTurns > 0) {
             fleeTurns--;
             if (adamantium + mana + elixir > 10) {
                 shouldDeliver = true;
             }
-            else return State.FLEE;
+            return State.FLEE;
         }
+        if (shouldDeliver) return State.DELIVERING;
 
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (hasAnchor) return State.DELIVER_ANCHOR;
@@ -328,7 +327,7 @@ public class Carrier extends Robot {
         if (!Util.isAttacker(best.type)) return;
         if (rc.canAttack(best.location)) {
             int total = adamantium + mana + elixir;
-            if (total > 5 && total < 20) {
+            if (total > 7) {
                 rc.attack(best.location);
                 shouldDeliver = false;
             }
