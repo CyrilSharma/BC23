@@ -55,8 +55,7 @@ public class HQ extends Robot {
         RobotType needed = buildToRobotType(b);
         buildIfCan(needed);
         for (RobotType r: RobotType.values()) {
-            if (r == RobotType.CARRIER &&
-                cntCarriers > 30) continue;
+            // if (r == RobotType.CARRIER) continue;
             // use in late game, but for now just don't make any.
             if (r == RobotType.AMPLIFIER) continue;
             buildIfCan(r);
