@@ -72,7 +72,7 @@ public class Launcher extends Robot {
         if (rc.getHealth() < 12) hurt = true;
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         communications.initial();
-        if (rc.getRoundNum()%2 == 1) updateNeighbors();
+        if (rc.getRoundNum()%3 != 2) updateNeighbors();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
@@ -132,7 +132,7 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
-        if (rc.getRoundNum()%2 == 0) return State.WAIT;
+        if (rc.getRoundNum()%3 == 2) return State.WAIT;
 
         boolean inHQRange = false;
         boolean hasEnemy = false;

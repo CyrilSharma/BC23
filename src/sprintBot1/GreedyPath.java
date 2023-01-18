@@ -33,7 +33,7 @@ public class GreedyPath {
     public void move(MapLocation loc) throws GameActionException {
         if (!rc.isMovementReady()) return;
         if (rc.getType() == RobotType.LAUNCHER &&
-            rc.getRoundNum()%2 == 0) return;
+            rc.getRoundNum()%3 == 2) return;
         if (!loc.equals(destination)) {
             destination = loc;
             bestSoFar = 99999;
