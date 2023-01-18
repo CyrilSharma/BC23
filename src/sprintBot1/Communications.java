@@ -90,11 +90,11 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if(getUnitCount(RobotType.CARRIER) < 20){
+            if (rc.getRoundNum() >= 50 && rc.getRoundNum() <= 150){
                 setResourceNeed(ResourceType.MANA, 4);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             }
-            else{
+            else {
                 setResourceNeed(ResourceType.MANA, 9);
                 setResourceNeed(ResourceType.ADAMANTIUM, 3);
             }
@@ -190,7 +190,7 @@ public class Communications {
 
     // always mines at a 50-50 ratio; may not want that.
     public ResourceType readResourceNeed() throws GameActionException {
-        if(rc.getRoundNum() <= 25) return ResourceType.MANA;
+        if(rc.getRoundNum() <= 15) return ResourceType.MANA;
         if(resourceNeeded == null) resourceNeeded = getResourceNeed();
         return resourceNeeded;
     }

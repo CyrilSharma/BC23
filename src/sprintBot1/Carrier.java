@@ -30,7 +30,7 @@ public class Carrier extends Robot {
     }
 
     void run() throws GameActionException {
-        allowCommedWells = rc.getRoundNum() >= 25;
+        allowCommedWells = true;//rc.getRoundNum() >= 25;
         mineEfficently = rc.getRoundNum() >= 75;
         //rc.disintegrate();
         initialize();
@@ -214,7 +214,7 @@ public class Carrier extends Robot {
         }
 
         boolean crowded() {
-            return harvestersNear > 3;
+            return harvestersNear > 7;
         }
 
         boolean bestResource() throws GameActionException {
