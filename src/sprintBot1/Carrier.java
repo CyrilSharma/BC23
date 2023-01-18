@@ -12,6 +12,8 @@ public class Carrier extends Robot {
     int fleeTurns = 0;
     MapLocation home;
     boolean hasAnchor = false;
+    boolean allowCommedWells;
+    boolean mineEfficently;
     private boolean shouldDeliver = false;
     enum State {
         SEARCHING,
@@ -28,6 +30,8 @@ public class Carrier extends Robot {
     }
 
     void run() throws GameActionException {
+        allowCommedWells = rc.getRoundNum() >= 25;
+        mineEfficently = rc.getRoundNum() >= 75;
         //rc.disintegrate();
         initialize();
         State state = determineState();
@@ -57,11 +61,19 @@ public class Carrier extends Robot {
     // No Seeking state until we have comms.
     State determineState() throws GameActionException {
         grab_anchor();
-        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
-            if (Util.isAttacker(r.type)) {
-                fleeTurns = 3;
-                return State.FLEE;
+        int attackerHealth = 0;
+        int defenderHealth = 0;
+        for (RobotInfo r: rc.senseNearbyRobots(-1)) {
+            if (r.team == rc.getTeam().opponent() && Util.isAttacker(r.type)) {
+                attackerHealth += r.health;
             }
+            if (r.team == rc.getTeam() && Util.isAttacker(r.type)) {
+                defenderHealth += r.health;
+            }
+        }
+        if (attackerHealth > 0) {
+            fleeTurns = 3;
+            return State.FLEE;
         }
 
         // fleeing but current seeing no enemies, deposit ur stuff.
@@ -116,46 +128,42 @@ public class Carrier extends Robot {
     void seek() throws GameActionException {
         greedyPath.move(wellTarget);
         greedyPath.move(wellTarget);
-        checkBetterTarget();
+        findTarget();
     }
 
-    void findTarget() throws GameActionException{
-        //basically the idea is, we flip a coin
-        //and based on that, check for certain resources
-        WellInfo[] wells = rc.senseNearbyWells();
-        if (wells.length > 0) {
+    void findTarget() throws GameActionException {
+        int iters = 0;
+        ResourceType r = communications.readResourceNeed();
+        while (iters < 3) {
+            WellInfo[] wells = rc.senseNearbyWells();
             WellTarget best = null;
-            for(WellInfo w : wells){
-                WellTarget cur = new WellTarget(w);
+            for (WellInfo w : wells){
+                if (Clock.getBytecodesLeft() < 5000) break;
+                if (w.getResourceType() != r) continue;
+                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType());
                 if (cur.isBetterThan(best)) best = cur;
             }
-            // if its crowded and not a good resource use comms.
-            if (!best.crowded() && best.r == communications.readResourceNeed())
-                wellTarget = best.loc;
-            else
-                wellTarget = communications.findBestWell();
-        }
-        else wellTarget = communications.findBestWell(); //null if nothing found
-    }
 
-    void checkBetterTarget() throws GameActionException{
-        WellInfo[] wells = rc.senseNearbyWells();
-        //int ada = communications.getAdamantiumReq(), mana = communications.getManaReq();
-        if (wells.length > 0) {
-            MapLocation bst = null;
-            int dist = rc.getLocation().distanceSquaredTo(wellTarget);
-            for(WellInfo w : wells){
-                if(w.getResourceType() != communications.readResourceNeed()) continue;
-                int d = w.getMapLocation().distanceSquaredTo(communications.findClosestHQto(w.getMapLocation()));
-                if(rc.getLocation().distanceSquaredTo(w.getMapLocation()) + d < dist){
-                   WellTarget uwu = new WellTarget(w);
-                   if(!uwu.crowded()){
-                       bst = uwu.loc;
-                       dist = rc.getLocation().distanceSquaredTo(uwu.loc) + d;
-                   }
+            if (best != null && !best.crowded()) {
+                wellTarget = best.loc;
+                return;
+            }
+
+            if (allowCommedWells) {
+                for (MapLocation m: communications.readWells(r)) {
+                    if (Clock.getBytecodesLeft() < 5000) break;
+                    if (m == null) continue;
+                    WellTarget cur = new WellTarget(m, r);
+                    if (cur.isBetterThan(best)) best = cur;
+                }
+                if (best != null && !best.crowded()) {
+                    wellTarget = best.loc;
+                    return;
                 }
             }
-            if (bst != null) wellTarget = bst;
+            // bash through all resources.
+            r = ResourceType.values()[(r.ordinal() + 1)%3];
+            if (!mineEfficently) break;
         }
     }
 
@@ -165,8 +173,8 @@ public class Carrier extends Robot {
         int distHQ;
         double dist;
         ResourceType r;
-        WellTarget(WellInfo w) throws GameActionException{
-            loc = w.getMapLocation();
+        WellTarget(MapLocation m, ResourceType res) throws GameActionException{
+            loc = m;
             dist = Util.absDistance(loc, rc.getLocation());
             distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
             harvestersNear = 0;
@@ -177,11 +185,11 @@ public class Carrier extends Robot {
                     harvestersNear++;
                 }
             }
-            r = w.getResourceType();
+            this.r = res;
         }
 
         boolean crowded() {
-            return harvestersNear>7;
+            return harvestersNear>3;
         }
 
         boolean bestResource() throws GameActionException {

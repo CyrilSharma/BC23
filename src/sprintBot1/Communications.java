@@ -230,26 +230,20 @@ public class Communications {
         return false;
     }
 
-    public MapLocation findBestWell() throws GameActionException{
-        MapLocation bestWell = null;
-        int dist = 1000000;
-        //TODO: later on, go to elixir too (we don't seem to need it now)
-        ResourceType r = readResourceNeed();
+    public MapLocation[] readWells(ResourceType r) throws GameActionException{
+        MapLocation[] locs = new MapLocation[15];
+        int ind = 0;
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             int typ = val & (0b111);
             if (typ == 3) continue;
             if(resources[typ] == r){
-                MapLocation w = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
-                if(rc.getLocation().distanceSquaredTo(w) + w.distanceSquaredTo(findClosestHQto(w)) < dist){
-                    dist = rc.getLocation().distanceSquaredTo(w);
-                    bestWell = w;
-                }
+                locs[ind] = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                ind++;
             }
         }
-        //System.out.println("location of well is " + bestWell);
-        return bestWell;
+        return locs;
     }
 
     public void reportWellCache() throws GameActionException{
