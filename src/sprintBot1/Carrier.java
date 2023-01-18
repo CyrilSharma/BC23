@@ -247,7 +247,6 @@ public class Carrier extends Robot {
     }
 
     void deliver() throws GameActionException {
-        rc.setIndicatorString("HI THERE");
         int dist = 1000000;
         for(int i = 0; i < communications.numHQ; i++){
             if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){

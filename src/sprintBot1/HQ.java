@@ -4,6 +4,7 @@ import battlecode.common.*;
 public class HQ extends Robot {
     int MAX_MINERS = 20;
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
+    int anchorRound = 1800;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
         super(rc);
@@ -105,9 +106,9 @@ public class HQ extends Robot {
             return Build.CARRIER;
         
         // Game is probably over, build anchors.
-        if (rc.getRoundNum() > 1000 && rc.canBuildAnchor(Anchor.STANDARD)) 
+        if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD)) 
             return Build.ANCHOR;
-        else if (rc.getRoundNum() > 1000)
+        else if (rc.getRoundNum() > anchorRound)
             return Build.NONE;
 
         // alternate between which things you add, unless ratios go out of wack.
