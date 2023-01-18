@@ -134,13 +134,13 @@ public class Launcher extends Robot {
     State determineState() throws GameActionException {
         if (rc.getRoundNum()%2 == 0) return State.WAIT;
 
-        boolean hasHq = false;
+        boolean inHQRange = false;
         boolean hasEnemy = false;
         for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (e.type != RobotType.HEADQUARTERS) hasEnemy = true;
             else {
-                hasHq = true;
-                enemyHQLoc = e.location;
+                if (e.location.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.actionRadiusSquared)
+                inHQRange = true;
             }
         }
 
@@ -274,7 +274,7 @@ public class Launcher extends Robot {
         }
 
         for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 1000) break;
+            if (Clock.getBytecodesLeft() < 2000) break;
             for (Direction d: directions) {
                 if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
                 else microtargets[d.ordinal()].addEnemy(r);
@@ -307,6 +307,7 @@ public class Launcher extends Robot {
             needsMove = !m.equals(rc.getLocation());
         }
         void updateAlly(RobotInfo r) {
+            if (!canMove) return;
             sumD += m.distanceSquaredTo(r.location);
         }
         boolean isBetterThan(ClusterTarget ct) {
@@ -344,6 +345,7 @@ public class Launcher extends Robot {
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
+            if (!canMove) return;
             if (!Util.isAttacker(r.type)) return;
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
@@ -367,6 +369,7 @@ public class Launcher extends Robot {
         } 
         
         void addAlly(RobotInfo r) throws GameActionException {
+            if (!canMove) return;
             if (Util.isAttacker(r.type)) {
                 MapInfo mi = rc.senseMapInfo(r.location);
                 double cooldown = mi.getCooldownMultiplier(rc.getTeam());
