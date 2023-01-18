@@ -1,0 +1,19 @@
+Flee code is suboptimal.
+- Miners sometimes return to where they just fleed from [bug].
+- Miners sometimes don't attack even when they're clearly going to die.
+- Miners don't actually optimally flee, i.e they don't choose the square that's attacked the least.
+
+Mining Code is suboptimal
+- Prioritizing mana in the short run is suboptimal on larger maps it seems.
+
+Launcher Code is suboptimal
+- Launchers sometimes can cascade whole groups of themselves in random dircetions.
+- This could be potentially addressed if we account for launcher health.
+- Launchers kind of get stuck in a certain spot, could be addressed if we went
+in the direction of the last enemy as opposed to just where the last enemy was.
+- Should go to broadcasts; of either amplifiers or carriers.
+
+Carrier Code is ok this is kind of redundant
+- They should broadcast locations of enemies.
+
+Also, we need to build amplifiers late game!
