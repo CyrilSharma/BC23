@@ -120,7 +120,7 @@ public class HQ extends Robot {
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 2;
-        if (mod==0 && cntCarriers < 30) return Build.CARRIER;
+        if (mod==0) return Build.CARRIER;
         return Build.LAUNCHER;
     }
 

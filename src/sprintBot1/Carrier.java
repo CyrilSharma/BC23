@@ -8,6 +8,7 @@ public class Carrier extends Robot {
     MapLocation wellTarget;
     MapLocation islandTarget;
     MapLocation depositLoc = null;
+    ResourceType chosen;
     // will eventually be replaced with comms.
     int fleeTurns = 0;
     MapLocation home;
@@ -26,7 +27,6 @@ public class Carrier extends Robot {
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
-        findHome();
     }
 
     void run() throws GameActionException {
@@ -35,7 +35,8 @@ public class Carrier extends Robot {
         //rc.disintegrate();
         initialize();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        if (chosen != null) rc.setIndicatorString("Seeking: " + chosen);
+        //rc.setIndicatorString(state.toString());
         
         communications.initial();
         //rc.setIndicatorString("need: " + communications.readResourceNeed());
@@ -136,7 +137,7 @@ public class Carrier extends Robot {
                 for (RobotInfo r: bots) {
                     if (r.type == RobotType.CARRIER) count++;
                 }
-                if (count > 4) findTarget();
+                if (count > 7) findTarget();
             }
         }
 
@@ -149,16 +150,18 @@ public class Carrier extends Robot {
         WellInfo[] wells = rc.senseNearbyWells();
         WellTarget[] wellTargets = new WellTarget[wells.length + 15];
         while (iters < 3) {
+            chosen = r;
             int ind = 0;
             WellTarget best = null;
             for (WellInfo w : wells){
-                if (Clock.getBytecodesLeft() < 5000) break;
+                if (Clock.getBytecodesLeft() < 1000) break;
                 if (w.getResourceType() != r) continue;
                 wellTargets[ind] = new WellTarget(w.getMapLocation(), w.getResourceType());
                 ind++;
             }
 
             for (RobotInfo f: friends) {
+                if (Clock.getBytecodesLeft() < 1000) break;
                 if (f.type != RobotType.CARRIER) continue;
                 for (int i = 0; i < ind; i++)
                     wellTargets[i].updateCarrier(f);
@@ -176,59 +179,19 @@ public class Carrier extends Robot {
 
             if (allowCommedWells) {
                 for (MapLocation m: communications.readWells(r)) {
-                    if (Clock.getBytecodesLeft() < 5000) break;
+                    if (Clock.getBytecodesLeft() < 1000) break;
                     if (m == null) continue;
                     WellTarget cur = new WellTarget(m, r);
                     if (cur.isBetterThan(best)) best = cur;
                 }
-                if (best != null && !best.crowded()) {
+                if (best != null && !best.crowded() && best.dist < 12) {
                     wellTarget = best.loc;
                     return;
                 }
             }
             // bash through all resources.
-            r = ResourceType.values()[(r.ordinal() + 1)%3];
+            r = ResourceType.values()[(r.ordinal() + 2)%3];
             if (!mineEfficently) break;
-        }
-    }
-
-    class WellTarget {
-        MapLocation loc;
-        int harvestersNear;
-        int distHQ;
-        double dist;
-        ResourceType r;
-        WellTarget(MapLocation m, ResourceType res) throws GameActionException{
-            loc = m;
-            dist = Util.absDistance(loc, rc.getLocation());
-            distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
-            harvestersNear = 0;
-            this.r = res;
-        }
-
-        void updateCarrier(RobotInfo r) {
-            if (r.location.distanceSquaredTo(loc) <= 4) {
-                harvestersNear++;
-            }
-        }
-
-        boolean crowded() {
-            return harvestersNear > 7;
-        }
-
-        boolean bestResource() throws GameActionException {
-            return r == communications.readResourceNeed();
-        }
-
-        boolean isBetterThan(WellTarget wt) throws GameActionException {
-            if (wt == null) return true;
-            if (wt.bestResource() && !bestResource()) return false;
-            if (!wt.bestResource() && bestResource()) return true;
-            if (!wt.crowded() && crowded()) return false;
-            if (wt.crowded() && !crowded()) return true;
-            if (wt.dist + 12 < dist) return false;
-            if (dist + 12 < wt.dist) return true;
-            return distHQ <= wt.distHQ; 
         }
     }
 
@@ -236,12 +199,14 @@ public class Carrier extends Robot {
     void harvest() throws GameActionException {
         WellInfo wi = rc.senseWell(wellTarget);
         ResourceType rt = wi.getResourceType();
-        if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
-            rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
-            wellTarget = null;
-            communications.resourceNeeded = null;
-        } else if (rc.canCollectResource(wellTarget, -1)) {
-            rc.collectResource(wellTarget, -1);
+        while (rc.isActionReady()) {
+            if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
+                rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
+                wellTarget = null;
+                communications.resourceNeeded = null;
+            } else if (rc.canCollectResource(wellTarget, -1)) {
+                rc.collectResource(wellTarget, -1);
+            }
         }
     }
 
@@ -311,16 +276,6 @@ public class Carrier extends Robot {
         return closestTarget;
     }
 
-    void findHome() throws GameActionException {
-        RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam());
-        for (RobotInfo r: robots) {
-            if (r.type == RobotType.HEADQUARTERS) {
-                home = r.location;
-                break;
-            }
-        }
-    }
-
     void attack() throws GameActionException {
         RobotInfo best = util.getBestAttackTarget();
         if (best == null) return;
@@ -334,33 +289,44 @@ public class Carrier extends Robot {
         }
     }
 
-    class AttackTarget {
+    class WellTarget {
         MapLocation loc;
-        boolean inRange;
-        int priority;
-        int health;
-
-        AttackTarget(RobotInfo r) {
-            loc = r.location;
-            switch (r.getType()) {
-                case BOOSTER: priority=4; break;
-                case AMPLIFIER: priority=3; break;
-                case HEADQUARTERS: priority=1; break;
-                case CARRIER: priority=2; break;
-                case LAUNCHER: priority=6; break;
-                case DESTABILIZER: priority=5; break;
-            }
-            health = r.health;
-            inRange = (rc.getLocation().distanceSquaredTo(loc) < rc.getType().actionRadiusSquared);
+        int harvestersNear;
+        int distHQ;
+        double dist;
+        ResourceType r;
+        WellTarget(MapLocation m, ResourceType res) throws GameActionException{
+            loc = m;
+            dist = Util.absDistance(loc, rc.getLocation());
+            distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
+            harvestersNear = 0;
+            this.r = res;
         }
 
-        boolean isBetterThan(AttackTarget at) {
-            if (at == null) return true;
-            if (at.inRange && !inRange) return false;
-            if (!at.inRange && inRange) return true;
-            if (at.priority > priority) return false;
-            if (at.priority < priority) return true;
-            return health <= at.health;
+        void updateCarrier(RobotInfo r) {
+            if (crowded()) return;
+            if (r.location.distanceSquaredTo(loc) <= 4) {
+                harvestersNear++;
+            }
+        }
+
+        boolean crowded() {
+            return harvestersNear > 7;
+        }
+
+        boolean bestResource() throws GameActionException {
+            return r == communications.readResourceNeed();
+        }
+
+        boolean isBetterThan(WellTarget wt) throws GameActionException {
+            if (wt == null) return true;
+            if (wt.bestResource() && !bestResource()) return false;
+            if (!wt.bestResource() && bestResource()) return true;
+            if (!wt.crowded() && crowded()) return false;
+            if (wt.crowded() && !crowded()) return true;
+            if (wt.dist + 12 < dist) return false;
+            if (dist + 12 < wt.dist) return true;
+            return distHQ <= wt.distHQ; 
         }
     }
 }
