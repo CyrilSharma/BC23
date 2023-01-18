@@ -90,15 +90,16 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum() <= 150) {
+            if (rc.getRoundNum() <= 15) {
+                setResourceNeed(ResourceType.MANA, 1);
+                setResourceNeed(ResourceType.ADAMANTIUM, 0);
+            } else if (rc.getRoundNum() <= 150) {
                 setResourceNeed(ResourceType.MANA, 2);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
-            }
-            else if (rc.getRoundNum() <= 250){
+            } else if (rc.getRoundNum() <= 250){
                 setResourceNeed(ResourceType.MANA, 4);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
-            }
-            else {
+            } else {
                 setResourceNeed(ResourceType.MANA, 9);
                 setResourceNeed(ResourceType.ADAMANTIUM, 3);
             }
@@ -127,13 +128,12 @@ public class Communications {
     }
 
     public void refresh() throws GameActionException {
-        if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum()%Constants.ATTACK_REFRESH > ATTACK_TARGETS_WIDTH) return;
-            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%Constants.ATTACK_REFRESH, 0);
-        }
-
         // purge memory after x turns to prevent bad updates.
         broadcastTargetMemory[rc.getRoundNum()%3] = null;
+        if (rc.getType() == RobotType.HEADQUARTERS) {
+            if (rc.getRoundNum()%Constants.ATTACK_REFRESH >= ATTACK_TARGETS_WIDTH) return;
+            rc.writeSharedArray(ATTACK_TARGETS + rc.getRoundNum()%Constants.ATTACK_REFRESH, 0);
+        }
     }
 
     // the idea here is the value will be weights.
@@ -596,15 +596,13 @@ public class Communications {
         }
         //rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
-        if (best.d > 15) return null;
+        if (best.d > 8) return null;
         else return best.m;
     }
 
     public MapLocation getBestRendevous() throws GameActionException {
         // This could be made better if it accounted for the actual positions of HQs,
         // and the number of HQs, i.e make central points to consecutive pairs of HQs
-        MapLocation m = findBestAttackTarget();
-        if (m != null) return m;
         return symmetryChecker.getRSym(findClosestHQ());
     }
 

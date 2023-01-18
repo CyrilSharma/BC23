@@ -51,6 +51,7 @@ public class Launcher extends Robot {
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     private MapLocation enemyHQLoc;
+    private MapLocation huntTarget;
     enum State {
         WAIT,
         RENDEVOUS,
@@ -67,6 +68,7 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
+        huntTarget = null;
         if (rc.getHealth() < 12) hurt = true;
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         communications.initial();
@@ -149,16 +151,19 @@ public class Launcher extends Robot {
         // waiting for squad.
         if (rc.getRoundNum() <= 7) return State.WAIT;
         // initially, only rendevous until you encounter an enemy.
-        boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
+        boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) <= 1);
         MapLocation target = communications.findBestAttackTarget();
-        boolean hasTarget = (target != null && rc.getLocation().distanceSquaredTo(target) >= 9);
+        boolean hasTarget = (target != null && rc.getLocation().distanceSquaredTo(target) >= 16);
+        if (hasTarget) huntTarget = target;
+
+        rc.setIndicatorString("" + hasEnemy + " " + (previousEnemy != null)  + " " + 
+            hasAdvance + " " + hasTarget);
         if (!hasEnemy && previousEnemy == null &&
-            (!hasAdvance || okToStray) &&
-            !hasTarget)
+            ((!hasAdvance || okToStray)) || hasTarget)
             return State.RENDEVOUS;
 
-        if (hasAdvance) return State.ADVANCE;
         if (hasEnemy) return State.ATTACK;
+        if (hasAdvance) return State.ADVANCE;
         // chase enemy only if you're not already chasing one with the group.
         if (previousEnemy != null) return State.CHASE;
         // if (hasHq) return State.SUFFOCATE; // ignore for now.
@@ -187,8 +192,7 @@ public class Launcher extends Robot {
                 if (prev != null && prev.location != r.location
                     && r.type == RobotType.LAUNCHER && 
                     (r.location.distanceSquaredTo(rc.getLocation()) >
-                    prev.location.distanceSquaredTo(rc.getLocation())) &&
-                    r.health > 8) {
+                    prev.location.distanceSquaredTo(rc.getLocation()))) {
                     x += r.location.x;
                     y += r.location.y;
                     //for (ClusterTarget t: targets) t.updateAlly(r);
@@ -213,8 +217,11 @@ public class Launcher extends Robot {
     }
 
     void rendevous() throws GameActionException {
-        MapLocation r = communications.getBestRendevous();
-        greedyPath.move(r);
+        if (huntTarget != null) greedyPath.move(huntTarget);
+        else {
+            MapLocation r = communications.getBestRendevous();
+            greedyPath.move(r);
+        }
     }
 
     void advance() throws GameActionException {
