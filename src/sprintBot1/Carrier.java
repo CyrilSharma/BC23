@@ -128,20 +128,46 @@ public class Carrier extends Robot {
     void seek() throws GameActionException {
         greedyPath.move(wellTarget);
         greedyPath.move(wellTarget);
-        findTarget();
+        // recompute target iff crowded.
+        if (wellTarget.distanceSquaredTo(rc.getLocation()) <= 9) {
+            if (rc.canSenseLocation(wellTarget)) {
+                WellInfo w = rc.senseWell(wellTarget);
+                int count = 0;
+                RobotInfo[] bots = rc.senseNearbyRobots(w.getMapLocation(), 2, rc.getTeam());
+                for (RobotInfo r: bots) {
+                    if (r.type == RobotType.CARRIER) count++;
+                }
+                if (count > 4) findTarget();
+            }
+        }
+
     }
 
     void findTarget() throws GameActionException {
         int iters = 0;
         ResourceType r = communications.readResourceNeed();
+        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
+        WellInfo[] wells = rc.senseNearbyWells();
+        WellTarget[] wellTargets = new WellTarget[wells.length + 15];
         while (iters < 3) {
-            WellInfo[] wells = rc.senseNearbyWells();
+            int ind = 0;
             WellTarget best = null;
             for (WellInfo w : wells){
                 if (Clock.getBytecodesLeft() < 5000) break;
                 if (w.getResourceType() != r) continue;
-                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType());
-                if (cur.isBetterThan(best)) best = cur;
+                wellTargets[ind] = new WellTarget(w.getMapLocation(), w.getResourceType());
+                ind++;
+            }
+
+            for (RobotInfo f: friends) {
+                if (f.type != RobotType.CARRIER) continue;
+                for (int i = 0; i < ind; i++)
+                    wellTargets[i].updateCarrier(f);
+            }
+
+            for (int i = 0; i < ind; i++) {
+                if (wellTargets[i].isBetterThan(best)) 
+                    best = wellTargets[i];
             }
 
             if (best != null && !best.crowded()) {
@@ -178,18 +204,17 @@ public class Carrier extends Robot {
             dist = Util.absDistance(loc, rc.getLocation());
             distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
             harvestersNear = 0;
-            RobotInfo[] robots = rc.senseNearbyRobots();
-            for (RobotInfo r: robots) {
-                if (r.type != RobotType.CARRIER) continue;
-                if (r.location.distanceSquaredTo(loc) <= 4) {
-                    harvestersNear++;
-                }
-            }
             this.r = res;
         }
 
+        void updateCarrier(RobotInfo r) {
+            if (r.location.distanceSquaredTo(loc) <= 4) {
+                harvestersNear++;
+            }
+        }
+
         boolean crowded() {
-            return harvestersNear>3;
+            return harvestersNear > 3;
         }
 
         boolean bestResource() throws GameActionException {

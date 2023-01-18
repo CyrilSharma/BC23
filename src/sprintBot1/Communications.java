@@ -230,6 +230,7 @@ public class Communications {
         return false;
     }
 
+    // return all wells not currently visible.
     public MapLocation[] readWells(ResourceType r) throws GameActionException{
         MapLocation[] locs = new MapLocation[15];
         int ind = 0;
@@ -239,6 +240,8 @@ public class Communications {
             int typ = val & (0b111);
             if (typ == 3) continue;
             if(resources[typ] == r){
+                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));;
+                if (m.distanceSquaredTo(rc.getLocation()) <= rc.getType().visionRadiusSquared) continue;
                 locs[ind] = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 ind++;
             }
