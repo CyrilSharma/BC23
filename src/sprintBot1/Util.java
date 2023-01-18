@@ -86,12 +86,13 @@ public class Util {
         RobotInfo r;
         int d;
 
-        AttackTarget(RobotInfo r) {
+        AttackTarget(RobotInfo r) throws GameActionException {
             loc = r.location;
             priority = Util.getPriority(r);
             health = r.health;
             this.r = r;
-            canAttack = rc.canAttack(loc);
+            canAttack = rc.canSenseLocation(loc) && rc.canAttack(loc) && rc.isLocationOccupied(loc)
+                && r.type != RobotType.HEADQUARTERS;
             // allows us to agree on who to attack.
             d = r.location.distanceSquaredTo(new MapLocation(0, 0));
         }

@@ -59,7 +59,7 @@ public class Launcher extends Robot {
         CHASE,
         ATTACK,
         IMPROVE_VISION,
-        SUFFOCATE
+        HUNT
     }
 
     public Launcher(RobotController rc) throws GameActionException {
@@ -83,7 +83,7 @@ public class Launcher extends Robot {
             case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
             case IMPROVE_VISION: improve_vision(); break;
-            case SUFFOCATE: suffocate();
+            case HUNT: hunt(); break;
         }
         doAttack(false);
         updateEnemy();
@@ -109,10 +109,6 @@ public class Launcher extends Robot {
         }
     }
 
-    void suffocate() throws GameActionException {
-        greedyPath.move(enemyHQLoc);
-    }
-
     void improve_vision() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
         int dist= -1;
@@ -131,7 +127,7 @@ public class Launcher extends Robot {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null) return;
         if (attackers && !Util.isAttacker(r.type)) return;
-        if (r != null && rc.canAttack(r.location)) 
+        if (r != null && rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) 
             rc.attack(r.location);
     }
 
@@ -158,10 +154,12 @@ public class Launcher extends Robot {
 
         rc.setIndicatorString("" + hasEnemy + " " + (previousEnemy != null)  + " " + 
             hasAdvance + " " + hasTarget);
-        if (!hasEnemy && previousEnemy == null &&
-            ((!hasAdvance || okToStray)) || hasTarget)
-            return State.RENDEVOUS;
-
+        if (!hasEnemy && previousEnemy == null) {
+            if (((!hasAdvance || okToStray)) && !hasTarget)
+                return State.RENDEVOUS;
+            if (hasTarget) return State.HUNT;
+        }
+        
         if (hasEnemy) return State.ATTACK;
         if (hasAdvance) return State.ADVANCE;
         // chase enemy only if you're not already chasing one with the group.
@@ -169,7 +167,6 @@ public class Launcher extends Robot {
         // if (hasHq) return State.SUFFOCATE; // ignore for now.
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if (hasHq) return State.SUFFOCATE;
         return State.WAIT;
     }
 
@@ -217,11 +214,12 @@ public class Launcher extends Robot {
     }
 
     void rendevous() throws GameActionException {
+        MapLocation r = communications.getBestRendevous();
+        greedyPath.move(r);
+    }
+
+    void hunt() throws GameActionException {
         if (huntTarget != null) greedyPath.move(huntTarget);
-        else {
-            MapLocation r = communications.getBestRendevous();
-            greedyPath.move(r);
-        }
     }
 
     void advance() throws GameActionException {
@@ -336,12 +334,12 @@ public class Launcher extends Robot {
 
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
-            net_dps -= ((double) rc.getType().damage) * (1.0 / rc.senseCooldownMultiplier(rc.getLocation()));
             nloc = rc.getLocation().add(dir);
             canMove = rc.canMove(dir);
             if (canMove) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 nloc.add(mi.getCurrentDirection());
+                net_dps -= ((double) rc.getType().damage) * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
         }
         
@@ -361,7 +359,12 @@ public class Launcher extends Robot {
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
             }
-        }
+            if (r.type == RobotType.HEADQUARTERS) {
+                int d = nloc.distanceSquaredTo(m);
+                if (d <= r.type.actionRadiusSquared) 
+                    net_dps += (double) r.type.damage * (1.0 / cooldown);
+            }
+        } 
         
         void addAlly(RobotInfo r) throws GameActionException {
             if (Util.isAttacker(r.type)) {

@@ -315,12 +315,12 @@ public class Launcher extends Robot {
 
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
-            net_dps -= ((double) rc.getType().damage) * (1.0 / rc.senseCooldownMultiplier(rc.getLocation()));
             nloc = rc.getLocation().add(dir);
             canMove = rc.canMove(dir);
             if (canMove) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 nloc.add(mi.getCurrentDirection());
+                net_dps -= ((double) rc.getType().damage) * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
         }
         
