@@ -115,13 +115,14 @@ public class HQ extends Robot {
             return Build.NONE;
         
         // Game is probably over, build anchors.
+        int anchorFreq = 50;
         if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD) &&
-            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%10 == 0)) || makingAnchor)) {
+            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%anchorFreq == 0)) || makingAnchor)) {
             communications.updateAnchor(1);
             makingAnchor = true;
             return Build.ANCHOR;
         } else if (rc.getRoundNum() > anchorRound && 
-            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%10 == 0)) || makingAnchor)) {
+            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%anchorFreq == 0)) || makingAnchor)) {
             communications.updateAnchor(1);
             makingAnchor = true;
             return Build.NONE;
