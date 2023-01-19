@@ -48,6 +48,7 @@ public class Launcher extends Robot {
     MapLocation bestNeighborLoc = null;
     Direction bestNeighborDir;
     boolean okToStray;
+    boolean shouldRendevous = true;
     int born;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
@@ -82,7 +83,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 2) updateNeighbors();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        //rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -160,7 +161,10 @@ public class Launcher extends Robot {
             if (e.type == RobotType.LAUNCHER) numLaunchers++;
         }
         // Conditions!!
-        boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) <= 1);
+        boolean closeToCenter = rc.getLocation().distanceSquaredTo(new 
+            MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2)) <= 9;
+        if (closeToCenter) shouldRendevous=false;
+        boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
         MapLocation target = communications.findBestAttackTarget();
         boolean hasTarget = false;
         if (target != null) {
@@ -192,11 +196,10 @@ public class Launcher extends Robot {
     }
 
     void updateNeighbors() throws GameActionException {
-        int count = 0;
         double x = 0;
         double y = 0;
+        double totalW = 0;
         HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
-        // only act on local movement.
         RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
         for (RobotInfo r: robots) {
             if (Clock.getBytecodesLeft() < 5000) break;
@@ -207,20 +210,24 @@ public class Launcher extends Robot {
                     && r.type == RobotType.LAUNCHER && 
                     (r.location.distanceSquaredTo(rc.getLocation()) >
                     prev.location.distanceSquaredTo(rc.getLocation()))) {
-                    x += r.location.x;
-                    y += r.location.y;
-                    //for (ClusterTarget t: targets) t.updateAlly(r);
-                    count++;
+                    x += r.location.x * 6;
+                    y += r.location.y * 6;
+                    totalW += 6;
                 }
+            }
+            if (r.type == RobotType.LAUNCHER) {
+                x += r.location.x;
+                y += r.location.y;
+                totalW += 1;
             }
             nneighbors.put(r.ID, r);
         }
-        if (count == 0) {
-            bestNeighborDir = Direction.CENTER;
+        if (totalW == 0) {
             bestNeighborLoc = null;
             return;
         }
-        bestNeighborLoc = new MapLocation((int)(x/count), (int)(y/count));
+        bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
+        rc.setIndicatorString(""+bestNeighborLoc);
         neighbors = nneighbors;
     }
 

@@ -68,11 +68,21 @@ public class Util {
     }
 
     RobotInfo getBestAttackTarget() throws GameActionException {
-        AttackTarget best = null;
-        for (RobotInfo e: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
-            AttackTarget cur = new AttackTarget(e);
-            if (cur.isBetterThan(best)) best = cur;
+        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        AttackTarget[] targets = new AttackTarget[enemies.length];
+        int ind = 0;
+        for (RobotInfo e: enemies) {
+            targets[ind++] = new AttackTarget(e);
         }
+        /* for (RobotInfo f: friends) {
+            if (Clock.getBytecodesLeft()<8000)
+            for (AttackTarget t: targets)
+                t.updateAlly(f);
+        } */
+        AttackTarget best = null;
+        for (AttackTarget t: targets) 
+            if (t.isBetterThan(best)) best = t;
         if (best == null) return null;
         return best.r;
     }
@@ -84,6 +94,7 @@ public class Util {
         int health;
         boolean canAttack;
         RobotInfo r;
+        int soldiersAttacking = 0;
         int d;
 
         AttackTarget(RobotInfo r) throws GameActionException {
@@ -97,6 +108,14 @@ public class Util {
             d = r.location.distanceSquaredTo(new MapLocation(0, 0));
         }
 
+        void updateAlly(RobotInfo f) throws GameActionException {
+            if (!canAttack) return;
+            if (f.type == RobotType.LAUNCHER) {
+                if (f.location.distanceSquaredTo(loc) <= RobotType.LAUNCHER.visionRadiusSquared)
+                    soldiersAttacking++;
+            }
+        }
+
         boolean isBetterThan(AttackTarget at) {
             if (at == null) return true;
             if (at.canAttack && !canAttack) return false;
@@ -104,7 +123,9 @@ public class Util {
             if (at.priority > priority) return false;
             if (at.priority < priority) return true;
             if (at.health < health) return false;
-            if (at.health > health) return true;
+            if (health < at.health) return true;
+            //if (at.soldiersAttacking > soldiersAttacking) return false;
+            //if (at.soldiersAttacking < soldiersAttacking) return true;
             return d <= at.d;
         }
     }

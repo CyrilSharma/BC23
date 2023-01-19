@@ -113,7 +113,7 @@ public class HQ extends Robot {
             return Build.AMPLIFIER;
         }
         
-        // Game is probably over, build anchors.
+        /* // Game is probably over, build anchors.
         int anchorFreq = 50;
         if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD) &&
             ((communications.shouldBuildAnchor() && (rc.getRoundNum()%anchorFreq == 0)) || makingAnchor)) {
@@ -125,7 +125,7 @@ public class HQ extends Robot {
             communications.updateAnchor(1);
             makingAnchor = true;
             return Build.NONE;
-        }
+        } */
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 2;
