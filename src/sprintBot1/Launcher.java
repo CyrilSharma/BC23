@@ -48,6 +48,7 @@ public class Launcher extends Robot {
     MapLocation bestNeighborLoc = null;
     Direction bestNeighborDir;
     boolean okToStray;
+    int born;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     private MapLocation enemyHQLoc;
@@ -59,12 +60,14 @@ public class Launcher extends Robot {
         CHASE,
         ATTACK,
         IMPROVE_VISION,
-        HUNT
+        HUNT,
+        HUNT_HQ
     }
 
     public Launcher(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
+        born = rc.getRoundNum();
     }
     void run() throws GameActionException {
         okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
@@ -84,6 +87,7 @@ public class Launcher extends Robot {
             case ATTACK: attack(); break;
             case IMPROVE_VISION: improve_vision(); break;
             case HUNT: hunt(); break;
+            case HUNT_HQ: hunt_hq();
         }
         doAttack(false);
         updateEnemy();
@@ -127,8 +131,9 @@ public class Launcher extends Robot {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null) return;
         if (attackers && !Util.isAttacker(r.type)) return;
-        if (r != null && rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) 
-            rc.attack(r.location);
+        if (r != null && rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
+            while (rc.canAttack(r.location)) rc.attack(r.location);
+        }
     }
 
     State determineState() throws GameActionException {
@@ -149,13 +154,19 @@ public class Launcher extends Robot {
         // initially, only rendevous until you encounter an enemy.
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) <= 1);
         MapLocation target = communications.findBestAttackTarget();
-        boolean hasTarget = (target != null && rc.getLocation().distanceSquaredTo(target) >= 16);
+        boolean hasTarget = false;
+        if (target != null) {
+            int d = rc.getLocation().distanceSquaredTo(target);
+            hasTarget = (d >= 16 && d <= 144);
+        }
+        boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         if (hasTarget) huntTarget = target;
 
         rc.setIndicatorString("" + hasEnemy + " " + (previousEnemy != null)  + " " + 
             hasAdvance + " " + hasTarget);
         if (!hasEnemy && previousEnemy == null) {
-            if (((!hasAdvance || okToStray)) && !hasTarget)
+            if (((!hasAdvance || okToStray)) && !hasTarget && 
+                (!knowsSymmetry || rc.getRoundNum() <= 500))
                 return State.RENDEVOUS;
             if (hasTarget) return State.HUNT;
         }
@@ -167,18 +178,15 @@ public class Launcher extends Robot {
         // if (hasHq) return State.SUFFOCATE; // ignore for now.
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         if (mi.hasCloud()) return State.IMPROVE_VISION;
+        if (knowsSymmetry && rc.getRoundNum() >= 500) return State.HUNT_HQ;
         return State.WAIT;
     }
 
     void updateNeighbors() throws GameActionException {
-        /* ClusterTarget[] targets = new ClusterTarget[9];
-        for (Direction d: directions) {
-            targets[d.ordinal()] = new ClusterTarget(d);
-        } */
-
         int count = 0;
         double x = 0;
         double y = 0;
+        HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
         // only act on local movement.
         RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
         for (RobotInfo r: robots) {
@@ -195,9 +203,8 @@ public class Launcher extends Robot {
                     //for (ClusterTarget t: targets) t.updateAlly(r);
                     count++;
                 }
-                neighbors.remove(r.ID);
             }
-            neighbors.put(r.ID, r);
+            nneighbors.put(r.ID, r);
         }
         if (count == 0) {
             bestNeighborDir = Direction.CENTER;
@@ -205,17 +212,33 @@ public class Launcher extends Robot {
             return;
         }
         bestNeighborLoc = new MapLocation((int)(x/count), (int)(y/count));
-        /* ClusterTarget best = null;
-        for (Direction d: directions) {
-            if (targets[d.ordinal()].isBetterThan(best))
-                best = targets[d.ordinal()];
-        }
-        bestNeighborDir = best.dir; */
+        neighbors = nneighbors;
     }
 
     void rendevous() throws GameActionException {
         MapLocation r = communications.getBestRendevous();
         greedyPath.move(r);
+    }
+
+    void hunt_hq() throws GameActionException {
+        MapLocation m = communications.getClosestEnemyHQ();
+        int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
+        if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
+            greedyPath.move(m);
+        } else if (m.distanceSquaredTo(rc.getLocation()) <= rad) {
+            int bestD = 100000;
+            MapLocation best = null;
+            for (MapLocation a: rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), -1)) {
+                if (a.distanceSquaredTo(m) <= rad) continue;
+                if (rc.canSenseLocation(a) && rc.isLocationOccupied(a)) continue;
+                int curD = a.distanceSquaredTo(rc.getLocation());
+                if (curD < bestD) {
+                    bestD = curD;
+                    best = a;
+                }
+            }
+            greedyPath.move(best);
+        }
     }
 
     void hunt() throws GameActionException {

@@ -241,7 +241,10 @@ public class Communications {
             int typ = val & (0b111);
             if (typ == 3) continue;
             if(resources[typ] == r){
-                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));;
+                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                // if mining this will kill us, don't.
+                if (symmetryChecker.getSymmetry() != -1 && 
+                    getClosestEnemyHQTo(m).distanceSquaredTo(m) <= RobotType.HEADQUARTERS.actionRadiusSquared) continue;
                 if (m.distanceSquaredTo(rc.getLocation()) <= rc.getType().visionRadiusSquared) continue;
                 locs[ind] = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 ind++;
@@ -491,17 +494,7 @@ public class Communications {
     }
 
     public MapLocation findClosestHQ() throws GameActionException {
-        MapLocation best = null;
-        int bestD = 100000;
-        for (MapLocation m: HQs) {
-            if (m == null) continue;
-            int d = rc.getLocation().distanceSquaredTo(m);
-            if (d < bestD) {
-                bestD = d;
-                best = m;
-            }
-        }
-        return best;
+        return findClosestHQto(rc.getLocation());
     }
 
     public MapLocation findClosestHQto(MapLocation g) throws GameActionException {
@@ -596,7 +589,6 @@ public class Communications {
         }
         //rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
-        if (best.d > 8) return null;
         else return best.m;
     }
 
@@ -626,6 +618,33 @@ public class Communications {
         }
         return minDistEnemy < minDistAlly;
     }
+
+    public MapLocation getClosestEnemyHQ() throws GameActionException {
+        return getClosestEnemyHQTo(rc.getLocation());
+    }
+
+    public MapLocation getClosestEnemyHQTo(MapLocation pos) throws GameActionException {
+        if (symmetryChecker.getSymmetry() == -1) return null;
+        int minDistEnemy = 100000;
+        MapLocation best = null;
+        for(int i = 0; i < numHQ; i++){
+            MapLocation h = HQs[i];
+            MapLocation s = null;
+            switch (symmetryChecker.getSymmetry()) {
+                case 0: s = symmetryChecker.getHSym(h); break;
+                case 1: s = symmetryChecker.getVSym(h); break;
+                case 2: s = symmetryChecker.getRSym(h); break;
+                default:
+            }
+            int d = pos.distanceSquaredTo(s);
+            if (d < minDistEnemy) {
+                minDistEnemy = d;
+                best = s;
+            }
+        }
+        return best;
+    }
+
 
     class AttackTarget {
         boolean low_health;

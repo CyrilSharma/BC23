@@ -53,11 +53,10 @@ public class GreedyPath {
             for (int i = 0; i < 8; i++) {
                 MapLocation next = rc.adjacentLocation(directions[dir]);
                 if (rc.onTheMap(next) && rc.canMove(directions[dir])){
-                    for (int iter = 0; iter < 2; iter++) {
+                    for (int iter = 0; iter < 1; iter++) {
                         if (!rc.canSenseLocation(next)) break;
                         MapInfo mi = rc.senseMapInfo(next);
                         next = next.add(mi.getCurrentDirection());
-                        if (rc.getType() != RobotType.LAUNCHER) break;
                     }
                     int nextDist = hybridDistance(next, destination);
                     if (firstDist == -1) {
@@ -78,11 +77,10 @@ public class GreedyPath {
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             MapLocation next = rc.adjacentLocation(directions[dir]);
-            for (int iter = 0; iter < 2; iter++) {
+            for (int iter = 0; iter < 1; iter++) {
                 if (!rc.canSenseLocation(next)) break;
                 MapInfo mi = rc.senseMapInfo(next);
                 next = next.add(mi.getCurrentDirection());
-                if (rc.getType() != RobotType.LAUNCHER) break;
             }
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {

@@ -156,6 +156,7 @@ public class Carrier extends Robot {
             for (WellInfo w : wells){
                 if (Clock.getBytecodesLeft() < 1000) break;
                 if (w.getResourceType() != r) continue;
+                // don't die.
                 wellTargets[ind] = new WellTarget(w.getMapLocation(), w.getResourceType());
                 ind++;
             }
