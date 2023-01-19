@@ -1,3 +1,6 @@
+Soldier Micro is broken;
+- somehow we don't tend to stick in pack when exectuing attack micro.
+
 Island Rushing will soon be good.
 - I pushed some code for it, but we need to ensure that we choose the island locs optimally.
 

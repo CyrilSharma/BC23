@@ -26,9 +26,9 @@ public class HQ extends Robot {
         if(rc.getRoundNum() == 2) communications.findOurHQs();
         if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
             // we're trying to go Comms-less, so for now just use these.
-            cntCarriers = communications.getUnitCount(RobotType.CARRIER);
-            cntLaunchers = communications.getUnitCount(RobotType.LAUNCHER);
-            cntAmplifiers = communications.readBuild(RobotType.AMPLIFIER);
+            cntCarriers = communications.readBuild(RobotType.CARRIER);
+            cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
+            cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
         }
         if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0){
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
@@ -108,11 +108,10 @@ public class HQ extends Robot {
             return Build.CARRIER;
 
         // We probably are somewhat secure, build an amplifier.
-        if (rc.getRoundNum() >= 200 && cntAmplifiers <= 2 && 
+        if (rc.getRoundNum() >= 200 && cntAmplifiers <= 1 && 
             RobotType.AMPLIFIER.buildCostMana <= rc.getResourceAmount(ResourceType.MANA)) {
             return Build.AMPLIFIER;
-        } else if (rc.getRoundNum() >= 200 && cntAmplifiers <= 2)
-            return Build.NONE;
+        }
         
         // Game is probably over, build anchors.
         int anchorFreq = 50;

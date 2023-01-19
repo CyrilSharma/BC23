@@ -155,13 +155,17 @@ public class Launcher extends Robot {
             }
         }
 
+        int numLaunchers = 0;
+        for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (e.type == RobotType.LAUNCHER) numLaunchers++;
+        }
         // Conditions!!
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) <= 1);
         MapLocation target = communications.findBestAttackTarget();
         boolean hasTarget = false;
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
-            hasTarget = (d >= 16 && d <= 144);
+            hasTarget = (d >= 64 && d <= 256);
             if (communications.symmetryChecker.getSymmetry() != -1) {
                 MapLocation m = communications.getClosestEnemyHQ();
                 hasTarget = hasTarget & (m.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
@@ -170,18 +174,20 @@ public class Launcher extends Robot {
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
+        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
         if (hasTarget) huntTarget = target;
         
         // States.
         if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
+        if ((rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns)
+            || (!hasAdvance || okToStray)) return State.RENDEVOUS;
+        if (hasAdvance) return State.ADVANCE;
         if (hurt && islandTarget != null) return State.HEAL;
         if (hasTarget) return State.HUNT;
-        if (hasAdvance) return State.ADVANCE;
         if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if (!knowsSymmetry) return State.RENDEVOUS;
-        if (knowsSymmetry) return State.HUNT_HQ;
+        if (knowsSymmetry && rc.getRoundNum()>=800) return State.HUNT_HQ;
         return State.WAIT;
     }
 
@@ -247,6 +253,10 @@ public class Launcher extends Robot {
 
     void hunt_hq() throws GameActionException {
         MapLocation m = communications.getClosestEnemyHQ();
+        hunt_hq(m);
+    }
+
+    void hunt_hq(MapLocation m) throws GameActionException {
         int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
         if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
             greedyPath.move(m);
@@ -271,12 +281,17 @@ public class Launcher extends Robot {
     }
 
     void advance() throws GameActionException {
-        //rc.setIndicatorString("" + bestNeighborDir);
-        // Direction d = bestNeighborDir;
-        if (bestNeighborLoc != null)
+        for (RobotInfo r: rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared, rc.getTeam().opponent())) {
+            if (r.type == RobotType.HEADQUARTERS) {
+                hunt_hq(r.location);
+                return;
+            }
+        }
+        if (bestNeighborLoc != null) {
+            rc.setIndicatorString(""+bestNeighborLoc);
             greedyPath.move(bestNeighborLoc);
-        /* if (d != Direction.CENTER && rc.canMove(d) && rc.getRoundNum()%2==1) 
-            rc.move(d); */
+            return;
+        }
     }
 
     void chase() throws GameActionException {
@@ -378,6 +393,7 @@ public class Launcher extends Robot {
         double dps_targetting = 0;
         double dps_defending = 0;
         int minDistToEnemy = 100000;
+        int enemies = 0;
         boolean canMove;
         MapLocation nloc;
 
@@ -394,7 +410,7 @@ public class Launcher extends Robot {
         
         void addEnemy(RobotInfo r) throws GameActionException {
             if (!canMove) return;
-            if (!Util.isAttacker(r.type)) return;
+            if (r.type == RobotType.AMPLIFIER || r.type == RobotType.CARRIER) return;
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
             // ignore boosting effects of other units for now.
@@ -408,6 +424,7 @@ public class Launcher extends Robot {
                     dps_targetting += (double) r.type.damage * (1.0 / cooldown);;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
+                enemies++;
             }
             if (r.type == RobotType.HEADQUARTERS) {
                 int d = nloc.distanceSquaredTo(m);
@@ -448,6 +465,10 @@ public class Launcher extends Robot {
                 return minDistToEnemy >= mt.minDistToEnemy;
             }
 
+            if (enemies > 1) {
+                if (mt.net_dps < net_dps) return false;
+                if (mt.net_dps > net_dps) return true;
+            }
             // get as far away from enemies while still being in range.
             if (minDistToEnemy >= rc.getType().actionRadiusSquared &&
                 mt.minDistToEnemy >= rc.getType().actionRadiusSquared)
