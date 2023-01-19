@@ -49,6 +49,7 @@ public class Launcher extends Robot {
     Direction bestNeighborDir;
     boolean okToStray;
     boolean shouldRendevous = true;
+    MapLocation rendevous;
     int born;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
@@ -71,6 +72,7 @@ public class Launcher extends Robot {
         super(rc);
         communications.findOurHQs();
         born = rc.getRoundNum();
+        rendevous = communications.getBestRendevous();
     }
     void run() throws GameActionException {
         okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
@@ -83,7 +85,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 2) updateNeighbors();
         State state = determineState();
-        //rc.setIndicatorString(state.toString());
+        rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -186,13 +188,12 @@ public class Launcher extends Robot {
         if (hasEnemy) return State.ATTACK;
         if ((rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns)
             || (!hasAdvance || okToStray)) return State.RENDEVOUS;
-        if (hasAdvance) return State.ADVANCE;
         if (hurt && islandTarget != null) return State.HEAL;
         if (hasTarget) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
         if (knowsSymmetry && rc.getRoundNum()>=800) return State.HUNT_HQ;
-        return State.WAIT;
+        return State.ADVANCE;
     }
 
     void updateNeighbors() throws GameActionException {
@@ -227,7 +228,6 @@ public class Launcher extends Robot {
             return;
         }
         bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
-        rc.setIndicatorString(""+bestNeighborLoc);
         neighbors = nneighbors;
     }
 
@@ -254,8 +254,7 @@ public class Launcher extends Robot {
     }
  
     void rendevous() throws GameActionException {
-        MapLocation r = communications.getBestRendevous();
-        greedyPath.move(r);
+        greedyPath.move(rendevous);
     }
 
     void hunt_hq() throws GameActionException {
@@ -295,7 +294,6 @@ public class Launcher extends Robot {
             }
         }
         if (bestNeighborLoc != null) {
-            rc.setIndicatorString(""+bestNeighborLoc);
             greedyPath.move(bestNeighborLoc);
             return;
         }
