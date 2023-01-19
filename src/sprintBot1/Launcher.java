@@ -186,13 +186,12 @@ public class Launcher extends Robot {
         // States.
         if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
-        if ((rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns)
-            || (!hasAdvance || okToStray)) return State.RENDEVOUS;
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
         if (hasTarget) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if (knowsSymmetry && rc.getRoundNum()>=800) return State.HUNT_HQ;
+        if ((knowsSymmetry && rc.getRoundNum()>=800) || inHQRange) return State.HUNT_HQ;
         return State.ADVANCE;
     }
 
