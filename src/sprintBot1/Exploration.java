@@ -51,13 +51,7 @@ public class Exploration {
         return new MapLocation(width - m.x - 1, height - m.y - 1);
     }
     public MapLocation generateTargetLauncher(MapLocation[] hqs, int nm) {
-        // we need to compute enemy territory somehow so we don't end up waltzing into enemy territory.
         int r = rng.nextInt(2);
-        /*
-        if(r == 0) {
-            return keypos[rng.nextInt(5)];
-        }
-        */
         if(r == 0){
             return randomReflect(hqs[rng.nextInt(nm)]);
         }
@@ -80,7 +74,7 @@ public class Exploration {
 
     public MapLocation generateTarget(MapLocation[] hqs, int num) throws GameActionException {
         MapLocation m = rc.getLocation();
-        while (rc.getLocation().distanceSquaredTo(m) <= 80 || communications.isEnemyTerritory(m, hqs, num)) {
+        while (rc.getLocation().distanceSquaredTo(m) <= 80) {
             m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
         }
         return m;

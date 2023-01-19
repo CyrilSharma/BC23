@@ -53,6 +53,7 @@ public class Launcher extends Robot {
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     private MapLocation enemyHQLoc;
     private MapLocation huntTarget;
+    private MapLocation islandTarget;
     enum State {
         WAIT,
         RENDEVOUS,
@@ -61,7 +62,8 @@ public class Launcher extends Robot {
         ATTACK,
         IMPROVE_VISION,
         HUNT,
-        HUNT_HQ
+        HUNT_HQ,
+        HEAL
     }
 
     public Launcher(RobotController rc) throws GameActionException {
@@ -71,9 +73,12 @@ public class Launcher extends Robot {
     }
     void run() throws GameActionException {
         okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
+        islandTarget = null;
         huntTarget = null;
-        if (rc.getHealth() < 12) hurt = true;
+        if (rc.getHealth() < 120) hurt = true;
+        if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
+        
         communications.initial();
         if (rc.getRoundNum()%3 != 2) updateNeighbors();
         State state = determineState();
@@ -87,7 +92,8 @@ public class Launcher extends Robot {
             case ATTACK: attack(); break;
             case IMPROVE_VISION: improve_vision(); break;
             case HUNT: hunt(); break;
-            case HUNT_HQ: hunt_hq();
+            case HUNT_HQ: hunt_hq(); break;
+            case HEAL: heal(); break;
         }
         doAttack(false);
         updateEnemy();
@@ -149,9 +155,7 @@ public class Launcher extends Robot {
             }
         }
 
-        // waiting for squad.
-        if (rc.getRoundNum() <= 7) return State.WAIT;
-        // initially, only rendevous until you encounter an enemy.
+        // Conditions!!
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) <= 1);
         MapLocation target = communications.findBestAttackTarget();
         boolean hasTarget = false;
@@ -160,24 +164,19 @@ public class Launcher extends Robot {
             hasTarget = (d >= 16 && d <= 144);
         }
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
-        if (hasTarget) huntTarget = target;
-
-        rc.setIndicatorString("" + hasEnemy + " " + (previousEnemy != null)  + " " + 
-            hasAdvance + " " + hasTarget);
-        if (!hasEnemy && previousEnemy == null) {
-            if (((!hasAdvance || okToStray)) && !hasTarget && 
-                (!knowsSymmetry || rc.getRoundNum() <= 500))
-                return State.RENDEVOUS;
-            if (hasTarget) return State.HUNT;
-        }
-        
-        if (hasEnemy) return State.ATTACK;
-        if (hasAdvance) return State.ADVANCE;
-        // chase enemy only if you're not already chasing one with the group.
-        if (previousEnemy != null) return State.CHASE;
-        // if (hasHq) return State.SUFFOCATE; // ignore for now.
+        boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
+        if (hasTarget) huntTarget = target;
+        
+        // States.
+        if (rc.getRoundNum() <= 7) return State.WAIT;
+        if (hasEnemy) return State.ATTACK;
+        if (hurt && islandTarget != null) return State.HEAL;
+        if (hasTarget) return State.HUNT;
+        if (hasAdvance) return State.ADVANCE;
+        if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
+        if ((!knowsSymmetry || rc.getRoundNum() <= 500)) return State.RENDEVOUS;
         if (knowsSymmetry && rc.getRoundNum() >= 500) return State.HUNT_HQ;
         return State.WAIT;
     }
@@ -215,6 +214,28 @@ public class Launcher extends Robot {
         neighbors = nneighbors;
     }
 
+    void heal() throws GameActionException {
+        greedyPath.move(islandTarget);
+    }
+
+    void findCloseIsland() throws GameActionException {
+        int[] islands = rc.senseNearbyIslands();
+        MapLocation closestTarget = null;
+        int d = 100000;
+        for (int idx: islands) {
+            if (Clock.getBytecodesLeft() < 1000) break;
+            if (rc.senseAnchor(idx) == null) continue;
+            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
+            for (MapLocation spot: spots) {
+                if (rc.getLocation().distanceSquaredTo(spot) >= d) continue;
+                if (!rc.canSenseLocation(spot)) continue;
+                if (rc.isLocationOccupied(spot)) continue;
+                closestTarget = spot;
+            }
+        }
+        islandTarget = closestTarget;
+    }
+ 
     void rendevous() throws GameActionException {
         MapLocation r = communications.getBestRendevous();
         greedyPath.move(r);

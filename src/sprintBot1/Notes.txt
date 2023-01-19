@@ -1,3 +1,6 @@
+Island Rushing will soon be good.
+- I pushed some code for it, but we need to ensure that we choose the island locs optimally.
+
 Flee code is suboptimal.
 - Miners don't actually optimally flee, i.e they don't choose the square that's attacked the least.
 

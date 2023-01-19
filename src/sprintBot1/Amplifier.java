@@ -2,14 +2,21 @@ package sprintBot1;
 import battlecode.common.*;
 
 public class Amplifier extends Robot {
+    int fleeTurns = 0;
     public Amplifier(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
     }
     void run() throws GameActionException {
         communications.initial();
+        if (fleeTurns > 0) {
+            fleeTurns--;
+            greedyPath.flee();
+            return;
+        }
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (Util.isAttacker(r.type)) {
+                fleeTurns = 3;
                 //greedyPath.move(communications.findClosestHQ());
                 greedyPath.flee();
                 return;

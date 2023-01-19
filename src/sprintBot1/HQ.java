@@ -4,7 +4,8 @@ import battlecode.common.*;
 public class HQ extends Robot {
     int MAX_MINERS = 20;
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
-    int anchorRound = 1800;
+    int anchorRound = 200;
+    boolean makingAnchor = false;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
         super(rc);
@@ -48,6 +49,8 @@ public class HQ extends Robot {
         if (b == Build.ANCHOR) {
             if (rc.canBuildAnchor(Anchor.STANDARD)) {
                 rc.buildAnchor(Anchor.STANDARD);
+                communications.updateAnchor(0);
+                makingAnchor = false;
             }
             return;
         }
@@ -105,17 +108,24 @@ public class HQ extends Robot {
             return Build.CARRIER;
 
         // We probably are somewhat secure, build an amplifier.
-        if (rc.getRoundNum() >= 200 && cntAmplifiers == 0 && 
+        if (rc.getRoundNum() >= 200 && cntAmplifiers <= 2 && 
             RobotType.AMPLIFIER.buildCostMana <= rc.getResourceAmount(ResourceType.MANA)) {
             return Build.AMPLIFIER;
-        } else if (rc.getRoundNum() >= 200 && cntAmplifiers == 0)
+        } else if (rc.getRoundNum() >= 200 && cntAmplifiers <= 2)
             return Build.NONE;
         
         // Game is probably over, build anchors.
-        if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD)) 
+        if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD) &&
+            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%10 == 0)) || makingAnchor)) {
+            communications.updateAnchor(1);
+            makingAnchor = true;
             return Build.ANCHOR;
-        else if (rc.getRoundNum() > anchorRound)
+        } else if (rc.getRoundNum() > anchorRound && 
+            ((communications.shouldBuildAnchor() && (rc.getRoundNum()%10 == 0)) || makingAnchor)) {
+            communications.updateAnchor(1);
+            makingAnchor = true;
             return Build.NONE;
+        }
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 2;

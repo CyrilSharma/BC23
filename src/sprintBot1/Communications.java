@@ -60,6 +60,8 @@ public class Communications {
     static final int V_SYM = H_SYM + 1;
     static final int R_SYM = V_SYM + 1;
 
+    static final int ANCHOR = R_SYM+1;
+
 
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
@@ -85,6 +87,14 @@ public class Communications {
         clearTargets();
         broadcastAttackTargets();
         setMineRatio();
+    }
+
+    public void updateAnchor(int a) throws GameActionException {
+        rc.writeSharedArray(ANCHOR, a);
+    }
+
+    public boolean shouldBuildAnchor() throws GameActionException {
+        return rc.readSharedArray(ANCHOR) == 0;
     }
 
     public void setMineRatio() throws GameActionException {

@@ -15,6 +15,7 @@ public class Carrier extends Robot {
     boolean hasAnchor = false;
     boolean allowCommedWells;
     boolean mineEfficently;
+    MapLocation[][] islandCache = new MapLocation[100][];
     private boolean shouldDeliver = false;
     enum State {
         SEARCHING,
@@ -30,16 +31,17 @@ public class Carrier extends Robot {
     }
 
     void run() throws GameActionException {
+        grab_anchor();
+        if (rc.canPlaceAnchor()) {
+            rc.placeAnchor();
+        }
         allowCommedWells = true;//rc.getRoundNum() >= 25;
         mineEfficently = rc.getRoundNum() >= 75;
         //rc.disintegrate();
         initialize();
         State state = determineState();
-        if (chosen != null) rc.setIndicatorString("Seeking: " + chosen);
-        //rc.setIndicatorString(state.toString());
-        
+        rc.setIndicatorString(state.toString());
         communications.initial();
-        //rc.setIndicatorString("need: " + communications.readResourceNeed());
         attack();
         switch (state) {
             case SEARCHING: search(); break;
@@ -50,7 +52,8 @@ public class Carrier extends Robot {
             case FLEE: flee(); break;
             default:
         }
-        communications.last();
+        //System.out.println(Clock.getBytecodesLeft());
+        //communications.last();
     }
 
     void initialize() {
@@ -61,7 +64,6 @@ public class Carrier extends Robot {
 
     // No Seeking state until we have comms.
     State determineState() throws GameActionException {
-        grab_anchor();
         int attackerHealth = 0;
         int defenderHealth = 0;
         for (RobotInfo r: rc.senseNearbyRobots(-1)) {
@@ -150,11 +152,13 @@ public class Carrier extends Robot {
         WellInfo[] wells = rc.senseNearbyWells();
         WellTarget[] wellTargets = new WellTarget[wells.length + 15];
         while (iters < 3) {
+            if (Clock.getBytecodesLeft() < 6000) break;
+
             chosen = r;
             int ind = 0;
             WellTarget best = null;
             for (WellInfo w : wells){
-                if (Clock.getBytecodesLeft() < 1000) break;
+                if (Clock.getBytecodesLeft() < 6000) break;
                 if (w.getResourceType() != r) continue;
                 // don't die.
                 wellTargets[ind] = new WellTarget(w.getMapLocation(), w.getResourceType());
@@ -162,7 +166,7 @@ public class Carrier extends Robot {
             }
 
             for (RobotInfo f: friends) {
-                if (Clock.getBytecodesLeft() < 1000) break;
+                if (Clock.getBytecodesLeft() < 6000) break;
                 if (f.type != RobotType.CARRIER) continue;
                 for (int i = 0; i < ind; i++)
                     wellTargets[i].updateCarrier(f);
@@ -180,7 +184,7 @@ public class Carrier extends Robot {
 
             if (allowCommedWells) {
                 for (MapLocation m: communications.readWells(r)) {
-                    if (Clock.getBytecodesLeft() < 1000) break;
+                    if (Clock.getBytecodesLeft() < 6000) break;
                     if (m == null) continue;
                     WellTarget cur = new WellTarget(m, r);
                     if (cur.isBetterThan(best)) best = cur;
@@ -243,11 +247,13 @@ public class Carrier extends Robot {
 
     void deliver_anchor() throws GameActionException {
         if (islandTarget == null) {
+            //System.out.println(Clock.getBytecodesLeft());
             islandTarget = findIslandTarget();
-            if (islandTarget == null) 
-                exploration.move(communications.HQs, communications.numHQ);
-        }
-        if (islandTarget != null) {
+            //System.out.println(Clock.getBytecodesLeft());
+            if (islandTarget == null) {
+                moveTowardsSoldiers();
+            }
+        } else {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
@@ -260,21 +266,80 @@ public class Carrier extends Robot {
         }
     }
 
-    MapLocation findIslandTarget() throws GameActionException {
-        int[] islands = rc.senseNearbyIslands();
-        MapLocation closestTarget = null;
-        int d = 100000;
-        for (int idx: islands) {
-            if (Clock.getBytecodesLeft() < 1000) break;
-            if (rc.senseAnchor(idx) != null) continue;
-            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
-            for (MapLocation spot: spots) {
-                if (rc.getLocation().distanceSquaredTo(spot) < d) {
-                    closestTarget = spot;
+    void moveTowardsSoldiers() throws GameActionException {
+        if (!rc.isMovementReady()) return;
+        int[] dists = new int[9];
+        for (Direction d: directions) {
+            dists[d.ordinal()] = 0;
+        }
+        MapLocation loc = rc.getLocation();
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (r.type != RobotType.LAUNCHER) continue;
+            if (Clock.getBytecodesLeft() < 7000) break;
+            for (Direction d: directions) {
+                if (!rc.canMove(d)) continue;
+                MapLocation m = loc.add(d);
+                if (rc.canSenseLocation(m)) {
+                    MapInfo mi = rc.senseMapInfo(m);
+                    m.add(mi.getCurrentDirection());
                 }
+                dists[d.ordinal()] += r.location.distanceSquaredTo(m);
             }
         }
-        return closestTarget;
+        int bestD = dists[0];
+        Direction best = null;
+        for (Direction d: directions) {
+            if (dists[d.ordinal()] < bestD) {
+                best = d;
+                bestD = dists[d.ordinal()];
+            }
+        }
+        //System.out.println(Clock.getBytecodesLeft());
+        if (best == null) {
+            // too expensive.
+            exploration.move(communications.HQs, communications.numHQ);
+            //System.out.println("end: " + Clock.getBytecodesLeft());
+        } else if (rc.canMove(best)) 
+            rc.move(best);
+    }
+
+    MapLocation findIslandTarget() throws GameActionException {
+        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
+        if (friends.length <= 3) return null;
+        int[] islands = rc.senseNearbyIslands();
+        if (islands.length == 0) return null;
+        IslandTarget best = null;
+        for (int idx: islands) {
+            if (Clock.getBytecodesLeft() < 9000) break;
+            if (rc.senseAnchor(idx) != null) continue;
+
+            // caching bc this is insanely expensive.
+            MapLocation[] spots;
+            if (islandCache[idx] == null) {
+                spots = rc.senseNearbyIslandLocations(idx);
+                islandCache[idx] = spots;
+            } else {
+                spots = islandCache[idx];
+            }
+
+            IslandTarget[] targets = new IslandTarget[spots.length];
+            for (int i = 0; i < spots.length; i++) {
+                targets[i] = new IslandTarget(spots[i]);
+            }
+            for (RobotInfo f: friends) {
+                if (Clock.getBytecodesLeft() < 8000) break;
+                if (targets.length == 0) break;
+                if (f.type != RobotType.LAUNCHER) continue;
+                for (IslandTarget t: targets) 
+                    t.updateSoldier(f);
+            }
+            for (int i = 0; i < spots.length; i++) {
+                if (targets[i].isBetterThan(best)) best = targets[i];
+            }
+        }
+        if (best == null) return null;
+        if (best.soldiersNear < 5) return null;
+        return best.loc;
     }
 
     void attack() throws GameActionException {
@@ -328,6 +393,30 @@ public class Carrier extends Robot {
             if (wt.dist + 12 < dist) return false;
             if (dist + 12 < wt.dist) return true;
             return distHQ <= wt.distHQ; 
+        }
+    }
+
+    class IslandTarget {
+        MapLocation loc;
+        int soldiersNear;
+        double dist;
+        IslandTarget(MapLocation m) throws GameActionException{
+            loc = m;
+            dist = Util.absDistance(loc, rc.getLocation());
+            soldiersNear = 0;
+        }
+
+        void updateSoldier(RobotInfo r) {
+            if (r.location.distanceSquaredTo(loc) <= 4) {
+                soldiersNear++;
+            }
+        }
+
+        boolean isBetterThan(IslandTarget it) throws GameActionException {
+            if (it == null) return true;
+            if (it.soldiersNear > soldiersNear) return false;
+            if (it.soldiersNear < soldiersNear) return true;
+            return dist <= it.dist;
         }
     }
 }

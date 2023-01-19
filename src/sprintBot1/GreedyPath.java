@@ -124,42 +124,6 @@ public class GreedyPath {
         return dy + dx + Math.max(dy, dx);
     }
 
-/*
-    public void move(MapLocation goal) throws GameActionException{
-        if(sz < 11){
-            lastLoc[sz] = rc.getLocation();
-            sz++;
-        }
-        else{
-            for(int i = 0; i < 10; i++) lastLoc[i] = lastLoc[i + 1];
-            lastLoc[10] = rc.getLocation();
-        }
-        Direction bst = Direction.CENTER;
-        int mn = 10000000;
-        int curDirStart = (int) (Math.random() * directions.length);
-        for (int i = 0; i < 8; i++) {
-            Direction dir = directions[(curDirStart + i) % 8];
-            MapLocation nxt = rc.getLocation().add(dir);
-            if (!rc.canMove(dir)) continue;
-            MapInfo mi = rc.senseMapInfo(nxt);
-            nxt = nxt.add(mi.getCurrentDirection());
-            int f = 1;
-            for (int j = 0; j < sz; j++)
-                if (lastLoc[j].equals(nxt)) {
-                    f = 0;
-                    break;
-                }
-            if (f > 0) {
-                if (goal.distanceSquaredTo(nxt) < mn) {
-                    bst = dir;
-                    mn = goal.distanceSquaredTo(nxt);
-                }
-            }
-        }
-        if(bst != Direction.CENTER && rc.canMove(bst)) rc.move(bst);
-    }
-
- */
     public boolean tryMove(Direction dir) throws GameActionException{
         if(rc.canMove(dir)){
             rc.move(dir);
@@ -168,24 +132,25 @@ public class GreedyPath {
         return false;
     }
 
-    public void flee() throws GameActionException{
-        Direction bst = Direction.CENTER;
+    public void flee() throws GameActionException {
         int dist = 0;
-        RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
-        for(Direction dir : directions) if(rc.canMove(dir)){
+        Direction bst = Direction.CENTER;
+        RobotInfo[] r = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        for(Direction dir : directions) {
+            if (!rc.canMove(dir)) continue;
             MapLocation esc = rc.getLocation().add(dir);
             int curDist = 0;
-            for(RobotInfo rob : r){
+            for (RobotInfo rob : r){
                 curDist += esc.distanceSquaredTo(rob.location) * (Util.isAttacker(rob.type) ? 3 : 1);
             }
-            if(curDist > dist){
+            if (curDist > dist){
                 bst = dir;
                 dist = curDist;
             }
         }
-        if(bst != Direction.CENTER && rc.canMove(bst)){
+
+        if (bst != Direction.CENTER && rc.canMove(bst)){
             rc.move(bst);
-            move(rc.getLocation().add(bst).add(bst));
         }
     }
 }
