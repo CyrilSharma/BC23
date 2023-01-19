@@ -46,6 +46,7 @@ public class Launcher extends Robot {
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
     MapLocation bestNeighborLoc = null;
+    MapLocation enemyHQ = null;
     Direction bestNeighborDir;
     boolean okToStray;
     boolean shouldRendevous = true;
@@ -148,19 +149,19 @@ public class Launcher extends Robot {
     State determineState() throws GameActionException {
         if (rc.getRoundNum()%3 == 2) return State.WAIT;
 
-        boolean inHQRange = false;
+        boolean seesHQ = false;
         boolean hasEnemy = false;
         for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (e.type != RobotType.HEADQUARTERS) hasEnemy = true;
             else {
-                if (e.location.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.actionRadiusSquared)
-                inHQRange = true;
+                enemyHQ = e.location;
+                seesHQ = true;
             }
         }
 
-        int numLaunchers = 0;
-        for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam())) {
-            if (e.type == RobotType.LAUNCHER) numLaunchers++;
+        int numCarriers = 0;
+        for (RobotInfo f : rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (f.type == RobotType.CARRIER) numCarriers++;
         }
         // Conditions!!
         boolean closeToCenter = rc.getLocation().distanceSquaredTo(new 
@@ -172,9 +173,8 @@ public class Launcher extends Robot {
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
             hasTarget = (d >= 64 && d <= 256);
-            if (communications.symmetryChecker.getSymmetry() != -1) {
-                MapLocation m = communications.getClosestEnemyHQ();
-                hasTarget = hasTarget & (m.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
+            if (enemyHQ != null) {
+                hasTarget = hasTarget & (enemyHQ.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
             }
         }
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
@@ -186,12 +186,14 @@ public class Launcher extends Robot {
         // States.
         if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns) return State.RENDEVOUS;
+        // don't mess with production.
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns
+            || numCarriers>5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
         if (hasTarget) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if ((knowsSymmetry && rc.getRoundNum()>=800) || inHQRange) return State.HUNT_HQ;
+        if ((knowsSymmetry && rc.getRoundNum()>=800) || seesHQ) return State.HUNT_HQ;
         return State.ADVANCE;
     }
 
@@ -258,7 +260,10 @@ public class Launcher extends Robot {
 
     void hunt_hq() throws GameActionException {
         MapLocation m = communications.getClosestEnemyHQ();
-        hunt_hq(m);
+        if (m != null) hunt_hq(m);
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
+            if (r.type == RobotType.HEADQUARTERS) hunt_hq(r.location);
+        }
     }
 
     void hunt_hq(MapLocation m) throws GameActionException {

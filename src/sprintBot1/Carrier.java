@@ -32,9 +32,6 @@ public class Carrier extends Robot {
 
     void run() throws GameActionException {
         grab_anchor();
-        if (rc.canPlaceAnchor()) {
-            rc.placeAnchor();
-        }
         allowCommedWells = true;//rc.getRoundNum() >= 25;
         mineEfficently = rc.getRoundNum() >= 75;
         //rc.disintegrate();
@@ -53,7 +50,7 @@ public class Carrier extends Robot {
             default:
         }
         //System.out.println(Clock.getBytecodesLeft());
-        //communications.last();
+        communications.last();
     }
 
     void initialize() {
@@ -251,13 +248,15 @@ public class Carrier extends Robot {
             islandTarget = findIslandTarget();
             //System.out.println(Clock.getBytecodesLeft());
             if (islandTarget == null) {
-                moveTowardsSoldiers();
+                //moveTowardsSoldiers();
+                exploration.move(communications.HQs, communications.numHQ);
             }
         } else {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
                 if (rc.canPlaceAnchor()) {
+                    System.out.println("HEY!");
                     rc.placeAnchor();
                     islandTarget = null;
                     hasAnchor = false;
@@ -304,6 +303,24 @@ public class Carrier extends Robot {
     }
 
     MapLocation findIslandTarget() throws GameActionException {
+        int[] islands = rc.senseNearbyIslands();
+        MapLocation closestTarget = null;
+        int d = 100000;
+        for (int idx: islands) {
+            if (Clock.getBytecodesLeft() < 1000) break;
+            if (rc.senseAnchor(idx) != null) continue;
+            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
+            for (MapLocation spot: spots) {
+                if (rc.getLocation().distanceSquaredTo(spot) < d) {
+                    closestTarget = spot;
+                }
+            }
+        }
+        return closestTarget;
+    }
+
+    // it's not a massive advantage to place it near soldiers [maybe near carrier??!]
+    /* MapLocation findIslandTarget() throws GameActionException {
         RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
         if (friends.length <= 3) return null;
         int[] islands = rc.senseNearbyIslands();
@@ -340,7 +357,7 @@ public class Carrier extends Robot {
         if (best == null) return null;
         if (best.soldiersNear < 5 && rc.getRoundNum() <= 750) return null;
         return best.loc;
-    }
+    } */
 
     void attack() throws GameActionException {
         RobotInfo best = util.getBestAttackTarget();
