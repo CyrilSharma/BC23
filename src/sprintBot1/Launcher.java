@@ -162,6 +162,10 @@ public class Launcher extends Robot {
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
             hasTarget = (d >= 16 && d <= 144);
+            if (communications.symmetryChecker.getSymmetry() != -1) {
+                MapLocation m = communications.getClosestEnemyHQ();
+                hasTarget = hasTarget & (m.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
+            }
         }
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
@@ -176,8 +180,8 @@ public class Launcher extends Robot {
         if (hasAdvance) return State.ADVANCE;
         if (previousEnemy != null) return State.CHASE;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if ((!knowsSymmetry || rc.getRoundNum() <= 500)) return State.RENDEVOUS;
-        if (knowsSymmetry && rc.getRoundNum() >= 500) return State.HUNT_HQ;
+        if (!knowsSymmetry) return State.RENDEVOUS;
+        if (knowsSymmetry) return State.HUNT_HQ;
         return State.WAIT;
     }
 

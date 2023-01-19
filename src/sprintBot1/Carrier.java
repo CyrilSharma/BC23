@@ -338,7 +338,7 @@ public class Carrier extends Robot {
             }
         }
         if (best == null) return null;
-        if (best.soldiersNear < 5) return null;
+        if (best.soldiersNear < 5 && rc.getRoundNum() <= 750) return null;
         return best.loc;
     }
 
