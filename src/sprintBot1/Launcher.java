@@ -212,15 +212,18 @@ public class Launcher extends Robot {
         double totalW = 0;
         HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
         RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
+        RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
         for (RobotInfo r: robots) {
             if (Clock.getBytecodesLeft() < 5000) break;
             if (neighbors.containsKey(r.ID)) {
                 RobotInfo prev = neighbors.get(r.ID);
                 // if a unit moved away from me, follow him. unless, he was retreating.
+                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.location.distanceSquaredTo(rc.getLocation());
+                for (RobotInfo n: nbrs) {
+                    netD += r.location.distanceSquaredTo(n.location) - prev.location.distanceSquaredTo(n.location);
+                }
                 if (prev != null && prev.location != r.location
-                    && r.type == RobotType.LAUNCHER && 
-                    (r.location.distanceSquaredTo(rc.getLocation()) >
-                    prev.location.distanceSquaredTo(rc.getLocation()))) {
+                    && r.type == RobotType.LAUNCHER && netD > 0) {
                     x += r.location.x * 6;
                     y += r.location.y * 6;
                     totalW += 6;
@@ -371,40 +374,6 @@ public class Launcher extends Robot {
                 best = microtargets[i];
         }
         if (rc.canMove(best.dir)) rc.move(best.dir);
-    }
-
-    class ClusterTarget {
-        int sumD = 0;
-        boolean canMove;
-        boolean needsMove;
-        MapLocation m;
-        Direction dir;
-        ClusterTarget(Direction dir) throws GameActionException {
-            this.dir = dir;
-            m = rc.getLocation().add(dir);
-            for (int i = 0; i < 2; i++) {
-                if (!rc.canSenseLocation(m)) break;
-                MapInfo mi = rc.senseMapInfo(m);
-                m = m.add(mi.getCurrentDirection());
-            }
-            canMove = rc.canMove(dir);
-            needsMove = !m.equals(rc.getLocation());
-        }
-        void updateAlly(RobotInfo r) {
-            if (!canMove) return;
-            sumD += m.distanceSquaredTo(r.location);
-        }
-        boolean isBetterThan(ClusterTarget ct) {
-            if (ct == null) return true;
-            if (ct.canMove && !canMove) return false;
-            if (!ct.canMove && canMove) return true;
-            if (ct.sumD < sumD) return false;
-            if (ct.sumD > sumD) return true;
-            // moving conveys information, so avoid moving if unnecessary.
-            if (!ct.needsMove && needsMove) return false;
-            if (ct.needsMove && !needsMove) return true;
-            return sumD <= ct.sumD;
-        }
     }
 
     // Choose best candidate for maneuvering in close encounters.
