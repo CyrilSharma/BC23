@@ -33,8 +33,7 @@ public class Carrier extends Robot {
     void run() throws GameActionException {
         grab_anchor();
         allowCommedWells = true;//rc.getRoundNum() >= 25;
-        //mineEfficently = rc.getRoundNum() >= 75;
-        //rc.disintegrate();
+        mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
         rc.setIndicatorString(""+resourceNeeded);
@@ -210,7 +209,7 @@ public class Carrier extends Robot {
             }
             // bash through all resources.
             r = ResourceType.values()[(r.ordinal() + 2)%3];
-            //if (!mineEfficently) break;
+            if (!mineEfficently) break;
         }
     }
 

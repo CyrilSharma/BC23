@@ -198,7 +198,8 @@ public class Launcher extends Robot {
         // if (rc.getRoundNum() <= 3) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns) return State.RENDEVOUS;
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
+            numCarriers > 5) return State.RENDEVOUS;
         if (hasTargetClose) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
         if (hurt && islandTarget != null) return State.HEAL;
@@ -216,15 +217,17 @@ public class Launcher extends Robot {
         double y = 0;
         double totalW = 0;
         HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
-        RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
         for (RobotInfo r: robots) {
             if (Clock.getBytecodesLeft() < 6000) break;
+            if (r.type != RobotType.LAUNCHER) continue;
             if (neighbors.containsKey(r.ID)) {
                 RobotInfo prev = neighbors.get(r.ID);
                 // if a unit moved away from me, follow him. unless, he was retreating.
                 int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.location.distanceSquaredTo(rc.getLocation());
-                for (RobotInfo n: nbrs) {
+                for (int i = 0; i < nbrs.length && i < 3; i++) {
+                    RobotInfo n = nbrs[i];
                     netD += r.location.distanceSquaredTo(n.location) - prev.location.distanceSquaredTo(n.location);
                 }
                 if (prev != null && prev.location != r.location
@@ -235,19 +238,18 @@ public class Launcher extends Robot {
                     friendsMoved = true;
                 }
             }
-            if (r.type == RobotType.LAUNCHER) {
-                x += r.location.x;
-                y += r.location.y;
-                totalW += 1;
-            }
+            // add in average position.
+            x += r.location.x;
+            y += r.location.y;
+            totalW += 1;
             nneighbors.put(r.ID, r);
         }
+        neighbors = nneighbors;
         if (totalW == 0) {
             bestNeighborLoc = null;
             return;
         }
         bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
-        neighbors = nneighbors;
     }
 
     void heal() throws GameActionException {
@@ -319,9 +321,9 @@ public class Launcher extends Robot {
             }
         }
         if (bestNeighborLoc == null) return;
-        if (friendsMoved) greedyPath.move(bestNeighborLoc);
-        else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2)
-            greedyPath.move(bestNeighborLoc);
+        /* if (friendsMoved) greedyPath.move(bestNeighborLoc);
+        else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2) */
+        greedyPath.move(bestNeighborLoc);
     }
 
     void chase() throws GameActionException {
@@ -361,25 +363,31 @@ public class Launcher extends Robot {
 
     void maneuver() throws GameActionException {
         rc.setIndicatorString("Maneuvering");
+        // System.out.println("1: " + Clock.getBytecodesLeft());
+        // Needs 1k Bytecode.
         MicroTarget[] microtargets = new MicroTarget[9];
         for (Direction d: directions) {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
-
+        
+        // System.out.println("2: " + Clock.getBytecodesLeft());
         for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 3000) break;
+            if (Clock.getBytecodesLeft() < 2000) break;
             for (Direction d: directions) {
                 if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
                 else microtargets[d.ordinal()].addEnemy(r);
             }
         }
 
+        // System.out.println("3: " + Clock.getBytecodesLeft());
+        // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
         for (int i = 0; i < 9; i++) {
             if (microtargets[i].isBetterThan(best))
                 best = microtargets[i];
         }
         if (rc.canMove(best.dir)) rc.move(best.dir);
+        // System.out.println("4: " + Clock.getBytecodesLeft());
     }
 
     // Choose best candidate for maneuvering in close encounters.
@@ -440,9 +448,9 @@ public class Launcher extends Robot {
                 MapInfo mi = rc.senseMapInfo(r.location);
                 double cooldown = mi.getCooldownMultiplier(rc.getTeam());
                 boolean onCloud = mi.hasCloud();
-                int action = onCloud ? GameConstants.CLOUD_VISION_RADIUS_SQUARED :
-                    r.type.actionRadiusSquared;
-                if (nloc.distanceSquaredTo(r.location) <= action)
+                //int vision = onCloud ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
+                int vision = r.type.actionRadiusSquared;;
+                if (nloc.distanceSquaredTo(r.location) <= vision)
                     dps_defending += (double) r.type.damage * (1.0 / cooldown);
             }
         }
@@ -464,8 +472,8 @@ public class Launcher extends Robot {
 
             // If hurt move to where enemies are targetting the least.
             if (hurt) {
-                if (mt.hasCloud && !hasCloud) return false;
-                if (!mt.hasCloud && hasCloud) return true;
+                //if (mt.hasCloud && !hasCloud) return false;
+                //if (!mt.hasCloud && hasCloud) return true;
                 if (mt.dps_targetting < dps_targetting) return false;
                 if (mt.dps_targetting > dps_targetting) return true;
                 // run away!!!!
