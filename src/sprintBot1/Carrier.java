@@ -39,8 +39,7 @@ public class Carrier extends Robot {
         //rc.disintegrate();
         initialize();
         State state = determineState();
-        //rc.setIndicatorString(state.toString());
-        rc.setIndicatorString(""+resourceNeeded);
+        rc.setIndicatorString(state.toString());
         communications.initial();
         attack();
         switch (state) {
@@ -107,6 +106,8 @@ public class Carrier extends Robot {
             return State.HARVESTING;
         }
         if (adamantium + mana + elixir > 0) {
+            wellTarget = null;
+            resourceNeeded = communications.readResourceNeed();
             return State.DELIVERING;
         }
         return State.SEARCHING;
@@ -114,6 +115,7 @@ public class Carrier extends Robot {
 
     void flee() throws GameActionException {
         findTarget();
+        greedyPath.flee();
         greedyPath.flee();
     }
 
@@ -178,7 +180,6 @@ public class Carrier extends Robot {
 
             if (best != null && !best.crowded()) {
                 wellTarget = best.loc;
-                resourceNeeded = communications.readResourceNeed();
                 return;
             }
 
@@ -191,7 +192,6 @@ public class Carrier extends Robot {
                 }
                 if (best != null && !best.crowded() && best.dist < 12) {
                     wellTarget = best.loc;
-                    resourceNeeded = communications.readResourceNeed();
                     return;
                 }
             }
@@ -203,11 +203,12 @@ public class Carrier extends Robot {
 
     // TODO: add some evasive maneuvers
     void harvest() throws GameActionException {
-        WellInfo wi = rc.senseWell(wellTarget);
         while (rc.isActionReady()) {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
-                if (!rc.isActionReady()) wellTarget = null;
+                if (!rc.isActionReady()) {
+                    wellTarget = null;
+                }
             } else if (rc.canCollectResource(wellTarget, -1)) {
                 rc.collectResource(wellTarget, -1);
             }

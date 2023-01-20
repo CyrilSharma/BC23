@@ -76,7 +76,6 @@ public class Launcher extends Robot {
         rendevous = communications.getBestRendevous();
     }
     void run() throws GameActionException {
-        okToStray = rc.getRoundNum() > (rc.getMapHeight() * rc.getMapWidth())/10;
         islandTarget = null;
         huntTarget = null;
         if (rc.getHealth() < 120) hurt = true;
@@ -140,7 +139,7 @@ public class Launcher extends Robot {
     void doAttack(boolean attackers) throws GameActionException {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null && attackers) return;
-        else if (r == null) {
+        else if (r == null && attackers==false) {
             MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
             if (clouds.length == 0) return;
             MapLocation loc = null;
@@ -191,7 +190,8 @@ public class Launcher extends Robot {
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
         if (hasTarget) huntTarget = target;
-        
+        // until we stop them from crashing into carriers.
+        // if (rc.getRoundNum() <= 3) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns
@@ -432,7 +432,9 @@ public class Launcher extends Robot {
                 MapInfo mi = rc.senseMapInfo(r.location);
                 double cooldown = mi.getCooldownMultiplier(rc.getTeam());
                 boolean onCloud = mi.hasCloud();
-                if (nloc.distanceSquaredTo(r.location) <=  GameConstants.CLOUD_VISION_RADIUS_SQUARED)
+                int action = onCloud ? GameConstants.CLOUD_VISION_RADIUS_SQUARED :
+                    r.type.actionRadiusSquared;
+                if (nloc.distanceSquaredTo(r.location) <= action)
                     dps_defending += (double) r.type.damage * (1.0 / cooldown);
             }
         }
@@ -455,7 +457,7 @@ public class Launcher extends Robot {
             // If hurt move to where enemies are targetting the least.
             if (hurt) {
                 if (mt.hasCloud && !hasCloud) return false;
-                if (!mt.hasCloud && hasCloud) return false;
+                if (!mt.hasCloud && hasCloud) return true;
                 if (mt.dps_targetting < dps_targetting) return false;
                 if (mt.dps_targetting > dps_targetting) return true;
                 // run away!!!!

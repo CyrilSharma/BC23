@@ -100,7 +100,10 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum() <= 150) {
+            if (rc.getRoundNum() <= 15) {
+                setResourceNeed(ResourceType.MANA, 1);
+                setResourceNeed(ResourceType.ADAMANTIUM, 0);
+            } else if (rc.getRoundNum() <= 150) {
                 setResourceNeed(ResourceType.MANA, 2);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             } else if (rc.getRoundNum() <= 250){
