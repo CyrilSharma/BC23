@@ -41,6 +41,7 @@ import battlecode.common.*;
 // Everything attacks outside of clouds if at all possible.
 // Spam rc.canAttack() for all tiles in vision radius ig.
 public class Launcher extends Robot {
+    int born;
     boolean hurt = false;
     int prevEnemyRound = -1;
     MapLocation previousEnemy = null;
@@ -51,7 +52,6 @@ public class Launcher extends Robot {
     boolean okToStray;
     boolean shouldRendevous = true;
     MapLocation rendevous;
-    int born;
     // may want to replace this with a custom implementation.
     HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     private MapLocation enemyHQLoc;
@@ -196,7 +196,7 @@ public class Launcher extends Robot {
         // if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns
             || numCarriers>5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
         if (hasTarget) return State.HUNT;
@@ -398,7 +398,6 @@ public class Launcher extends Robot {
                 nloc.add(mi.getCurrentDirection());
                 net_dps -= ((double) rc.getType().damage) * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
-            
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
@@ -407,11 +406,11 @@ public class Launcher extends Robot {
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
             boolean onCloud = mi.hasCloud();
-            // ignore boosting effects of other units for now.
             double cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
-
-            int action = (onCloud || hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
-            int vision = (onCloud || hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;;
+            //int action = (onCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
+            //int vision = (onCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;
+            int action = r.type.actionRadiusSquared;
+            int vision = r.type.visionRadiusSquared;
             if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(m);
                 if (d <= action) 

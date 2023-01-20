@@ -91,17 +91,23 @@ public class HQ extends Robot {
             MapLocation mloc = loc;
             if (rc.canSenseLocation(loc)) {
                 MapInfo mi = rc.senseMapInfo(mloc);
-                mloc.add(mi.getCurrentDirection());
+                mloc = mloc.add(mi.getCurrentDirection());
             }
-            int d = mloc.distanceSquaredTo(new MapLocation(rc.getMapHeight()/2, rc.getMapWidth()/2));
-            if (d < bestD) best = loc;
+            int d = mloc.distanceSquaredTo(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2));
+            if (d < bestD) {
+                bestD = d;
+                best = loc;
+            }
         }
         if (rc.canBuildRobot(RobotType.LAUNCHER, best))
                 rc.buildRobot(RobotType.LAUNCHER, best);
+        for (MapLocation m: rc.getAllLocationsWithinRadiusSquared(best, 1)) {
+            if (m.distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared) continue;
+            if (rc.canBuildRobot(RobotType.LAUNCHER, m))
+                rc.buildRobot(RobotType.LAUNCHER, m);
+        }
         for (Direction dir: directions) {
-            if (best.add(dir).distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared) {
-                continue;
-            }
+            if (best.add(dir).distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared) continue;
             if (rc.canBuildRobot(RobotType.LAUNCHER, best.add(dir)))
                 rc.buildRobot(RobotType.LAUNCHER, best.add(dir));
         }
