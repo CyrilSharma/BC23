@@ -22,6 +22,7 @@ public class HQ extends Robot {
     }
     void run() throws GameActionException {
         //if(rc.getRoundNum() == 1000) rc.resign();
+        communications.initial();
         rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
@@ -34,9 +35,6 @@ public class HQ extends Robot {
         if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0){
             if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
                 communications.resetCounts();
-        }
-        if(rc.getRoundNum() > 2){
-            communications.initial();
         }
         build();
         communications.last();
