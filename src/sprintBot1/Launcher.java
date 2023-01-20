@@ -50,6 +50,7 @@ public class Launcher extends Robot {
     MapLocation enemyHQ = null;
     Direction bestNeighborDir;
     boolean okToStray;
+    boolean friendsMoved = false;
     boolean shouldRendevous = true;
     MapLocation rendevous;
     // may want to replace this with a custom implementation.
@@ -78,6 +79,7 @@ public class Launcher extends Robot {
     void run() throws GameActionException {
         islandTarget = null;
         huntTarget = null;
+        friendsMoved = false;
         if (rc.getHealth() < 120) hurt = true;
         if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
@@ -190,7 +192,7 @@ public class Launcher extends Robot {
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
-        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/8;
+        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
         if (hasTargetClose) huntTarget = target;
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;
@@ -230,6 +232,7 @@ public class Launcher extends Robot {
                     x += r.location.x * 6;
                     y += r.location.y * 6;
                     totalW += 6;
+                    friendsMoved = true;
                 }
             }
             if (r.type == RobotType.LAUNCHER) {
@@ -315,10 +318,10 @@ public class Launcher extends Robot {
                 return;
             }
         }
-        if (bestNeighborLoc != null) {
+        if (bestNeighborLoc == null) return;
+        if (friendsMoved) greedyPath.move(bestNeighborLoc);
+        else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2)
             greedyPath.move(bestNeighborLoc);
-            return;
-        }
     }
 
     void chase() throws GameActionException {

@@ -172,7 +172,9 @@ public class Communications {
         int val = rng.nextInt(sum);
 
         for (int i = 0; i < 3; i++) {
-            if (val < bounds[i]) return res[i];
+            if (val < bounds[i]) {
+                return res[i];
+            }
         }
         return res[rng.nextInt(3)];
     }

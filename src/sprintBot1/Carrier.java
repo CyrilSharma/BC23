@@ -37,7 +37,8 @@ public class Carrier extends Robot {
         //rc.disintegrate();
         initialize();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        rc.setIndicatorString(""+resourceNeeded);
+        //rc.setIndicatorString(state.toString());
         communications.initial();
         attack();
         switch (state) {
@@ -209,7 +210,7 @@ public class Carrier extends Robot {
             }
             // bash through all resources.
             r = ResourceType.values()[(r.ordinal() + 2)%3];
-            if (!mineEfficently) break;
+            //if (!mineEfficently) break;
         }
     }
 
@@ -412,7 +413,7 @@ public class Carrier extends Robot {
         }
 
         boolean bestResource() throws GameActionException {
-            return r == communications.readResourceNeed();
+            return r == resourceNeeded;
         }
 
         boolean isBetterThan(WellTarget wt) throws GameActionException {
