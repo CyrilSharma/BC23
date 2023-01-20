@@ -74,11 +74,6 @@ public class Util {
         for (RobotInfo e: enemies) {
             targets[ind++] = new AttackTarget(e);
         }
-        /* for (RobotInfo f: friends) {
-            if (Clock.getBytecodesLeft()<8000)
-            for (AttackTarget t: targets)
-                t.updateAlly(f);
-        } */
         AttackTarget best = null;
         for (AttackTarget t: targets) 
             if (t.isBetterThan(best)) best = t;
@@ -105,14 +100,6 @@ public class Util {
                 && r.type != RobotType.HEADQUARTERS;
             // allows us to agree on who to attack.
             d = r.location.distanceSquaredTo(new MapLocation(0, 0));
-        }
-
-        void updateAlly(RobotInfo f) throws GameActionException {
-            if (!canAttack) return;
-            if (f.type == RobotType.LAUNCHER) {
-                if (f.location.distanceSquaredTo(loc) <= RobotType.LAUNCHER.visionRadiusSquared)
-                    soldiersAttacking++;
-            }
         }
 
         boolean isBetterThan(AttackTarget at) {

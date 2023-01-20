@@ -33,7 +33,7 @@ public class Carrier extends Robot {
     void run() throws GameActionException {
         grab_anchor();
         allowCommedWells = true;//rc.getRoundNum() >= 25;
-        mineEfficently = rc.getRoundNum() >= 75;
+        // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
         rc.setIndicatorString(""+resourceNeeded);
@@ -143,6 +143,8 @@ public class Carrier extends Robot {
 
     void seek() throws GameActionException {
         // recompute if crowded.
+        greedyPath.move(wellTarget);
+        greedyPath.move(wellTarget);
         if (wellTarget.distanceSquaredTo(rc.getLocation()) <= 9) {
             if (rc.canSenseLocation(wellTarget)) {
                 WellInfo w = rc.senseWell(wellTarget);
@@ -154,8 +156,6 @@ public class Carrier extends Robot {
                 if (count > 7) findTarget();
             }
         }
-        greedyPath.move(wellTarget);
-        greedyPath.move(wellTarget);
     }
 
     void findTarget() throws GameActionException {

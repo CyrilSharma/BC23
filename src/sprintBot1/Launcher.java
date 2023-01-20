@@ -385,20 +385,17 @@ public class Launcher extends Robot {
             mi = rc.senseMapInfo(m);
             if (r.team == rc.getTeam()) {
                 cooldown = mi.getCooldownMultiplier(rc.getTeam());
-                currentDPS = (double) launcherDMG * (1.0 / cooldown);
+                currentDPS = (double) r.type.damage * (1.0 / cooldown);
                 for (Direction d: directions) {
                     microtargets[d.ordinal()].addAlly(r);
                 }
-                
             } else {
                 cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
-                currentDPS = (double) launcherDMG * (1.0 / cooldown);
+                currentDPS = (double) r.type.damage * (1.0 / cooldown);
                 for (Direction d: directions) {
                     microtargets[d.ordinal()].addEnemy(r);
                 }
             }
-            //int end = Clock.getBytecodesLeft();
-            //System.out.println(start - end);
             iters++;
         }
         System.out.println(iters);
@@ -413,13 +410,11 @@ public class Launcher extends Robot {
     }
 
     // Choose best candidate for maneuvering in close encounters.
-    int launcherDMG = RobotType.LAUNCHER.damage;
-    int hqDMG = RobotType.HEADQUARTERS.damage;
     class MicroTarget {
         Direction dir;
-        double net_dps = 0;
         double dps_targetting = 0;
         double dps_defending = 0;
+        double my_dps;
         int minDistToEnemy = 100000;
         boolean canMove;
         boolean hasCloud;
@@ -432,8 +427,8 @@ public class Launcher extends Robot {
             if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
-                nloc.add(mi.getCurrentDirection());
-                net_dps -= ((double) rc.getType().damage) * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
+                nloc = nloc.add(mi.getCurrentDirection());
+                my_dps = RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
         }
         
@@ -443,7 +438,6 @@ public class Launcher extends Robot {
             if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(r.location);
                 if (d <= r.type.actionRadiusSquared) {
-                    net_dps += currentDPS;
                     dps_targetting += currentDPS;
                 } else if (d <= r.type.visionRadiusSquared)
                     dps_targetting += currentDPS;
@@ -453,7 +447,7 @@ public class Launcher extends Robot {
             if (r.type == RobotType.HEADQUARTERS) {
                 int d = nloc.distanceSquaredTo(r.location);
                 if (d <= r.type.actionRadiusSquared) 
-                    net_dps += currentDPS;
+                    dps_targetting += currentDPS;
             }
         } 
 
@@ -465,7 +459,7 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            if (net_dps > 0) return 1;
+            if (dps_targetting > my_dps) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
         }
