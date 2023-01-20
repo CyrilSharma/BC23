@@ -192,8 +192,6 @@ public class Launcher extends Robot {
         int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
         if (hasTarget) huntTarget = target;
         
-        // States.
-        // if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns
@@ -361,7 +359,7 @@ public class Launcher extends Robot {
         }
 
         for (RobotInfo r: rc.senseNearbyRobots()) {
-            if (Clock.getBytecodesLeft() < 2000) break;
+            if (Clock.getBytecodesLeft() < 3000) break;
             for (Direction d: directions) {
                 if (r.team == rc.getTeam()) microtargets[d.ordinal()].addAlly(r);
                 else microtargets[d.ordinal()].addEnemy(r);
@@ -456,6 +454,8 @@ public class Launcher extends Robot {
 
             // If hurt move to where enemies are targetting the least.
             if (hurt) {
+                if (mt.hasCloud && !hasCloud) return false;
+                if (!mt.hasCloud && hasCloud) return false;
                 if (mt.dps_targetting < dps_targetting) return false;
                 if (mt.dps_targetting > dps_targetting) return true;
                 // run away!!!!
