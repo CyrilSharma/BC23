@@ -1,4 +1,5 @@
 package sprintBot1;
+
 import battlecode.common.*;
 
 public class HQ extends Robot {
@@ -44,9 +45,10 @@ public class HQ extends Robot {
 
     void build() throws GameActionException {
         if (rc.getRoundNum() == 1) buildConvoy();
+        if (rc.getRoundNum() <= 2) placeExploratoryCarriers();
+
         Build b = getBuildType();
         if (b == Build.NONE) return;
-        
         if (b == Build.ANCHOR) {
             if (rc.canBuildAnchor(Anchor.STANDARD)) {
                 rc.buildAnchor(Anchor.STANDARD);
@@ -111,6 +113,48 @@ public class HQ extends Robot {
             if (rc.canBuildRobot(RobotType.LAUNCHER, best.add(dir)))
                 rc.buildRobot(RobotType.LAUNCHER, best.add(dir));
         }
+    }
+
+    int placementInd=0;
+    MapLocation[] prevPlacements = new MapLocation[4];
+    void placeExploratoryCarriers() throws GameActionException {
+        MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
+        if (placementInd == 0) {
+            MapLocation best = null;
+            int bestD = -1;
+            for (MapLocation loc: locs) {
+                if (!rc.canBuildRobot(RobotType.CARRIER, loc)) continue;
+                MapLocation mloc = loc;
+                if (rc.canSenseLocation(loc)) {
+                    MapInfo mi = rc.senseMapInfo(mloc);
+                    mloc = mloc.add(mi.getCurrentDirection());
+                }
+                int d = mloc.distanceSquaredTo(new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2));
+                if (d > bestD) {
+                    bestD = d;
+                    best = loc;
+                }
+            }
+            if (rc.canBuildRobot(RobotType.CARRIER, best))
+                    rc.buildRobot(RobotType.CARRIER, best);
+            prevPlacements[placementInd++] = best;
+        }
+        
+        int minDist;
+        MapLocation cur;
+        for (int i = 0; rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium && i < 5; i++) {
+            cur = locs[rng.nextInt(locs.length)];
+            minDist = 10000;
+            for (MapLocation m: prevPlacements) {
+                if (m == null) continue;
+                if (cur.distanceSquaredTo(m) <= minDist) 
+                    minDist = cur.distanceSquaredTo(m);
+            }
+            if (minDist >= 9 && minDist <= 25 && rc.canBuildRobot(RobotType.CARRIER, cur)) {
+                rc.buildRobot(RobotType.CARRIER, cur);
+                prevPlacements[placementInd++] = cur;
+            }
+        }  
     }
 
     MapLocation getBuildLocation(RobotType t) throws GameActionException {
