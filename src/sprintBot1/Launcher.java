@@ -80,7 +80,7 @@ public class Launcher extends Robot {
         islandTarget = null;
         huntTarget = null;
         friendsMoved = false;
-        if (rc.getHealth() < 120) hurt = true;
+        hurt = rc.getHealth() < 120;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         
@@ -194,7 +194,7 @@ public class Launcher extends Robot {
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
-        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
+        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/6;
         if (hasTargetClose) huntTarget = target;
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;
@@ -379,6 +379,9 @@ public class Launcher extends Robot {
 
 
     double currentDPS, cooldown;
+    boolean robotOnCloud;
+    int curActionRadius;
+    int curVisionRadius;
     void maneuver() throws GameActionException {
         rc.setIndicatorString("Maneuvering");
         // Needs 1k Bytecode.
@@ -397,13 +400,19 @@ public class Launcher extends Robot {
             mi = rc.senseMapInfo(m);
             if (r.team == rc.getTeam()) {
                 cooldown = mi.getCooldownMultiplier(rc.getTeam());
+                robotOnCloud = mi.hasCloud();
                 currentDPS = (double) r.type.damage * (1.0 / cooldown);
+                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
+                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;
                 for (Direction d: directions) {
                     microtargets[d.ordinal()].addAlly(r);
                 }
             } else {
                 cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
                 currentDPS = (double) r.type.damage * (1.0 / cooldown);
+                robotOnCloud = mi.hasCloud();
+                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
+                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;
                 for (Direction d: directions) {
                     microtargets[d.ordinal()].addEnemy(r);
                 }
@@ -447,9 +456,9 @@ public class Launcher extends Robot {
             if (!canMove) return;
             if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(r.location);
-                if (d <= r.type.actionRadiusSquared) {
+                if (d <= curActionRadius) {
                     dps_targetting += currentDPS;
-                } else if (d <= r.type.visionRadiusSquared)
+                } else if (d <= curVisionRadius)
                     dps_targetting += currentDPS;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
@@ -464,7 +473,7 @@ public class Launcher extends Robot {
         
         void addAlly(RobotInfo r) throws GameActionException {
             if (!canMove) return;
-            if (nloc.distanceSquaredTo(r.location) <= r.type.visionRadiusSquared)
+            if (nloc.distanceSquaredTo(r.location) <= curVisionRadius)
                 dps_defending += currentDPS;
         }
        
@@ -478,17 +487,16 @@ public class Launcher extends Robot {
             if (mt.canMove && !canMove) return false;
             if (!mt.canMove && canMove) return true;
 
-            
             // the idea here is attack first, then move out of range.
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
             // If hurt move to where enemies are targetting the least.
             if (hurt) {
-                //if (mt.hasCloud && !hasCloud) return false;
-                //if (!mt.hasCloud && hasCloud) return true;
-                if (mt.dps_targetting < dps_targetting) return false;
-                if (mt.dps_targetting > dps_targetting) return true;
+                if (mt.hasCloud && !hasCloud) return false;
+                if (!mt.hasCloud && hasCloud) return true;
+                if (mt.dps_defending > dps_defending) return false;
+                if (mt.dps_defending < dps_defending) return true;
                 // run away!!!!
                 return minDistToEnemy >= mt.minDistToEnemy;
             }
