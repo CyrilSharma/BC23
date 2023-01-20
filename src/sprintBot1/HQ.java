@@ -43,6 +43,7 @@ public class HQ extends Robot {
     }
 
     void build() throws GameActionException {
+        if (rc.getRoundNum() == 1) buildConvoy();
         Build b = getBuildType();
         if (b == Build.NONE) return;
         
@@ -78,6 +79,31 @@ public class HQ extends Robot {
                 communications.updateBuild(r);
                 rc.setIndicatorString("Built: " + r);
             }
+        }
+    }
+
+    void buildConvoy() throws GameActionException {
+        MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), RobotType.HEADQUARTERS.actionRadiusSquared);
+        MapLocation best = null;
+        int bestD = 1000000;
+        for (MapLocation loc: locs) {
+            if (!rc.canBuildRobot(RobotType.LAUNCHER, loc)) continue;
+            MapLocation mloc = loc;
+            if (rc.canSenseLocation(loc)) {
+                MapInfo mi = rc.senseMapInfo(mloc);
+                mloc.add(mi.getCurrentDirection());
+            }
+            int d = mloc.distanceSquaredTo(new MapLocation(rc.getMapHeight()/2, rc.getMapWidth()/2));
+            if (d < bestD) best = loc;
+        }
+        if (rc.canBuildRobot(RobotType.LAUNCHER, best))
+                rc.buildRobot(RobotType.LAUNCHER, best);
+        for (Direction dir: directions) {
+            if (best.add(dir).distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared) {
+                continue;
+            }
+            if (rc.canBuildRobot(RobotType.LAUNCHER, best.add(dir)))
+                rc.buildRobot(RobotType.LAUNCHER, best.add(dir));
         }
     }
 

@@ -193,7 +193,7 @@ public class Launcher extends Robot {
         if (hasTarget) huntTarget = target;
         
         // States.
-        if (rc.getRoundNum() <= 7) return State.WAIT;
+        // if (rc.getRoundNum() <= 7) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()+7<=exploreTurns
@@ -214,7 +214,7 @@ public class Launcher extends Robot {
         RobotInfo[] robots = rc.senseNearbyRobots(16, rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
         for (RobotInfo r: robots) {
-            if (Clock.getBytecodesLeft() < 5000) break;
+            if (Clock.getBytecodesLeft() < 6000) break;
             if (neighbors.containsKey(r.ID)) {
                 RobotInfo prev = neighbors.get(r.ID);
                 // if a unit moved away from me, follow him. unless, he was retreating.
@@ -385,17 +385,20 @@ public class Launcher extends Robot {
         int minDistToEnemy = 100000;
         int enemies = 0;
         boolean canMove;
+        boolean hasCloud;
         MapLocation nloc;
 
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             nloc = rc.getLocation().add(dir);
             canMove = rc.canMove(dir);
-            if (canMove) {
+            if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
+                hasCloud = mi.hasCloud();
                 nloc.add(mi.getCurrentDirection());
                 net_dps -= ((double) rc.getType().damage) * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
+            
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
@@ -403,14 +406,17 @@ public class Launcher extends Robot {
             if (r.type == RobotType.AMPLIFIER || r.type == RobotType.CARRIER) return;
             MapLocation m = r.location;
             MapInfo mi = rc.senseMapInfo(m);
+            boolean onCloud = mi.hasCloud();
             // ignore boosting effects of other units for now.
             double cooldown = mi.getCooldownMultiplier(rc.getTeam().opponent());
 
+            int action = (onCloud || hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
+            int vision = (onCloud || hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;;
             if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(m);
-                if (d <= r.type.actionRadiusSquared) 
+                if (d <= action) 
                     net_dps += (double) r.type.damage * (1.0 / cooldown);
-                if (d <= r.type.visionRadiusSquared)
+                if (d <= vision)
                     dps_targetting += (double) r.type.damage * (1.0 / cooldown);;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
@@ -428,7 +434,9 @@ public class Launcher extends Robot {
             if (Util.isAttacker(r.type)) {
                 MapInfo mi = rc.senseMapInfo(r.location);
                 double cooldown = mi.getCooldownMultiplier(rc.getTeam());
-                dps_defending += (double) r.type.damage * (1.0 / cooldown);
+                boolean onCloud = mi.hasCloud();
+                if (nloc.distanceSquaredTo(r.location) <=  GameConstants.CLOUD_VISION_RADIUS_SQUARED)
+                    dps_defending += (double) r.type.damage * (1.0 / cooldown);
             }
         }
        
