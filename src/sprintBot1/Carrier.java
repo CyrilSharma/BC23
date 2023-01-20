@@ -9,12 +9,13 @@ public class Carrier extends Robot {
     MapLocation islandTarget;
     MapLocation depositLoc = null;
     ResourceType chosen;
+    ResourceType resourceNeeded;
     // will eventually be replaced with comms.
     int fleeTurns = 0;
     MapLocation home;
     boolean hasAnchor = false;
     boolean allowCommedWells;
-    boolean mineEfficently;
+    boolean mineEfficently = false;
     MapLocation[][] islandCache = new MapLocation[100][];
     private boolean shouldDeliver = false;
     enum State {
@@ -28,16 +29,18 @@ public class Carrier extends Robot {
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
+        resourceNeeded = communications.readResourceNeed();
     }
 
     void run() throws GameActionException {
         grab_anchor();
         allowCommedWells = true;//rc.getRoundNum() >= 25;
-        mineEfficently = rc.getRoundNum() >= 75;
+        //mineEfficently = rc.getRoundNum() >= 75;
         //rc.disintegrate();
         initialize();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        //rc.setIndicatorString(state.toString());
+        rc.setIndicatorString(""+resourceNeeded);
         communications.initial();
         attack();
         switch (state) {
@@ -125,9 +128,7 @@ public class Carrier extends Robot {
     }
 
     void seek() throws GameActionException {
-        greedyPath.move(wellTarget);
-        greedyPath.move(wellTarget);
-        // recompute target iff crowded.
+        // recompute if crowded.
         if (wellTarget.distanceSquaredTo(rc.getLocation()) <= 9) {
             if (rc.canSenseLocation(wellTarget)) {
                 WellInfo w = rc.senseWell(wellTarget);
@@ -139,12 +140,13 @@ public class Carrier extends Robot {
                 if (count > 7) findTarget();
             }
         }
-
+        greedyPath.move(wellTarget);
+        greedyPath.move(wellTarget);
     }
 
     void findTarget() throws GameActionException {
         int iters = 0;
-        ResourceType r = communications.readResourceNeed();
+        ResourceType r = resourceNeeded;
         RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
         WellInfo[] wells = rc.senseNearbyWells();
         WellTarget[] wellTargets = new WellTarget[wells.length + 15];
@@ -176,6 +178,7 @@ public class Carrier extends Robot {
 
             if (best != null && !best.crowded()) {
                 wellTarget = best.loc;
+                resourceNeeded = communications.readResourceNeed();
                 return;
             }
 
@@ -188,6 +191,7 @@ public class Carrier extends Robot {
                 }
                 if (best != null && !best.crowded() && best.dist < 12) {
                     wellTarget = best.loc;
+                    resourceNeeded = communications.readResourceNeed();
                     return;
                 }
             }
@@ -200,12 +204,10 @@ public class Carrier extends Robot {
     // TODO: add some evasive maneuvers
     void harvest() throws GameActionException {
         WellInfo wi = rc.senseWell(wellTarget);
-        ResourceType rt = wi.getResourceType();
         while (rc.isActionReady()) {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
-                wellTarget = null;
-                communications.resourceNeeded = null;
+                if (!rc.isActionReady()) wellTarget = null;
             } else if (rc.canCollectResource(wellTarget, -1)) {
                 rc.collectResource(wellTarget, -1);
             }

@@ -100,10 +100,7 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum() <= 15) {
-                setResourceNeed(ResourceType.MANA, 1);
-                setResourceNeed(ResourceType.ADAMANTIUM, 0);
-            } else if (rc.getRoundNum() <= 150) {
+            if (rc.getRoundNum() <= 150) {
                 setResourceNeed(ResourceType.MANA, 2);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             } else if (rc.getRoundNum() <= 250){
@@ -149,7 +146,11 @@ public class Communications {
     // the weight will be used to sample from a random distribution to determine
     // the desired resource whilst mantaining a raio.
     public void setResourceNeed(ResourceType r, int val) throws GameActionException {
-        rc.writeSharedArray(RESOURCE_NEED + r.ordinal(), val);
+        int type = 10000000;
+        if (r == ResourceType.ADAMANTIUM) type = 0;
+        if (r == ResourceType.MANA) type = 1;
+        if (r == ResourceType.ELIXIR) type = 2;
+        rc.writeSharedArray(RESOURCE_NEED + type, val);
     }
 
     public ResourceType getResourceNeed() throws GameActionException {
@@ -163,7 +164,7 @@ public class Communications {
             bounds[i] = prev + cur;
             prev = bounds[i];
         }
-        ResourceType[] res = ResourceType.values();
+        ResourceType[] res = {ResourceType.ADAMANTIUM, ResourceType.MANA, ResourceType.ELIXIR};
         if (sum == 0) return res[rng.nextInt(3)];
         int val = rng.nextInt(sum);
 
