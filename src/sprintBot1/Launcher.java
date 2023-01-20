@@ -271,7 +271,10 @@ public class Launcher extends Robot {
         MapLocation m = communications.getClosestEnemyHQ();
         if (m != null) hunt_hq(m);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
-            if (r.type == RobotType.HEADQUARTERS) hunt_hq(r.location);
+            if (r.type == RobotType.HEADQUARTERS) {
+                hunt_hq(r.location);
+                return;
+            }
         }
     }
 
