@@ -55,7 +55,6 @@ public class Launcher extends Robot {
     boolean shouldRendevous = true;
     MapLocation rendevous;
     // may want to replace this with a custom implementation.
-    HashMap<Integer,RobotInfo> neighbors = new HashMap<Integer,RobotInfo>();
     private MapLocation enemyHQLoc;
     private MapLocation huntTarget;
     private MapLocation islandTarget;
@@ -82,7 +81,7 @@ public class Launcher extends Robot {
         huntTarget = null;
         friendsMoved = false;
         if (rc.getHealth() < 120) hurt = true;
-        if (hurt) findCloseIsland();
+        // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         
         communications.initial();
@@ -215,25 +214,31 @@ public class Launcher extends Robot {
         return State.ADVANCE;
     }
 
+    MapLocation[] neighbors = new MapLocation[100];
+    StringBuilder neighborStr = new StringBuilder();
     void updateNeighbors() throws GameActionException {
         double x = 0;
         double y = 0;
         double totalW = 0;
-        HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
-        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
+        //HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
+        MapLocation[] nneighbors = new MapLocation[100];
+        StringBuilder nneighborStr = new StringBuilder();
+        RobotInfo[] robots = rc.senseNearbyRobots(9 , rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
+        // int iters = 0;
         for (RobotInfo r: robots) {
+            //int start = Clock.getBytecodesLeft();
             if (Clock.getBytecodesLeft() < 8000) break;
             if (r.type != RobotType.LAUNCHER) continue;
-            if (neighbors.containsKey(r.ID)) {
-                RobotInfo prev = neighbors.get(r.ID);
+            if (neighborStr.toString().contains(""+r.ID)) {
+                MapLocation prev = neighbors[r.ID%100];
                 // if a unit moved away from me, follow him. unless, he was retreating.
-                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.location.distanceSquaredTo(rc.getLocation());
+                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
                 for (int i = 0; i < nbrs.length && i < 3; i++) {
                     RobotInfo n = nbrs[i];
-                    netD += r.location.distanceSquaredTo(n.location) - prev.location.distanceSquaredTo(n.location);
+                    netD += r.location.distanceSquaredTo(n.location) - prev.distanceSquaredTo(n.location);
                 }
-                if (prev != null && prev.location != r.location
+                if (prev != null && prev != r.location
                     && r.type == RobotType.LAUNCHER && netD > 0) {
                     x += r.location.x * 6;
                     y += r.location.y * 6;
@@ -241,13 +246,19 @@ public class Launcher extends Robot {
                     friendsMoved = true;
                 }
             }
+            // iters++;
             // add in average position.
             x += r.location.x;
             y += r.location.y;
             totalW += 1;
-            nneighbors.put(r.ID, r);
+            nneighbors[r.ID%100] = r.location;
+            nneighborStr.append("|"+r.ID);
+            //int end = Clock.getBytecodesLeft();
+            //System.out.println("iter cost: " + (start-end));
         }
+        //System.out.println(iters);
         neighbors = nneighbors;
+        neighborStr = nneighborStr;
         if (totalW == 0) {
             bestNeighborLoc = null;
             return;
@@ -324,8 +335,10 @@ public class Launcher extends Robot {
             }
         }
         if (bestNeighborLoc == null) return;
-        if (friendsMoved) greedyPath.move(bestNeighborLoc);
-        else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2)
+        if (friendsMoved) {
+            rc.setIndicatorString("FRIENDS MOVED!!");
+            greedyPath.move(bestNeighborLoc);
+        } else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2)
             greedyPath.move(bestNeighborLoc);
     }
 
@@ -374,7 +387,6 @@ public class Launcher extends Robot {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
         
-        int iters = 0;
         MapLocation m;
         MapInfo mi;
         for (RobotInfo r: rc.senseNearbyRobots()) {
@@ -396,9 +408,7 @@ public class Launcher extends Robot {
                     microtargets[d.ordinal()].addEnemy(r);
                 }
             }
-            iters++;
         }
-        System.out.println(iters);
 
         // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
