@@ -139,9 +139,18 @@ public class Launcher extends Robot {
  
     void doAttack(boolean attackers) throws GameActionException {
         RobotInfo r = util.getBestAttackTarget();
-        if (r == null) return;
+        if (r == null && attackers) return;
+        else if (r == null) {
+            MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
+            if (clouds.length == 0) return;
+            MapLocation loc = null;
+            for (int i = 0; (loc == null || rc.canSenseLocation(loc)) && i < 5; i++)
+                loc = clouds[rng.nextInt(clouds.length)];
+            if (loc != null && rc.canAttack(loc)) rc.attack(loc);
+            return;
+        }
         if (attackers && !Util.isAttacker(r.type)) return;
-        if (r != null && rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
+        if (rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
             while (rc.canAttack(r.location)) rc.attack(r.location);
         }
     }
