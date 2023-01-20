@@ -83,7 +83,7 @@ public class Launcher extends Robot {
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         
         communications.initial();
-        if (rc.getRoundNum()%3 != 2) updateNeighbors();
+        if (rc.getRoundNum()%3 != 1) updateNeighbors();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
@@ -124,12 +124,12 @@ public class Launcher extends Robot {
 
     void improve_vision() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
-        int dist= -1;
+        int bestD = 1000000;
         Direction bestDir = Direction.CENTER;
         for (Direction d: directions) {
-            if (rc.getLocation().add(d).distanceSquaredTo(m) > dist
-                && rc.canMove(d)) {
-                dist = rc.getLocation().add(d).distanceSquaredTo(m);
+            int dist = rc.getLocation().add(d).distanceSquaredTo(m);
+            if (dist < bestD && rc.canMove(d)) {
+                bestD = dist;
                 bestDir = d;
             }
         }
@@ -155,7 +155,7 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
-        if (rc.getRoundNum()%3 == 2) return State.WAIT;
+        if (rc.getRoundNum()%3 == 1) return State.WAIT;
 
         boolean seesHQ = false;
         boolean hasEnemy = false;
@@ -190,7 +190,7 @@ public class Launcher extends Robot {
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
-        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
+        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/8;
         if (hasTargetClose) huntTarget = target;
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;

@@ -1,8 +1,6 @@
 package sprintBot1;
 import battlecode.common.*;
 
-// TODO some weird errors with Home being confused with nearest HQ.
-
 public class Carrier extends Robot {
     int adamantium, mana, elixir;
     MapLocation wellTarget;
@@ -114,9 +112,23 @@ public class Carrier extends Robot {
     }
 
     void flee() throws GameActionException {
+        doMine();
         findTarget();
         greedyPath.flee();
         greedyPath.flee();
+        doMine();
+    }
+
+    void doMine() throws GameActionException {
+        for (WellInfo w: rc.senseNearbyWells()) {
+            while (rc.canCollectResource(w.getMapLocation(), 1)) {
+                if (rc.canCollectResource(w.getMapLocation(), 7-(adamantium+mana+elixir))) {
+                    rc.collectResource(w.getMapLocation(), 7-(adamantium+mana+elixir));
+                } else if (rc.canCollectResource(w.getMapLocation(), -1)) {
+                    rc.collectResource(w.getMapLocation(), -1);
+                }
+            }
+        }
     }
 
     void search() throws GameActionException{
@@ -259,7 +271,6 @@ public class Carrier extends Robot {
                 greedyPath.move(islandTarget);
             } else {
                 if (rc.canPlaceAnchor()) {
-                    System.out.println("HEY!");
                     rc.placeAnchor();
                     islandTarget = null;
                     hasAnchor = false;

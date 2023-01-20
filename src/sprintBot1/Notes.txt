@@ -1,16 +1,4 @@
-Soldier Micro is broken;
-- somehow we don't tend to stick in pack when exectuing attack micro.
-
-Island Rushing will soon be good.
-- I pushed some code for it, but we need to ensure that we choose the island locs optimally.
-
-Flee code is suboptimal.
-- Miners don't actually optimally flee, i.e they don't choose the square that's attacked the least.
-
-Launcher Code is suboptimal
-- Launchers kind of get stuck in a certain spot, could be addressed if we went
-in the direction of the last enemy as opposed to just where the last enemy was.
-- Should go to broadcasts; of either amplifiers or carriers.
-
-Also, we have no idea how to deal with clouds.
-- Soldiers should hide in them when low health?
+Distributed Resource Collection
+- The reason this powerful is not because of mining rates, it means your resource supply is 
+- harder to harass.
+- Soldiers need to defend wells where miners are. This is more important than anything else really.
