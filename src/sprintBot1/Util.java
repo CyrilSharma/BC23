@@ -68,7 +68,6 @@ public class Util {
     }
 
     RobotInfo getBestAttackTarget() throws GameActionException {
-        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
         AttackTarget[] targets = new AttackTarget[enemies.length];
         int ind = 0;

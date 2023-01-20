@@ -757,7 +757,7 @@ public class Communications {
                 tiles[HQs[i].x][HQs[i].y] = new Data(Direction.CENTER, 0, 0, 1);
             }
             for (MapInfo mi: area) {
-                if (Clock.getBytecodesLeft() < 1000) return;
+                if (Clock.getBytecodesLeft() < 1500) return;
                 if (getSymmetry() != -1) return;
                 MapLocation m = mi.getMapLocation();
                 int status = -1;
