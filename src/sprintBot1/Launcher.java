@@ -177,30 +177,35 @@ public class Launcher extends Robot {
         if (closeToCenter) shouldRendevous=false;
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
         MapLocation target = communications.findBestAttackTarget();
-        boolean hasTarget = false;
+        boolean hasTargetClose = false;
+        boolean hasTargetFar = false;
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
-            hasTarget = (d >= 64 && d <= 256);
+            hasTargetClose = (d >= 64 && d <= 256);
+            hasTargetFar = (d >= 64);
             if (enemyHQ != null) {
-                hasTarget = hasTarget & (enemyHQ.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
+                hasTargetClose = hasTargetClose & (enemyHQ.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
             }
         }
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/4;
-        if (hasTarget) huntTarget = target;
+        if (hasTargetClose) huntTarget = target;
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
         // don't mess with production.
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns
-            || numCarriers>5) return State.RENDEVOUS;
-        if (hurt && islandTarget != null) return State.HEAL;
-        if (hasTarget) return State.HUNT;
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns) return State.RENDEVOUS;
+        if (hasTargetClose) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
+        if (hurt && islandTarget != null) return State.HEAL;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
         if ((knowsSymmetry && rc.getRoundNum()>=800) || seesHQ) return State.HUNT_HQ;
+        if (hasTargetFar) {
+            huntTarget = target;
+            return State.HUNT;
+        }
         return State.ADVANCE;
     }
 
