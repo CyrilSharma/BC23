@@ -5,11 +5,11 @@ public class Carrier extends Robot {
     int adamantium, mana, elixir;
     int fleeTurns = 0;
     int numGreedy = 0;
-    int prevCrowdedTurn = 0;
+    int prevBadTurn = 0;
     MapLocation wellTarget;
     MapLocation islandTarget;
     MapLocation depositLoc = null;
-    MapLocation prevCrowdedWell;
+    MapLocation prevBadWell;
     ResourceType chosen;
     ResourceType resourceNeeded;
     boolean hasAnchor = false;
@@ -87,6 +87,8 @@ public class Carrier extends Robot {
         for (RobotInfo r: rc.senseNearbyRobots(-1)) {
             if (r.team == rc.getTeam().opponent() && Util.isAttacker(r.type)) {
                 fleeTurns = 3;
+                prevBadWell = wellTarget;
+                prevBadTurn = rc.getRoundNum();
                 return State.FLEE;
             }
         }
@@ -133,6 +135,7 @@ public class Carrier extends Robot {
     void explore() throws GameActionException {
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 8);
         int bestD = -1;
+        int sqrD = (int) Math.pow((Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 4), 2);
         MapLocation best = rc.getLocation();
         for (MapLocation m: locs) {
             if (m.distanceSquaredTo(rc.getLocation()) <= 2) continue;
@@ -140,7 +143,7 @@ public class Carrier extends Robot {
                 if (!rc.sensePassability(m)) continue;
             }
             int distHQ = m.distanceSquaredTo(communications.findClosestHQ());
-            if (distHQ > RobotType.HEADQUARTERS.visionRadiusSquared + 20) continue;
+            if (distHQ > sqrD) continue;
             int distPrev = 0;
             if (prev != null) {
                 distPrev = m.distanceSquaredTo(prev);
@@ -160,8 +163,8 @@ public class Carrier extends Robot {
     void flee() throws GameActionException {
         doMine();
         findTarget();
-        greedyPath.flee();
-        greedyPath.flee();
+        if (!greedyPath.flee()) greedyPath.move(communications.findClosestHQ());
+        if (!greedyPath.flee()) greedyPath.move(communications.findClosestHQ());
         doMine();
     }
 
@@ -188,7 +191,7 @@ public class Carrier extends Robot {
     }
 
     void seek() throws GameActionException {
-        rc.setIndicatorString("WellTarget: "+wellTarget);
+        // rc.setIndicatorString("WellTarget: "+wellTarget);
         // initially, we don't know all the wells. re-evaluate target regularly.
         if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
@@ -218,8 +221,8 @@ public class Carrier extends Robot {
                     resourceNeeded = ResourceType.ADAMANTIUM;
                 } else
                     resourceNeeded = ResourceType.MANA;
-                prevCrowdedWell = wellTarget;
-                prevCrowdedTurn = rc.getRoundNum();
+                prevBadWell = wellTarget;
+                prevBadTurn = rc.getRoundNum();
                 findTarget();
             }
         }
@@ -376,8 +379,8 @@ public class Carrier extends Robot {
             for (WellInfo w : wells){
                 if (Clock.getBytecodesLeft() < 6000) break;
                 if (w.getResourceType() != r) continue;
-                if (prevCrowdedWell != null && rc.getRoundNum() - 10 < prevCrowdedTurn && 
-                    w.getMapLocation().equals(prevCrowdedWell)) continue;
+                if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
+                    w.getMapLocation().equals(prevBadWell)) continue;
                 wellTargets[ind++] = new WellTarget(w.getMapLocation(), w.getResourceType());
             }
 
@@ -404,8 +407,8 @@ public class Carrier extends Robot {
                     if (Clock.getBytecodesLeft() < 6000) break;
                     if (m == null) continue;
                     if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.CARRIER.visionRadiusSquared) continue;
-                    if (prevCrowdedWell != null && rc.getRoundNum() - 10 < prevCrowdedTurn && 
-                        m.equals(prevCrowdedWell)) continue;
+                    if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
+                        m.equals(prevBadWell)) continue;
                     WellTarget cur = new WellTarget(m, r);
                     if (cur.isBetterThan(best)) best = cur;
                 }

@@ -132,7 +132,7 @@ public class GreedyPath {
         return false;
     }
 
-    public void flee() throws GameActionException {
+    public boolean flee() throws GameActionException {
         int dist = 0;
         Direction bst = Direction.CENTER;
         RobotInfo[] r = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
@@ -151,6 +151,8 @@ public class GreedyPath {
 
         if (bst != Direction.CENTER && rc.canMove(bst)){
             rc.move(bst);
+            return true;
         }
+        return false;
     }
 }

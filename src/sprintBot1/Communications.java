@@ -93,22 +93,24 @@ public class Communications {
     public boolean getGreedy() throws GameActionException {
         // scales between 0 and 1/2
         double total = 4 * numHQ;
-        int numExplore = Math.min((int) Math.round((((double) (rc.getMapHeight() + rc.getMapWidth()) / 200.0) * total)), 4);
+        int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
+        int numExplore = Math.min((int) Math.round((((double) mn) / 100.0) * total), 4);
         int count = rc.readSharedArray(GREEDYCOUNT);
         if (rc.canWriteSharedArray(0, 0))
             rc.writeSharedArray(GREEDYCOUNT, count+1);
-        if (count < total - numExplore) {
-            return true;
+        // the way this is set up, primarily adamantium dudes will be greedy.
+        if (count < numExplore) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     public ResourceType getResourceInitial() throws GameActionException {
         int count = rc.readSharedArray(GREEDYCOUNT);
         //System.out.println("COUNT: "+count);
         double total = 4 * numHQ;
-        int nAdamantium = Math.min((int) Math.round((((double) (rc.getMapHeight() + rc.getMapWidth()) / 120.0) * total)),
-            (int)(0.75 * total));
+        int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
+        int nAdamantium = Math.min((int) Math.round((((double) mn / 60.0) * total)), (int)(0.75 * total));
         //System.out.println("nAdamantium: "+nAdamantium);
         //System.out.println(nAdamantium);
         if (count < nAdamantium) return ResourceType.ADAMANTIUM;
@@ -161,8 +163,8 @@ public class Communications {
 
     public void refresh() throws GameActionException {
         // purge memory after x turns to prevent bad updates.
-        broadcastTargetMemory[rc.getRoundNum()%3] = null;
         if (rc.getType() == RobotType.HEADQUARTERS) {
+            broadcastTargetMemory[rc.getRoundNum()%3] = null;
             if (rc.getRoundNum()%Constants.ATTACK_REFRESH >= ATTACK_TARGETS_WIDTH) return;
             rc.writeSharedArray(ATTACK_TARGETS + (rc.getRoundNum()%Constants.ATTACK_REFRESH), 0);
         }
@@ -567,6 +569,7 @@ public class Communications {
     }
 
     public void broadcastAttackTargets() throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
         RobotInfo r = util.getBestAttackTarget();
         if (r != null && r.type != RobotType.HEADQUARTERS) 
             broadcastAttackTarget(r);
@@ -616,18 +619,17 @@ public class Communications {
     }
 
     public void clearTargets() throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
             int x = (message>>4) & (0b111111);
             int y = (message>>10) & (0b111111);
             MapLocation m = new MapLocation(x, y);
-            // TODO: may be bugged because of clouds
             if (rc.canSenseLocation(m)) {
                 RobotInfo r = rc.senseRobotAtLocation(m);
                 if (r == null) {
-                    if (rc.canWriteSharedArray(i, 0)) rc.writeSharedArray(i, 0);
-                    else ; // add to memory?
+                    rc.writeSharedArray(i, 0);
                 } 
             }
         }

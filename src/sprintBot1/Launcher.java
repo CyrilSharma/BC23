@@ -87,7 +87,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 1) updateNeighbors();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        //rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -224,10 +224,10 @@ public class Launcher extends Robot {
         StringBuilder nneighborStr = new StringBuilder();
         RobotInfo[] robots = rc.senseNearbyRobots(9 , rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
-        // int iters = 0;
+        System.out.println(Clock.getBytecodesLeft());
         for (RobotInfo r: robots) {
             //int start = Clock.getBytecodesLeft();
-            if (Clock.getBytecodesLeft() < 8000) break;
+            if (Clock.getBytecodesLeft() < 6750) break;
             if (r.type != RobotType.LAUNCHER) continue;
             if (neighborStr.toString().contains(""+r.ID)) {
                 MapLocation prev = neighbors[r.ID%100];
@@ -245,11 +245,10 @@ public class Launcher extends Robot {
                     friendsMoved = true;
                 }
             }
-            // iters++;
             // add in average position.
             x += r.location.x;
             y += r.location.y;
-            totalW += 1;
+            totalW++;
             nneighbors[r.ID%100] = r.location;
             nneighborStr.append("|"+r.ID);
             //int end = Clock.getBytecodesLeft();
