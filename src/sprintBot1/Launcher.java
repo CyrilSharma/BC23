@@ -224,7 +224,6 @@ public class Launcher extends Robot {
         StringBuilder nneighborStr = new StringBuilder();
         RobotInfo[] robots = rc.senseNearbyRobots(9 , rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
-        System.out.println(Clock.getBytecodesLeft());
         for (RobotInfo r: robots) {
             //int start = Clock.getBytecodesLeft();
             if (Clock.getBytecodesLeft() < 6750) break;
