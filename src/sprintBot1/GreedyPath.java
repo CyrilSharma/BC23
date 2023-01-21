@@ -74,6 +74,7 @@ public class GreedyPath {
             int lastDist = -1; // Distance if you move in the opposite direction
             int dir = startDir;
             for (int i = 0; i < 8; i++) {
+                if(dir == 8) dir = 0;
                 MapLocation next = rc.adjacentLocation(directions[dir]);
                 if (rc.onTheMap(next) && rc.canMove(directions[dir])){
                     for (int iter = 0; iter < 1; iter++) {
@@ -99,6 +100,7 @@ public class GreedyPath {
 
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
+            if(dir == 8) dir = 0;
             MapLocation next = rc.adjacentLocation(directions[dir]);
             for (int iter = 0; iter < 1; iter++) {
                 if (!rc.canSenseLocation(next)) break;

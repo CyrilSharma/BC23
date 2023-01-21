@@ -98,6 +98,7 @@ public class Carrier extends Robot {
             if (adamantium + mana + elixir > 10) {
                 shouldDeliver = true;
             }
+            else resourceNeeded = communications.getResourceNeed();
             return State.FLEE;
         }
 
@@ -261,6 +262,7 @@ public class Carrier extends Robot {
                 if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r))) {
                     rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
                     shouldDeliver = false;
+                    resourceNeeded = communications.getResourceNeed();
                 }
             }
         }
