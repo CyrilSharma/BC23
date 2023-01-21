@@ -8,6 +8,7 @@ public class GreedyPath {
     MapLocation target;
     int sz = 0;
     MapLocation[] lastLoc = new MapLocation[11];
+    int fuzzyCnt = 0;
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -42,6 +43,28 @@ public class GreedyPath {
             startDirMissingInARow = 0;
         }
         if(rc.getLocation().equals(loc)) return;
+        if(sz < 11){
+            lastLoc[sz] = rc.getLocation();
+            sz++;
+        }
+        else{
+            for(int i = 0; i < 10; i++) lastLoc[i] = lastLoc[i + 1];
+            lastLoc[10] = rc.getLocation();
+        }
+        RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
+        if(r.length > 25){
+            fuzzyCnt = 10;
+        }
+        for(int i = 0; i < sz; i++){
+            if(rc.getLocation().equals(lastLoc[i])){
+                fuzzyCnt = 10;
+                break;
+            }
+        }
+        if(fuzzyCnt > 0){
+            fuzzy(loc);
+            fuzzyCnt--;
+        }
 
         int dist = hybridDistance(rc.getLocation(), destination);
         if (dist < bestSoFar) {
@@ -117,6 +140,38 @@ public class GreedyPath {
             else dir = (dir + 7) % 8;
         }
     }
+
+    public void fuzzy(MapLocation goal) throws GameActionException{
+        if(sz < 11){
+            lastLoc[sz] = rc.getLocation();
+            sz++;
+        }
+        else{
+            for(int i = 0; i < 10; i++) lastLoc[i] = lastLoc[i + 1];
+            lastLoc[10] = rc.getLocation();
+        }
+        Direction bst = Direction.CENTER;
+        int mn = 10000000;
+        int curDirStart = (int) (Math.random() * directions.length);
+        for (int i = 0; i < 8; i++) {
+            Direction dir = directions[(curDirStart + i) % 8];
+            MapLocation nxt = rc.getLocation().add(dir);
+            int f = 1;
+            for (int j = 0; j < sz; j++)
+                if (lastLoc[j].equals(nxt)) {
+                    f = 0;
+                    break;
+                }
+            if (rc.canMove(dir) && f > 0) {
+                if (goal.distanceSquaredTo(nxt) < mn) {
+                    bst = dir;
+                    mn = goal.distanceSquaredTo(nxt);
+                }
+            }
+        }
+        if(bst != Direction.CENTER && rc.canMove(bst) && rc.getLocation().distanceSquaredTo(goal) >= rc.getLocation().add(bst).distanceSquaredTo(goal)) rc.move(bst);
+    }
+
     // hybrid between manhattan distance (dx + dy) and max distance max(dx, dy)
     public static int hybridDistance(MapLocation a, MapLocation b) {
         int dy = Math.abs(a.y - b.y);
