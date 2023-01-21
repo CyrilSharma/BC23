@@ -22,6 +22,7 @@ public class Communications {
     int numEnemyHQCache = 0;
     int numEnemyHQ = 0;
     int lastReported = -10;
+    int index;
     //constants
     // this should never be used in a for loop.
     // static final int SHARED_ARRAY_SIZE = 64;
@@ -61,7 +62,7 @@ public class Communications {
     static final int R_SYM = V_SYM + 1;
 
     static final int ANCHOR = R_SYM + 1;
-
+    static final int GREEDYCOUNT = ANCHOR+1;
 
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
@@ -89,6 +90,31 @@ public class Communications {
         setMineRatio();
     }
 
+    public boolean getGreedy() throws GameActionException {
+        // scales between 0 and 1/2
+        double total = 4 * numHQ;
+        int numExplore = Math.min((int) Math.round((((double) (rc.getMapHeight() + rc.getMapWidth()) / 200.0) * total)), 4);
+        int count = rc.readSharedArray(GREEDYCOUNT);
+        if (rc.canWriteSharedArray(0, 0))
+            rc.writeSharedArray(GREEDYCOUNT, count+1);
+        if (count < total - numExplore) {
+            return true;
+        }
+        return false;
+    }
+
+    public ResourceType getResourceInitial() throws GameActionException {
+        int count = rc.readSharedArray(GREEDYCOUNT);
+        //System.out.println("COUNT: "+count);
+        double total = 4 * numHQ;
+        int nAdamantium = Math.min((int) Math.round((((double) (rc.getMapHeight() + rc.getMapWidth()) / 120.0) * total)),
+            (int)(0.75 * total));
+        //System.out.println("nAdamantium: "+nAdamantium);
+        //System.out.println(nAdamantium);
+        if (count < nAdamantium) return ResourceType.ADAMANTIUM;
+        else return ResourceType.MANA;
+    }
+
     public void updateAnchor(int a) throws GameActionException {
         rc.writeSharedArray(ANCHOR, a);
     }
@@ -101,7 +127,7 @@ public class Communications {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
             if (rc.getRoundNum() <= 150) {
-                setResourceNeed(ResourceType.MANA, 2);
+                setResourceNeed(ResourceType.MANA, 4);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             } else if (rc.getRoundNum() <= 250){
                 setResourceNeed(ResourceType.MANA, 4);
@@ -170,6 +196,13 @@ public class Communications {
 
         for (int i = 0; i < 3; i++) {
             if (val < bounds[i]) {
+                /* if (rc.getRoundNum()<20) {
+                    System.out.println("ADAMANTIUM: "+rc.readSharedArray(RESOURCE_NEED)+" MANA: "+rc.readSharedArray(RESOURCE_NEED+1));
+                    System.out.println("BOUND[0]: "+bounds[0]+" BOUND[1]: "+bounds[1]);
+                    System.out.println("SUM: "+sum);
+                    System.out.println("VAL: "+val);
+                    System.out.println(res[i]);
+                } */
                 return res[i];
             }
         }
@@ -243,7 +276,21 @@ public class Communications {
         return false;
     }
 
-    // return all wells not currently visible.
+    public void getWell(ResourceType r) throws GameActionException {
+        int ind = 0;
+        MapLocation[] locs = new MapLocation[15];
+        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+            if (rc.readSharedArray(i) == 0) continue;
+            int val = rc.readSharedArray(i);
+            int typ = val & (0b111);
+            if (typ == 3) continue;
+            if(resources[typ] == r){
+                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+            }
+        }
+    }
+
+    // return all wells
     public MapLocation[] readWells(ResourceType r) throws GameActionException{
         MapLocation[] locs = new MapLocation[15];
         int ind = 0;

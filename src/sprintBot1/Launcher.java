@@ -199,14 +199,13 @@ public class Launcher extends Robot {
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
-        // don't mess with production.
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
-            numCarriers > 5) return State.RENDEVOUS;
         if (hasTargetClose) return State.HUNT;
         if (previousEnemy != null) return State.CHASE;
+        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
+            numCarriers > 5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if ((knowsSymmetry && rc.getRoundNum()>=800) || seesHQ) return State.HUNT_HQ;
+        if ((knowsSymmetry && rc.getRoundNum()>=600) || seesHQ) return State.HUNT_HQ;
         if (hasTargetFar) {
             huntTarget = target;
             return State.HUNT;
