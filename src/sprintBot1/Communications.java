@@ -129,7 +129,7 @@ public class Communications {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
             if (rc.getRoundNum() <= 150) {
-                setResourceNeed(ResourceType.MANA, 4);
+                setResourceNeed(ResourceType.MANA, 2);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             } else if (rc.getRoundNum() <= 250){
                 setResourceNeed(ResourceType.MANA, 4);
