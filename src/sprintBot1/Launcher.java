@@ -185,8 +185,8 @@ public class Launcher extends Robot {
         boolean hasTargetFar = false;
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
-            hasTargetClose = (d >= 64 && d <= 256);
-            hasTargetFar = (d >= 64);
+            hasTargetClose = (d <= 64);
+            hasTargetFar = (d > 64);
             if (enemyHQ != null) {
                 hasTargetClose = hasTargetClose & (enemyHQ.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
             }
@@ -322,6 +322,7 @@ public class Launcher extends Robot {
             greedyPath.move(best);
         }
     }
+
 
     void hunt() throws GameActionException {
         if (huntTarget != null) greedyPath.move(huntTarget);

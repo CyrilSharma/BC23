@@ -100,10 +100,7 @@ public class Communications {
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
         if (rc.getType() == RobotType.HEADQUARTERS) {
-            if (rc.getRoundNum() <= 15) {
-                setResourceNeed(ResourceType.MANA, 1);
-                setResourceNeed(ResourceType.ADAMANTIUM, 0);
-            } else if (rc.getRoundNum() <= 150) {
+            if (rc.getRoundNum() <= 150) {
                 setResourceNeed(ResourceType.MANA, 2);
                 setResourceNeed(ResourceType.ADAMANTIUM, 2);
             } else if (rc.getRoundNum() <= 250){
@@ -257,10 +254,6 @@ public class Communications {
             if (typ == 3) continue;
             if(resources[typ] == r){
                 MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
-                // if mining this will kill us, don't.
-                if (symmetryChecker.getSymmetry() != -1 && 
-                    getClosestEnemyHQTo(m).distanceSquaredTo(m) <= RobotType.HEADQUARTERS.actionRadiusSquared) continue;
-                if (m.distanceSquaredTo(rc.getLocation()) <= rc.getType().visionRadiusSquared) continue;
                 locs[ind] = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 ind++;
             }
@@ -285,7 +278,7 @@ public class Communications {
                     int val = rc.readSharedArray(j);
                     if(val != 0) continue;
                     int msg = MANA_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
-                    if(wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
+                    if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
                         msg = ADAMANTIUM_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
                     }
                     rc.writeSharedArray(j, msg);
