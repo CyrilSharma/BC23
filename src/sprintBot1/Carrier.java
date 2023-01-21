@@ -409,6 +409,7 @@ public class Carrier extends Robot {
                     if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.CARRIER.visionRadiusSquared) continue;
                     if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
                         m.equals(prevBadWell)) continue;
+                    if (communications.isEnemyTerritory(m)) continue;
                     WellTarget cur = new WellTarget(m, r);
                     if (cur.isBetterThan(best)) best = cur;
                 }

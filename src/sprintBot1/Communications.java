@@ -656,12 +656,12 @@ public class Communications {
         return symmetryChecker.getRSym(findClosestHQ());
     }
 
-    public boolean isEnemyTerritory(MapLocation m, MapLocation[] HQS, int numHQQ) throws GameActionException {
+    public boolean isEnemyTerritory(MapLocation m) throws GameActionException {
         if (symmetryChecker.getSymmetry() == -1) return false;
         int minDistEnemy = 100000;
         int minDistAlly = 100000;
-        for(int i = 0; i < numHQQ; i++){
-            MapLocation h = HQS[i];
+        for(int i = 0; i < numHQ; i++){
+            MapLocation h = HQs[i];
             int d1 = h.distanceSquaredTo(m);
             MapLocation s = null;
             switch (symmetryChecker.getSymmetry()) {
