@@ -44,7 +44,8 @@ public class Launcher extends Robot {
     int born;
     int fleeTurns = 0;
     boolean hurt = false;
-    int prevEnemyRound = -1;
+    int prevEnemyRound = -10;
+    int prevHuntRound = -10;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
     MapLocation enemyHQ = null;
@@ -93,6 +94,7 @@ public class Launcher extends Robot {
         hurt = rc.getHealth() < 100;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
+        // if (rc.getRoundNum() - prevHuntRound > 5) huntTarget = null;
         
         communications.initial();
         if (rc.getRoundNum()%3 != 1) updateNeighbors();
@@ -195,9 +197,7 @@ public class Launcher extends Robot {
             int d = rc.getLocation().distanceSquaredTo(target);
             hasTargetClose = (d <= 64);
             hasTargetFar = (d > 64);
-            if (enemyHQ != null) {
-                hasTargetClose = hasTargetClose & (enemyHQ.distanceSquaredTo(target) > RobotType.HEADQUARTERS.actionRadiusSquared);
-            }
+            prevHuntRound = rc.getRoundNum();
         }
         boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
         boolean hasIslandTarget = islandTarget != null;
@@ -211,7 +211,7 @@ public class Launcher extends Robot {
             return State.HUNT;
         }
         if (previousEnemy != null) return State.CHASE;
-        if (hasTargetFar) {
+        if (hasTargetFar || rc.getRoundNum() - prevHuntRound < 5) {
             huntTarget = target;
             return State.HUNT;
         }
@@ -340,7 +340,7 @@ public class Launcher extends Robot {
                     best = a;
                 }
             }
-            greedyPath.move(best);
+            if (best != null) greedyPath.move(best);
         }
     }
 
