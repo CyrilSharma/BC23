@@ -45,7 +45,7 @@ public class GreedyPath {
         if (rc.getType() == RobotType.LAUNCHER &&
             rc.getRoundNum()%3 == 1) return;
         if (rc.getLocation().equals(loc)) return;
-        if (!loc.equals(previous)) {
+        if (previous == null || loc.distanceSquaredTo(previous) > 25) {
             previous = loc;
             resetGreedy(loc);
             resetBug(loc);

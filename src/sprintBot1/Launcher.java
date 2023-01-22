@@ -98,7 +98,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 1) updateNeighbors();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        //rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -194,6 +194,7 @@ public class Launcher extends Robot {
         if (closeToCenter) shouldRendevous=false;
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
         MapLocation target = communications.findBestAttackTarget();
+        rc.setIndicatorString(""+target);
         // /rc.setIndicatorString(""+target);
         boolean hasTargetClose = false;
         boolean hasTargetFar = false;

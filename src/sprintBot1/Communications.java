@@ -140,6 +140,7 @@ public class Communications {
     }
 
     public void last() throws GameActionException {
+        broadcastAttackTargets();
         symmetryChecker.updateSymmetry();
         /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
@@ -818,14 +819,14 @@ public class Communications {
                     if (!rc.canSenseLocation(s)) continue;
                     RobotInfo e = rc.senseRobotAtLocation(s);
                     if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
-                        rc.writeSharedArray(H_SYM, 1);
+                        rc.writeSharedArray(V_SYM, 1);
                 }
                 if (rSym) {
                     MapLocation s = getRSym(m);
                     if (!rc.canSenseLocation(s)) continue;
                     RobotInfo e = rc.senseRobotAtLocation(s);
                     if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
-                        rc.writeSharedArray(H_SYM, 1);
+                        rc.writeSharedArray(R_SYM, 1);
                 }
             }
         }
