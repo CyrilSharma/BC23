@@ -873,6 +873,7 @@ public class Communications {
         boolean hSym = true;
         boolean vSym = true;
         boolean rSym = true;
+        boolean checkedHQs = false;
 
         SymmetryChecker(RobotController rc) {
             this.rc = rc;
@@ -912,44 +913,84 @@ public class Communications {
 
         void updateHQSymmetry() throws GameActionException {
             // Mark whether or not you can see an enemy HQ.
-            if (rc.getRoundNum() != 2) return;
             if (rc.getType() != RobotType.HEADQUARTERS) return;
-            for (int i = 0; i < 4; i++) {
-                MapLocation m = HQs[i];
-                if (m == null) continue;
+            if (getSymmetry() != -1) return;
+            if (!checkedHQs) {
+                for (int i = 0; i < 4; i++) {
+                    if (Clock.getBytecodesLeft() < 500) break;
+                    MapLocation m = HQs[i];
+                    if (m == null) continue;
+                    if (hSym) {
+                        MapLocation s = getHSym(m);
+                        if (rc.canSenseLocation(s)) {
+                            RobotInfo e = rc.senseRobotAtLocation(s);
+                            if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                                rc.writeSharedArray(H_SYM, 1);
+                        }
+                    }
+                    if (vSym) {
+                        MapLocation s = getVSym(m);
+                        if (rc.canSenseLocation(s)) {
+                            RobotInfo e = rc.senseRobotAtLocation(s);
+                            if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                                rc.writeSharedArray(V_SYM, 1);
+                        }
+                    }
+                    if (rSym) {
+                        MapLocation s = getRSym(m);
+                        if (rc.canSenseLocation(s)) {
+                            RobotInfo e = rc.senseRobotAtLocation(s);
+                            if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                                rc.writeSharedArray(R_SYM, 1);
+                        }
+                    }
+                }
+                checkedHQs = true;
+            }
+
+            for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+                if (Clock.getBytecodesLeft() < 500) break;
+                if (rc.readSharedArray(i) == 0) continue;
+                int val = rc.readSharedArray(i);
+                int typ = val & (0b111);
+                if (typ == 3) continue;
+                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
                 if (hSym) {
                     MapLocation s = getHSym(m);
-                    if (!rc.canSenseLocation(s)) continue;
-                    RobotInfo e = rc.senseRobotAtLocation(s);
-                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
-                        rc.writeSharedArray(H_SYM, 1);
+                    if (rc.canSenseLocation(s)) {
+                        WellInfo w = rc.senseWell(s);
+                        if (w == null || w.getResourceType() != resources[typ])
+                            rc.writeSharedArray(H_SYM, 1);
+                    }
                 }
                 if (vSym) {
                     MapLocation s = getVSym(m);
-                    if (!rc.canSenseLocation(s)) continue;
-                    RobotInfo e = rc.senseRobotAtLocation(s);
-                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
-                        rc.writeSharedArray(V_SYM, 1);
+                    if (rc.canSenseLocation(s)) {
+                        WellInfo w = rc.senseWell(s);
+                        if (w == null || w.getResourceType() != resources[typ])
+                            rc.writeSharedArray(V_SYM, 1);
+                    }
                 }
                 if (rSym) {
                     MapLocation s = getRSym(m);
-                    if (!rc.canSenseLocation(s)) continue;
-                    RobotInfo e = rc.senseRobotAtLocation(s);
-                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
-                        rc.writeSharedArray(R_SYM, 1);
+                    if (rc.canSenseLocation(s)) {
+                        WellInfo w = rc.senseWell(s);
+                        if (w == null || w.getResourceType() != resources[typ])
+                            rc.writeSharedArray(R_SYM, 1);
+                    }
                 }
             }
         }
 
         void updateSymmetry() throws GameActionException {
-            // all default to 1, they have to be eliminated.
             updateHQSymmetry();
+            if (rc.getType() == RobotType.HEADQUARTERS) return;
             if (!isReady()) return;
             pushUpdates();
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
             int iters = 0;
             for (MapInfo mi: area) {
-                if (Clock.getBytecodesLeft() < 1500) break;
+                if (Clock.getBytecodesLeft() < 500) break;
                 if (getSymmetry() != -1) break;
                 MapLocation m = mi.getMapLocation();
                 // already did this tile.
