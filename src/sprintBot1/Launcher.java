@@ -53,11 +53,16 @@ public class Launcher extends Robot {
     boolean okToStray;
     boolean friendsMoved = false;
     boolean shouldRendevous = true;
+    boolean shouldHarass = false;
     MapLocation rendevous;
     // may want to replace this with a custom implementation.
     private MapLocation enemyHQLoc;
     private MapLocation huntTarget;
     private MapLocation islandTarget;
+    MapLocation harassTarget = null;
+    int harassTimer = 0;
+    int harassDir = -1;
+    MapLocation[] harassLoc = {new MapLocation(0, 0), new MapLocation(1, 0), new MapLocation(1, 1), new MapLocation(0, 1)};
     enum State {
         WAIT,
         RENDEVOUS,
@@ -67,7 +72,8 @@ public class Launcher extends Robot {
         IMPROVE_VISION,
         HUNT,
         HUNT_HQ,
-        HEAL
+        HEAL,
+        HARASS
     }
 
     public Launcher(RobotController rc) throws GameActionException {
@@ -75,6 +81,10 @@ public class Launcher extends Robot {
         communications.findOurHQs();
         born = rc.getRoundNum();
         rendevous = communications.getBestRendevous();
+        if(rng.nextInt(5) == 0 && rc.getRoundNum() >= 150){
+            shouldHarass = true;
+            harassDir = rng.nextInt(2);
+        }
     }
     void run() throws GameActionException {
         islandTarget = null;
@@ -99,6 +109,7 @@ public class Launcher extends Robot {
             case HUNT: hunt(); break;
             case HUNT_HQ: hunt_hq(); break;
             case HEAL: heal(); break;
+            case HARASS: harass(); break;
         }
         doAttack(false);
         updateEnemy();
@@ -157,6 +168,7 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
+        if(shouldHarass) return State.HARASS;
         if (rc.getRoundNum()%3 == 1) return State.WAIT;
 
         boolean seesHQ = false;
@@ -424,6 +436,31 @@ public class Launcher extends Robot {
                 best = microtargets[i];
         }
         if (rc.canMove(best.dir)) rc.move(best.dir);
+    }
+
+    void harass() throws GameActionException{
+        rc.setIndicatorString("i am harass :) " + harassTarget + " " + harassTimer);
+        if(harassTimer <= 0 || (harassTarget != null && rc.getLocation().distanceSquaredTo(harassTarget) <= 9)) harassTarget = null;
+        if(harassTarget == null){
+            harassTimer = 50;
+            int ind = -1;
+            int d = 1000000;
+            for(int i = 0; i < 4; i++){
+                MapLocation cr = new MapLocation((harassLoc[i].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[i].y == 0 ? 5 : rc.getMapHeight() - 5));
+                int ds = rc.getLocation().distanceSquaredTo(cr);
+                if(ds < d){
+                    d = ds;
+                    ind = i;
+                }
+            }
+            assert(ind != -1);
+            if(harassDir == 0) harassTarget = new MapLocation((harassLoc[(ind + 1) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[(ind + 1) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
+            else harassTarget = new MapLocation((harassLoc[(ind + 3) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[(ind + 3) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
+        }
+        RobotInfo[] rob = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
+        if(rob.length > 0) greedyPath.launcherFlee();
+        greedyPath.move(harassTarget);
+        harassTimer--;
     }
 
     // Choose best candidate for maneuvering in close encounters.
