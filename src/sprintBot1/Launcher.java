@@ -91,7 +91,7 @@ public class Launcher extends Robot {
         islandTarget = null;
         huntTarget = null;
         friendsMoved = false;
-        hurt = rc.getHealth() < 120;
+        hurt = rc.getHealth() < 100;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         
@@ -218,7 +218,7 @@ public class Launcher extends Robot {
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
             numCarriers > 5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
-        if (mi.hasCloud()) return State.IMPROVE_VISION;
+        // if (mi.hasCloud()) return State.IMPROVE_VISION;
         if ((knowsSymmetry && rc.getRoundNum()>=600) || seesHQ) return State.HUNT_HQ;
         if (hasTargetFar) {
             huntTarget = target;
@@ -396,12 +396,13 @@ public class Launcher extends Robot {
     int curVisionRadius;
     void maneuver() throws GameActionException {
         rc.setIndicatorString("Maneuvering");
+        rc.setIndicatorString("BYTECODE: "+Clock.getBytecodesLeft());
         // Needs 1k Bytecode.
         MicroTarget[] microtargets = new MicroTarget[9];
         for (Direction d: directions) {
             microtargets[d.ordinal()] = new MicroTarget(d);
         }
-        
+
         MapLocation m;
         MapInfo mi;
         for (RobotInfo r: rc.senseNearbyRobots()) {
@@ -430,7 +431,6 @@ public class Launcher extends Robot {
                 }
             }
         }
-
         // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
         for (int i = 0; i < 9; i++) {

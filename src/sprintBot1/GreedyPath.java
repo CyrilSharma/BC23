@@ -65,7 +65,7 @@ public class GreedyPath {
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
     public void bug(MapLocation loc) throws GameActionException {
-        rc.setIndicatorString("BUG: " + loc);
+        // rc.setIndicatorString("BUG: " + loc);
         bugCnt--;
 
         // Exit condition: got closer to the destination then when I started.
@@ -134,7 +134,7 @@ public class GreedyPath {
             return;
         }
         if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
-        rc.setIndicatorString("FUZZY: " + goal);
+        // rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
