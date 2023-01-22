@@ -67,8 +67,9 @@ public class GreedyPath {
             fuzzyCnt = 10;
         }
         if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-            rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10 &&
+            (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
             lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
+            System.out.println("GOAL ROUND: "+goalRound);
             System.out.println("CYCLE DETECTED");
             fuzzyCnt = 10;
         } else {
@@ -110,6 +111,8 @@ public class GreedyPath {
             }
         }
 
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             if(dir == 8) dir = 0;
@@ -147,14 +150,13 @@ public class GreedyPath {
                 if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
                     startDir = rc.getLocation().directionTo(destination).ordinal();
                 }
-                if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+                
                 return;
             }
 
             if (clockwise) dir = (dir + 1) % 8;
             else dir = (dir + 7) % 8;
         }
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
     }
 
     public void fuzzy(MapLocation goal) throws GameActionException{
