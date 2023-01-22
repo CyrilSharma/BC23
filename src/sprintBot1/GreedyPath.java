@@ -69,11 +69,7 @@ public class GreedyPath {
         if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
             (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
             lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-            System.out.println("GOAL ROUND: "+goalRound);
-            System.out.println("CYCLE DETECTED");
             fuzzyCnt = 10;
-        } else {
-            System.out.println("CYCLE NOT DETECTED");
         }
         if(fuzzyCnt > 0){
             fuzzy(loc);
