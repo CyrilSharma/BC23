@@ -162,7 +162,7 @@ public class Communications {
         // purge memory after x turns to prevent bad updates.
         if (rc.getType() == RobotType.HEADQUARTERS) {
             broadcastTargetMemory[rc.getRoundNum()%3] = null;
-            if (rc.getRoundNum()%Constants.ATTACK_REFRESH >= ATTACK_TARGETS_WIDTH) return;
+            if ((rc.getRoundNum()%Constants.ATTACK_REFRESH) >= ATTACK_TARGETS_WIDTH) return;
             rc.writeSharedArray(ATTACK_TARGETS + (rc.getRoundNum()%Constants.ATTACK_REFRESH), 0);
         }
     }
@@ -246,8 +246,10 @@ public class Communications {
         if (!rc.canWriteSharedArray(0, 0)) return;
         // do this for all memories...
         for (int i = 0; i < 3; i++) {
-            if (broadcastTargetMemory[i] != null)
+            if (broadcastTargetMemory[i] != null) {
                 broadcastAttackTarget(broadcastTargetMemory[i]);
+                broadcastTargetMemory[i] = null;
+            }
         }
     }
 
@@ -606,6 +608,11 @@ public class Communications {
                 write = true;
             }
         }
+        for (int i = 0; i < 3; i++) {
+            if (broadcastTargetMemory[i] != null &&
+                broadcastTargetMemory[i].equals(r)) 
+                return true;
+        }
         if (empty_index == -1) return false;
         if (!write) {
             broadcastTargetMemory[rc.getRoundNum()%3] = r;
@@ -639,6 +646,7 @@ public class Communications {
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
+            rc.setIndicatorString("Message Index: "+i);
             AttackTarget cur = new AttackTarget(rc.readSharedArray(i));
             if (cur.isBetterThan(best)) best = cur;
             count++;

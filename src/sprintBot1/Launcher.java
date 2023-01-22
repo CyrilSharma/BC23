@@ -62,7 +62,8 @@ public class Launcher extends Robot {
     MapLocation harassTarget = null;
     int harassTimer = 0;
     int harassDir = -1;
-    MapLocation[] harassLoc = {new MapLocation(0, 0), new MapLocation(1, 0), new MapLocation(1, 1), new MapLocation(0, 1)};
+    MapLocation[] harassLoc = {new MapLocation(0, 0), new MapLocation(1, 0), 
+            new MapLocation(1, 1), new MapLocation(0, 1)};
     enum State {
         WAIT,
         RENDEVOUS,
@@ -168,7 +169,7 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
-        if(shouldHarass) return State.HARASS;
+        if (shouldHarass) return State.HARASS;
         if (rc.getRoundNum()%3 == 1) return State.WAIT;
 
         boolean seesHQ = false;
@@ -193,6 +194,7 @@ public class Launcher extends Robot {
         if (closeToCenter) shouldRendevous=false;
         boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
         MapLocation target = communications.findBestAttackTarget();
+        // /rc.setIndicatorString(""+target);
         boolean hasTargetClose = false;
         boolean hasTargetFar = false;
         if (target != null) {
@@ -454,8 +456,10 @@ public class Launcher extends Robot {
                 }
             }
             assert(ind != -1);
-            if(harassDir == 0) harassTarget = new MapLocation((harassLoc[(ind + 1) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[(ind + 1) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
-            else harassTarget = new MapLocation((harassLoc[(ind + 3) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[(ind + 3) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
+            if (harassDir == 0) harassTarget = new MapLocation((harassLoc[(ind + 1) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, 
+                (harassLoc[(ind + 1) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
+            else harassTarget = new MapLocation((harassLoc[(ind + 3) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5,
+                (harassLoc[(ind + 3) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
         }
         RobotInfo[] rob = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         if(rob.length > 0) greedyPath.launcherFlee();
