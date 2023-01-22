@@ -9,7 +9,7 @@ public class GreedyPath {
     boolean ready = false;
     int sz = 0;
     int[][] lastLoc;
-    int fuzzyCnt = 0;
+    int bugCnt = 0;
     int curIter = 0;
     int goalRound = 0;
     static final Direction[] directions = {
@@ -54,61 +54,33 @@ public class GreedyPath {
             rc.getRoundNum()%3 == 1) return;
         if (!loc.equals(destination)) {
             destination = loc;
-            bestSoFar = 99999;
-            startDir = -1;
+            bestSoFar = hybridDistance(rc.getLocation(), destination);
+            startDir = 0;
             clockwise = Math.random() < 0.5;
             startDirMissingInARow = 0;
             goalRound = rc.getRoundNum();
         }
         isReady();
         if(rc.getLocation().equals(loc)) return;
-        RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
-        if(r.length > 25){
-            fuzzyCnt = 10;
-        }
         if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
             (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
             lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-            fuzzyCnt = 10;
+            bugCnt = 10;
         }
-        if(fuzzyCnt > 0){
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+        if(bugCnt == 0) {
             fuzzy(loc);
-            fuzzyCnt--;
+            return;
         }
+        bugCnt--;
+        // If I got closer, switch back to greedy.
         int dist = hybridDistance(rc.getLocation(), destination);
         if (dist < bestSoFar) {
-            bestSoFar = dist;
-            startDir = rc.getLocation().directionTo(destination).ordinal();
-            int firstDist = -1; // Distance if you move in the current clockwise/anticlockwise direction
-            int lastDist = -1; // Distance if you move in the opposite direction
-            int dir = startDir;
-            for (int i = 0; i < 8; i++) {
-                if(dir == 8) dir = 0;
-                MapLocation next = rc.adjacentLocation(directions[dir]);
-                if (rc.onTheMap(next) && rc.canMove(directions[dir])){
-                    for (int iter = 0; iter < 1; iter++) {
-                        if (!rc.canSenseLocation(next)) break;
-                        MapInfo mi = rc.senseMapInfo(next);
-                        next = next.add(mi.getCurrentDirection());
-                    }
-                    int nextDist = hybridDistance(next, destination);
-                    if (firstDist == -1) {
-                        firstDist = nextDist;
-                    }
-                    lastDist = nextDist;
-                }
-                if (clockwise) dir = (dir + 1) % 8;
-                else dir = (dir + 7) % 8;
-            }
-            //System.out.println("clockwise = " + clockwise + ", firstDist = " + firstDist + ", lastDist = " + lastDist);
-            if (lastDist < firstDist) {
-                // Switch directions
-                clockwise = !clockwise;
-            }
+            bugCnt = 0;
+            fuzzy(loc);
+            return;
         }
-
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
-
+        // Otherwise use standard bug.
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             if(dir == 8) dir = 0;
@@ -155,20 +127,19 @@ public class GreedyPath {
         }
     }
 
-    public void fuzzy(MapLocation goal) throws GameActionException{
-        Direction bst = Direction.CENTER;
+    public void fuzzy(MapLocation goal) throws GameActionException {
         int mn = 10000000;
+        Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
         for (int i = 0; i < 8; i++) {
             Direction dir = directions[(curDirStart + i) % 8];
             MapLocation nxt = rc.getLocation().add(dir);
-            int f = 1;
-            if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-                rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10 &&
-                lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-                f = 0;
+            for (int iter = 0; iter < 1; iter++) {
+                if (!rc.canSenseLocation(nxt)) break;
+                MapInfo mi = rc.senseMapInfo(nxt);
+                nxt = nxt.add(mi.getCurrentDirection());
             }
-            if (rc.canMove(dir) && f > 0) {
+            if (rc.canMove(dir)) {
                 if (goal.distanceSquaredTo(nxt) < mn) {
                     bst = dir;
                     mn = goal.distanceSquaredTo(nxt);
