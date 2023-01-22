@@ -128,7 +128,7 @@ public class GreedyPath {
         if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
             (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
             lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-            bugCnt = 10;
+            bugCnt = 50;
             resetBug(goal);
             bug(goal);
             return;

@@ -209,21 +209,23 @@ public class Launcher extends Robot {
         boolean hasIslandTarget = islandTarget != null;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/6;
-        if (hasTargetClose) huntTarget = target;
         // until we stop them from crashing into carriers.
         // if (rc.getRoundNum() <= 3) return State.WAIT;
         if (hasEnemy) return State.ATTACK;
-        if (hasTargetClose) return State.HUNT;
+        if (hasTargetClose) {
+            huntTarget = target;
+            return State.HUNT;
+        }
         if (previousEnemy != null) return State.CHASE;
+        if (hasTargetFar) {
+            huntTarget = target;
+            return State.HUNT;
+        }
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
             numCarriers > 5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
         if ((knowsSymmetry && rc.getRoundNum()>=600) || seesHQ) return State.HUNT_HQ;
-        if (hasTargetFar) {
-            huntTarget = target;
-            return State.HUNT;
-        }
         return State.ADVANCE;
     }
 

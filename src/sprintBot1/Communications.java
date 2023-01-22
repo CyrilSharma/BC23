@@ -22,7 +22,7 @@ public class Communications {
     int numEnemyHQCache = 0;
     int numEnemyHQ = 0;
     int lastReported = -10;
-    int index;
+    int hqIndex = -1;
     //constants
     // this should never be used in a for loop.
     // static final int SHARED_ARRAY_SIZE = 64;
@@ -60,8 +60,9 @@ public class Communications {
     static final int H_SYM = ENEMY_HQ + ENEMY_HQ_WIDTH;
     static final int V_SYM = H_SYM + 1;
     static final int R_SYM = V_SYM + 1;
+    static final int SEES_HQ = R_SYM + 1;
 
-    static final int ANCHOR = R_SYM + 1;
+    static final int ANCHOR = SEES_HQ + 1;
     static final int GREEDYCOUNT = ANCHOR+1;
 
     static final RobotType[] UNITS = {
@@ -140,10 +141,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
-            " " + symmetryChecker.rSym); */
+            " " + symmetryChecker.rSym);
         
     }
 
@@ -546,6 +547,7 @@ public class Communications {
             if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
             MapLocation hq = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+            if (hq.equals(rc.getLocation())) hqIndex = numHQ;
             HQs[numHQ++] = hq;
         }
     }
@@ -757,7 +759,9 @@ public class Communications {
         boolean ready = false;
         int curW = 0;
         boolean[] updates = {false, false, false};
-        boolean hSym, vSym, rSym;
+        boolean hSym = true;
+        boolean vSym = true;
+        boolean rSym = true;
 
         SymmetryChecker(RobotController rc) {
             this.rc = rc;
@@ -795,14 +799,48 @@ public class Communications {
             }
         }
 
+        void updateHQSymmetry() throws GameActionException {
+            // Mark whether or not you can see an enemy HQ.
+            if (rc.getRoundNum() != 2) return;
+            if (rc.getType() != RobotType.HEADQUARTERS) return;
+            RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+            int seesHQ = 0;
+            for (RobotInfo e: robots) {
+                if (e.type == RobotType.HEADQUARTERS) {
+                    seesHQ = 1;
+                    break;
+                }
+            }
+            for (int i = 0; i < 4; i++) {
+                MapLocation m = HQs[i];
+                if (m == null) continue;
+                if (hSym) {
+                    MapLocation s = getHSym(m);
+                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
+                        if (seesHQ == 0) rc.writeSharedArray(H_SYM, 1);
+                    }
+                }
+                if (vSym) {
+                    MapLocation s = getVSym(m);
+                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
+                        if (seesHQ == 0) rc.writeSharedArray(V_SYM, 1);
+                    }
+                }
+                if (rSym) {
+                    MapLocation s = getRSym(m);
+                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
+                        if (seesHQ == 0) rc.writeSharedArray(R_SYM, 1);
+                    }
+                }
+            }
+        }
+
         void updateSymmetry() throws GameActionException {
             // all default to 1, they have to be eliminated.
+            updateHQSymmetry();
             if (!isReady()) return;
             pushUpdates();
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
-            for (int i = 0; i < numHQ; i++) {
-                tiles[HQs[i].x][HQs[i].y] = new Data(Direction.CENTER, 0, 0, 1);
-            }
             for (MapInfo mi: area) {
                 if (Clock.getBytecodesLeft() < 1500) return;
                 if (getSymmetry() != -1) return;
@@ -835,45 +873,51 @@ public class Communications {
 
                 if (hSym) {
                     MapLocation s = getHSym(m);
-                    Data sym = tiles[s.x][s.y];
-                    if (sym == null) continue;
-                    if (mi.getCurrentDirection().getDeltaX() != sym.current.getDeltaX() ||
-                        mi.getCurrentDirection().getDeltaY() != -1*sym.current.getDeltaY())
-                        hSym = false;
-                    if ((sym.isHQ != -1 && status != -1) && 
-                        (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) hSym = false;
-                    if (sym.tileType != tileType) hSym = false;
-                    if ((sym.wellType != -1 && wellType != -1) && 
-                        sym.wellType != tiles[m.x][m.y].wellType) hSym = false;
+                    if (!s.equals(m)) {
+                        Data sym = tiles[s.x][s.y];
+                        if (sym == null) continue;
+                        if (mi.getCurrentDirection().getDeltaX() != sym.current.getDeltaX() ||
+                            mi.getCurrentDirection().getDeltaY() != -1*sym.current.getDeltaY())
+                            hSym = false;
+                        if ((sym.isHQ != -1 && status != -1) && 
+                            (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) hSym = false;
+                        if (sym.tileType != tileType) hSym = false;
+                        if ((sym.wellType != -1 && wellType != -1) && 
+                            sym.wellType != tiles[m.x][m.y].wellType) hSym = false;
+                    }
                 }
 
                 if (vSym) {
                     MapLocation s = getVSym(m);
-                    Data sym = tiles[s.x][s.y];
-                    if (sym == null) continue;
-                    if (mi.getCurrentDirection().getDeltaY() != sym.current.getDeltaY() ||
-                        mi.getCurrentDirection().getDeltaX() != -1*sym.current.getDeltaX())
-                        vSym = false;
-                    
-                    if ((sym.isHQ != -1 && status != -1) && 
-                        (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) vSym = false;
-                    if (sym.tileType != tileType) vSym = false;
-                    if ((sym.wellType != -1 && wellType != -1) && 
-                        sym.wellType != tiles[m.x][m.y].wellType) vSym = false;
+                    if (!s.equals(m)) {
+                        Data sym = tiles[s.x][s.y];
+                        if (sym == null) continue;
+                        if (mi.getCurrentDirection().getDeltaY() != sym.current.getDeltaY() ||
+                            mi.getCurrentDirection().getDeltaX() != -1*sym.current.getDeltaX())
+                            vSym = false;
+                        
+                        if ((sym.isHQ != -1 && status != -1) && 
+                            (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) vSym = false;
+                        if (sym.tileType != tileType) vSym = false;
+                        if ((sym.wellType != -1 && wellType != -1) && 
+                            sym.wellType != tiles[m.x][m.y].wellType) vSym = false;
+                    }
                 }
 
                 if (rSym) {
                     MapLocation s = getRSym(m);
-                    Data sym = tiles[s.x][s.y];
-                    if (sym == null) continue;
-                    if (mi.getCurrentDirection() != sym.current.opposite()) 
-                        rSym = false;
+                    if (!s.equals(m)) {
+                        Data sym = tiles[s.x][s.y];
+                        if (sym == null) continue;
+                        if (mi.getCurrentDirection() != sym.current.opposite()) 
+                            rSym = false;
 
-                    if ((sym.isHQ != -1 && status != -1) && 
-                        (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) rSym = false;
-                    if (sym.tileType != tileType) rSym = false;
-                    if ((sym.wellType != -1 && wellType != -1) && 
-                        sym.wellType != tiles[m.x][m.y].wellType) rSym = false;
+                        if ((sym.isHQ != -1 && status != -1) && 
+                            (sym.isHQ + tiles[m.x][m.y].isHQ) != 3) rSym = false;
+                        if (sym.tileType != tileType) rSym = false;
+                        if ((sym.wellType != -1 && wellType != -1) && 
+                            sym.wellType != tiles[m.x][m.y].wellType) rSym = false;
+                    }
                 }
                 if (rc.canWriteSharedArray(H_SYM, 0)) {
                     if (!hSym) rc.writeSharedArray(H_SYM, 1);
