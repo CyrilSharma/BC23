@@ -793,6 +793,8 @@ public class Communications {
                     bestJ = j;
                 }
             }
+            // we can't make an accurate estimate.
+            if (bestD > 225) return;
             marked[bestJ] = true;
             marked[i] = true;
             estimates[ind2++] = new MapLocation((locs[i].x + locs[bestJ].x) / 2,
@@ -993,8 +995,6 @@ public class Communications {
                 if (Clock.getBytecodesLeft() < 500) break;
                 if (getSymmetry() != -1) break;
                 MapLocation m = mi.getMapLocation();
-                // already did this tile.
-                if (tiles[m.x][m.y] != null) continue;
                 int status = -1;
                 if (rc.canSenseRobotAtLocation(m)) {
                     RobotInfo r = rc.senseRobotAtLocation(m);
