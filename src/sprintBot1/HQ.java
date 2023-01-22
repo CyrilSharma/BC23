@@ -21,6 +21,7 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
+        // REMEMBER TO COMMENT THIS OUT :DDDDD
         if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
         rc.setIndicatorString("Built: Nothing");
