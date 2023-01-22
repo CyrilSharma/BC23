@@ -44,7 +44,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        rc.setIndicatorString(state.toString() + " "+resourceNeeded);
+        //rc.setIndicatorString(state.toString() + " "+resourceNeeded);
         communications.initial();
         attack();
         switch (state) {

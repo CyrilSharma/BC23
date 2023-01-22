@@ -202,7 +202,7 @@ public class Communications {
                     System.out.println("VAL: "+val);
                     System.out.println(res[i]);
                 } */
-                rc.setIndicatorString("I TOGGLED TO " + res[i]);
+                // rc.setIndicatorString("I TOGGLED TO " + res[i]);
                 return res[i];
             }
         }
@@ -646,7 +646,6 @@ public class Communications {
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
-            rc.setIndicatorString("Message Index: "+i);
             AttackTarget cur = new AttackTarget(rc.readSharedArray(i));
             if (cur.isBetterThan(best)) best = cur;
             count++;
