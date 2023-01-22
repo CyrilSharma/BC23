@@ -30,7 +30,7 @@ public class GreedyPath {
     boolean isReady() throws GameActionException {
         if (ready) return true;
         int start = Clock.getBytecodesLeft();
-        while (curIter < rc.getMapHeight()) {
+        while (curIter < rc.getMapWidth()) {
             if (start - Clock.getBytecodesLeft() > 1000) return false;
             lastLoc[curIter] = new int[rc.getMapHeight()];
             curIter++;
