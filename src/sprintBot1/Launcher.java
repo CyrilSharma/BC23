@@ -575,7 +575,10 @@ public class Launcher extends Robot {
             if (ct.canMove && !canMove) return false;
             if (!ct.canMove && canMove) return true;
             // if sufficently close, do not move closer.
-            if (d <= rc.getType().actionRadiusSquared / 2) return true;
+            if (ct.d > RobotType.CARRIER.actionRadiusSquared &&
+                d < RobotType.CARRIER.actionRadiusSquared) return false;
+            if (ct.d < RobotType.CARRIER.actionRadiusSquared &&
+                d > RobotType.CARRIER.actionRadiusSquared) return true;
             return d <= ct.d;
         }
     }

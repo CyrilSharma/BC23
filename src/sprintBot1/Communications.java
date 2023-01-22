@@ -147,10 +147,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
-            " " + symmetryChecker.rSym); */
+            " " + symmetryChecker.rSym);
         
     }
 
@@ -908,6 +908,7 @@ public class Communications {
         void updateHQSymmetry() throws GameActionException {
             // Mark whether or not you can see an enemy HQ.
             if (rc.getType() != RobotType.HEADQUARTERS) return;
+            if (rc.getRoundNum() <= 1) return;
             if (getSymmetry() != -1) return;
             if (!checkedHQs) {
                 for (int i = 0; i < 4; i++) {
