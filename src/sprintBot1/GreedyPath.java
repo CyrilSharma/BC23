@@ -52,7 +52,7 @@ public class GreedyPath {
         if (!rc.isMovementReady()) return;
         if (rc.getType() == RobotType.LAUNCHER &&
             rc.getRoundNum()%3 == 1) return;
-        if (destination == null || !loc.equals(destination)) {
+        if (!loc.equals(destination)) {
             destination = loc;
             bestSoFar = 99999;
             startDir = -1;
