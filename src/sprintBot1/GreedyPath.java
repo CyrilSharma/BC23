@@ -11,6 +11,7 @@ public class GreedyPath {
     int[][] lastLoc;
     int fuzzyCnt = 0;
     int curIter = 0;
+    int goalRound = 0;
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -51,23 +52,27 @@ public class GreedyPath {
         if (!rc.isMovementReady()) return;
         if (rc.getType() == RobotType.LAUNCHER &&
             rc.getRoundNum()%3 == 1) return;
-        if (!loc.equals(destination)) {
+        if (destination == null || !loc.equals(destination)) {
             destination = loc;
             bestSoFar = 99999;
             startDir = -1;
             clockwise = Math.random() < 0.5;
             startDirMissingInARow = 0;
+            goalRound = rc.getRoundNum();
         }
         isReady();
         if(rc.getLocation().equals(loc)) return;
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
         if(r.length > 25){
             fuzzyCnt = 10;
         }
         if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-            rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
+            rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10 &&
+            lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
+            System.out.println("CYCLE DETECTED");
             fuzzyCnt = 10;
+        } else {
+            System.out.println("CYCLE NOT DETECTED");
         }
         if(fuzzyCnt > 0){
             fuzzy(loc);
@@ -142,16 +147,17 @@ public class GreedyPath {
                 if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
                     startDir = rc.getLocation().directionTo(destination).ordinal();
                 }
+                if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
                 return;
             }
 
             if (clockwise) dir = (dir + 1) % 8;
             else dir = (dir + 7) % 8;
         }
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
     }
 
     public void fuzzy(MapLocation goal) throws GameActionException{
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         Direction bst = Direction.CENTER;
         int mn = 10000000;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -160,7 +166,8 @@ public class GreedyPath {
             MapLocation nxt = rc.getLocation().add(dir);
             int f = 1;
             if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-                rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
+                rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10 &&
+                lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
                 f = 0;
             }
             if (rc.canMove(dir) && f > 0) {
@@ -170,7 +177,11 @@ public class GreedyPath {
                 }
             }
         }
-        if(!bst.equals(Direction.CENTER) && rc.canMove(bst) && rc.getLocation().distanceSquaredTo(goal) >= rc.getLocation().add(bst).distanceSquaredTo(goal)) rc.move(bst);
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+        if(!bst.equals(Direction.CENTER) && rc.canMove(bst) 
+            && rc.getLocation().distanceSquaredTo(goal) >= 
+            rc.getLocation().add(bst).distanceSquaredTo(goal)) 
+            rc.move(bst);
     }
 
     // hybrid between manhattan distance (dx + dy) and max distance max(dx, dy)
