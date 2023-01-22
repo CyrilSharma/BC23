@@ -744,7 +744,7 @@ public class Communications {
 
 
     public MapLocation[] estimateEnemyHQs() throws GameActionException{
-        MapLocation[] ret = new MapLocation[numHQ + 1];
+        MapLocation[] ret = new MapLocation[numHQ];
         for(int i = 0; i < numHQ; i++){
             int xPos = 0, yPos = 0;
             int tot = 0;
