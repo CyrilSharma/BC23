@@ -47,7 +47,6 @@ public class Launcher extends Robot {
     int prevEnemyRound = -1;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
-    MapLocation bestNeighborLoc = null;
     MapLocation enemyHQ = null;
     Direction bestNeighborDir;
     boolean okToStray;
@@ -192,7 +191,6 @@ public class Launcher extends Robot {
         boolean closeToCenter = rc.getLocation().distanceSquaredTo(new 
             MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2)) <= 9;
         if (closeToCenter) shouldRendevous=false;
-        boolean hasAdvance = !(bestNeighborLoc == null || bestNeighborLoc.distanceSquaredTo(rc.getLocation()) == 0);
         MapLocation target = communications.findBestAttackTarget();
         rc.setIndicatorString(""+target);
         // /rc.setIndicatorString(""+target);
@@ -274,10 +272,24 @@ public class Launcher extends Robot {
         neighbors = nneighbors;
         neighborStr = nneighborStr;
         if (totalW == 0) {
-            bestNeighborLoc = null;
+            bestNeighborDir = Direction.CENTER;
             return;
         }
-        bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
+        MapLocation bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
+        Direction bestDir = null;
+        int bestD = 10000000;
+        for (Direction d: directions) {
+            if (!rc.canMove(d)) continue;
+            MapLocation nloc = rc.getLocation().add(d);
+            MapInfo mi = rc.senseMapInfo(nloc);
+            nloc = nloc.add(mi.getCurrentDirection());
+            int dist = nloc.distanceSquaredTo(bestNeighborLoc);
+            if (dist < bestD) {
+                bestD = dist;
+                bestDir = d; 
+            }
+        }
+        bestNeighborDir = bestDir;
     }
 
     void heal() throws GameActionException {
@@ -349,12 +361,8 @@ public class Launcher extends Robot {
                 return;
             }
         }
-        if (bestNeighborLoc == null) return;
-        if (friendsMoved) {
-            rc.setIndicatorString("FRIENDS MOVED!!");
-            greedyPath.move(bestNeighborLoc);
-        } else if (rc.getLocation().distanceSquaredTo(bestNeighborLoc) >= 2)
-            greedyPath.move(bestNeighborLoc);
+        if (bestNeighborDir == null) return;
+        if (rc.canMove(bestNeighborDir)) rc.move(bestNeighborDir);
     }
 
     void chase() throws GameActionException {
