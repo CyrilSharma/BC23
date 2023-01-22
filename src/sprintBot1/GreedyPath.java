@@ -6,6 +6,7 @@ import java.util.Map;
 public class GreedyPath {
     RobotController rc;
     boolean ready = false;
+    boolean shoudAvoidClouds = false;
     int sz = 0;
     int[][] lastLoc;
     int bugCnt = 0;
@@ -41,11 +42,16 @@ public class GreedyPath {
 
     MapLocation previous = null;
     public void move(MapLocation loc) throws GameActionException {
+        move(loc, false);
+    }
+
+    public void move(MapLocation loc, boolean avoidClouds) throws GameActionException {
         if (!rc.isMovementReady()) return;
         if (rc.getType() == RobotType.LAUNCHER &&
             rc.getRoundNum()%3 == 1) return;
         if (rc.getLocation().equals(loc)) return;
         if (previous == null || loc.distanceSquaredTo(previous) > 25) {
+            shoudAvoidClouds = avoidClouds;
             previous = loc;
             resetGreedy(loc);
             resetBug(loc);
@@ -141,12 +147,10 @@ public class GreedyPath {
         for (int i = 0; i < 8; i++) {
             Direction dir = directions[(curDirStart + i) % 8];
             MapLocation nxt = rc.getLocation().add(dir);
-            for (int iter = 0; iter < 1; iter++) {
-                if (!rc.canSenseLocation(nxt)) break;
-                MapInfo mi = rc.senseMapInfo(nxt);
-                nxt = nxt.add(mi.getCurrentDirection());
-            }
-            if (rc.canMove(dir)) {
+            if (!rc.onTheMap(nxt)) continue;
+            MapInfo mi = rc.senseMapInfo(nxt);
+            nxt = nxt.add(mi.getCurrentDirection());
+            if (rc.canMove(dir) && !(shoudAvoidClouds && mi.hasCloud())) {
                 if (goal.distanceSquaredTo(nxt) < mn) {
                     bst = dir;
                     mn = goal.distanceSquaredTo(nxt);
@@ -180,7 +184,9 @@ public class GreedyPath {
     }
 
     public boolean tryMove(Direction dir) throws GameActionException{
-        if(rc.canMove(dir) && !dir.equals(Direction.CENTER)){
+        MapInfo mi = rc.senseMapInfo(rc.getLocation().add(dir));
+        if(rc.canMove(dir) && !dir.equals(Direction.CENTER) &&
+            !(shoudAvoidClouds && mi.hasCloud())){
             rc.move(dir);
             return true;
         }

@@ -97,7 +97,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 1) updateNeighbors();
         State state = determineState();
-        //rc.setIndicatorString(state.toString());
+        rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -173,10 +173,8 @@ public class Launcher extends Robot {
 
         boolean seesHQ = false;
         boolean hasEnemy = false;
-        boolean hasAttacker = false;
         for (RobotInfo e : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (e.type != RobotType.HEADQUARTERS) hasEnemy = true;
-            if (Util.isAttacker(e.type)) hasAttacker = true;
             if (e.type == RobotType.HEADQUARTERS) {
                 enemyHQ = e.location;
                 seesHQ = true;
@@ -188,11 +186,8 @@ public class Launcher extends Robot {
             if (f.type == RobotType.CARRIER) numCarriers++;
         }
         // Conditions!!
-        boolean closeToCenter = rc.getLocation().distanceSquaredTo(new 
-            MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2)) <= 9;
-        if (closeToCenter) shouldRendevous=false;
         MapLocation target = communications.findBestAttackTarget();
-        rc.setIndicatorString(""+target);
+        // rc.setIndicatorString(""+target);
         // /rc.setIndicatorString(""+target);
         boolean hasTargetClose = false;
         boolean hasTargetFar = false;
@@ -220,11 +215,11 @@ public class Launcher extends Robot {
             huntTarget = target;
             return State.HUNT;
         }
+        if (knowsSymmetry || communications.EnemyHQEstimates != null) return State.HUNT_HQ;
         if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
             numCarriers > 5) return State.RENDEVOUS;
         if (hurt && islandTarget != null) return State.HEAL;
-        // if (mi.hasCloud()) return State.IMPROVE_VISION;
-        if ((knowsSymmetry && rc.getRoundNum()>=600) || seesHQ) return State.HUNT_HQ;
+        if (mi.hasCloud()) return State.IMPROVE_VISION;
         return State.ADVANCE;
     }
 

@@ -117,12 +117,9 @@ public class Communications {
 
     public ResourceType getResourceInitial() throws GameActionException {
         int count = rc.readSharedArray(GREEDYCOUNT);
-        //System.out.println("COUNT: "+count);
         double total = 4 * numHQ;
         int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
         int nAdamantium = Math.min((int) Math.round((((double) mn / 60.0) * total)), (int)(0.75 * total));
-        //System.out.println("nAdamantium: "+nAdamantium);
-        //System.out.println(nAdamantium);
         if (count < nAdamantium) return ResourceType.ADAMANTIUM;
         else return ResourceType.MANA;
     }
@@ -150,10 +147,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
-            " " + symmetryChecker.rSym);
+            " " + symmetryChecker.rSym); */
         
     }
 
@@ -205,14 +202,6 @@ public class Communications {
 
         for (int i = 0; i < 3; i++) {
             if (val < bounds[i]) {
-                /* if (rc.getRoundNum()<20) {
-                    System.out.println("ADAMANTIUM: "+rc.readSharedArray(RESOURCE_NEED)+" MANA: "+rc.readSharedArray(RESOURCE_NEED+1));
-                    System.out.println("BOUND[0]: "+bounds[0]+" BOUND[1]: "+bounds[1]);
-                    System.out.println("SUM: "+sum);
-                    System.out.println("VAL: "+val);
-                    System.out.println(res[i]);
-                } */
-                // rc.setIndicatorString("I TOGGLED TO " + res[i]);
                 return res[i];
             }
         }
@@ -392,7 +381,6 @@ public class Communications {
             }
             return;
         }
-        //System.out.println("wells: " + numWells);
         reportWellCache();
         int addInd = 0;
         for (WellInfo w : wells){
@@ -407,7 +395,6 @@ public class Communications {
                        }
                    }
                    if(not_marked > 0) {
-                       //System.out.println("Telling about mana well on: " + w.getMapLocation());
                        rc.writeSharedArray(freeSlots[addInd++], msg);
                        cntMana++;
                    }
@@ -424,7 +411,6 @@ public class Communications {
                         }
                     }
                     if(not_marked > 0){
-                        //System.out.println("Telling about ada well on: " + w.getMapLocation());
                         rc.writeSharedArray(freeSlots[addInd++], msg);
                         cntAda++;
                     }
@@ -441,7 +427,6 @@ public class Communications {
                         }
                     }
                     if(not_marked > 0) {
-                        //System.out.println("Telling about elixir well on: " + w.getMapLocation());
                         rc.writeSharedArray(freeSlots[addInd++], msg);
                         cntElixir++;
                     }
@@ -521,8 +506,24 @@ public class Communications {
         numEnemyHQCache = 0;
     }
 
-    public void checkEnemyHQs() throws GameActionException{
-        for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+    public void checkEnemyHQs() throws GameActionException {
+        if (symmetryChecker.getSymmetry() != -1) {
+            int ind = 0;
+            for (MapLocation m: HQs) {
+                if (m == null) continue;
+                MapLocation s = null;
+                switch (symmetryChecker.getSymmetry()) {
+                    case 0: s = symmetryChecker.getHSym(m); break;
+                    case 1: s = symmetryChecker.getVSym(m); break;
+                    case 2: s = symmetryChecker.getRSym(m); break;
+                    default:
+                }
+                EnemyHQs[ind++] = s;
+            }
+            numEnemyHQ = numHQ;
+            return;
+        }
+        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
             int val = rc.readSharedArray(i);
             if(val == 0) continue;
             MapLocation cr = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
@@ -534,12 +535,6 @@ public class Communications {
                 }
             }
             if(!marked) EnemyHQs[numEnemyHQ++] = cr;
-            /*
-            for(int j = 0; j < numEnemyHQ; j++){
-                System.out.println(EnemyHQs[j]);
-            }
-            System.out.println("-------");
-             */
         }
     }
 
@@ -698,22 +693,19 @@ public class Communications {
     }
 
     public MapLocation getClosestEnemyHQTo(MapLocation pos) throws GameActionException {
-        if (symmetryChecker.getSymmetry() == -1) return null;
+        if (symmetryChecker.getSymmetry() == -1 && EnemyHQEstimates == null) return null;
+        MapLocation[] locs = null;
+        if (symmetryChecker.getSymmetry() != -1) locs = EnemyHQs;
+        else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
         int minDistEnemy = 100000;
         MapLocation best = null;
         for(int i = 0; i < numHQ; i++){
-            MapLocation h = HQs[i];
-            MapLocation s = null;
-            switch (symmetryChecker.getSymmetry()) {
-                case 0: s = symmetryChecker.getHSym(h); break;
-                case 1: s = symmetryChecker.getVSym(h); break;
-                case 2: s = symmetryChecker.getRSym(h); break;
-                default:
-            }
-            int d = pos.distanceSquaredTo(s);
+            MapLocation h = locs[i];
+            if (h == null) continue;
+            int d = pos.distanceSquaredTo(h);
             if (d < minDistEnemy) {
                 minDistEnemy = d;
-                best = s;
+                best = h;
             }
         }
         return best;
@@ -1081,7 +1073,6 @@ public class Communications {
                 }
                 iters++;
             }
-            // System.out.println(iters);
         }
 
         MapLocation getHSym(MapLocation a) {
