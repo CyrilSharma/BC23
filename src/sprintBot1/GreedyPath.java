@@ -6,9 +6,11 @@ import java.util.Map;
 public class GreedyPath {
     RobotController rc;
     MapLocation target;
+    boolean ready = false;
     int sz = 0;
-    int[][] lastLoc = new int[65][65];
+    int[][] lastLoc;
     int fuzzyCnt = 0;
+    int curIter = 0;
     static final Direction[] directions = {
         Direction.NORTH,
         Direction.NORTHEAST,
@@ -19,8 +21,22 @@ public class GreedyPath {
         Direction.WEST,
         Direction.NORTHWEST,
     };
+
     public GreedyPath(RobotController rc) {
         this.rc = rc;
+        lastLoc = new int[rc.getMapWidth()][];
+    }
+
+    boolean isReady() throws GameActionException {
+        if (ready) return true;
+        int start = Clock.getBytecodesLeft();
+        while (curIter < rc.getMapHeight()) {
+            if (start - Clock.getBytecodesLeft() > 1000) return false;
+            lastLoc[curIter] = new int[rc.getMapHeight()];
+            curIter++;
+        }
+        ready = true;
+        return true;
     }
 
     public static MapLocation destination = null;
@@ -42,13 +58,15 @@ public class GreedyPath {
             clockwise = Math.random() < 0.5;
             startDirMissingInARow = 0;
         }
+        isReady();
         if(rc.getLocation().equals(loc)) return;
-        lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
         if(r.length > 25){
             fuzzyCnt = 10;
         }
-        if(lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
+        if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
+            rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
             fuzzyCnt = 10;
         }
         if(fuzzyCnt > 0){
@@ -133,7 +151,7 @@ public class GreedyPath {
     }
 
     public void fuzzy(MapLocation goal) throws GameActionException{
-        lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         Direction bst = Direction.CENTER;
         int mn = 10000000;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -141,7 +159,8 @@ public class GreedyPath {
             Direction dir = directions[(curDirStart + i) % 8];
             MapLocation nxt = rc.getLocation().add(dir);
             int f = 1;
-            if(lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
+            if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
+                rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10){
                 f = 0;
             }
             if (rc.canMove(dir) && f > 0) {
