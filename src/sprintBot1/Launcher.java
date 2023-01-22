@@ -169,7 +169,7 @@ public class Launcher extends Robot {
     }
 
     State determineState() throws GameActionException {
-        if (shouldHarass) return State.HARASS;
+        //if (shouldHarass) return State.HARASS;
         if (rc.getRoundNum()%3 == 1) return State.WAIT;
 
         boolean seesHQ = false;

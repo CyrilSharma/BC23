@@ -5,7 +5,6 @@ import java.util.Map;
 
 public class GreedyPath {
     RobotController rc;
-    MapLocation target;
     boolean ready = false;
     int sz = 0;
     int[][] lastLoc;
@@ -28,19 +27,36 @@ public class GreedyPath {
         lastLoc = new int[rc.getMapWidth()][];
     }
 
-    boolean isReady() throws GameActionException {
-        if (ready) return true;
+    void getReady() throws GameActionException {
+        if (ready) return;
         int start = Clock.getBytecodesLeft();
         while (curIter < rc.getMapWidth()) {
-            if (start - Clock.getBytecodesLeft() > 1000) return false;
+            if (start - Clock.getBytecodesLeft() > 1000) return;
             lastLoc[curIter] = new int[rc.getMapHeight()];
             curIter++;
         }
         ready = true;
-        return true;
+        return;
     }
 
-    public static MapLocation destination = null;
+    MapLocation previous = null;
+    public void move(MapLocation loc) throws GameActionException {
+        if (!rc.isMovementReady()) return;
+        if (rc.getType() == RobotType.LAUNCHER &&
+            rc.getRoundNum()%3 == 1) return;
+        if (rc.getLocation().equals(loc)) return;
+        if (!loc.equals(previous)) {
+            previous = loc;
+            resetGreedy(loc);
+            resetBug(loc);
+            bugCnt = 0;
+        }
+        getReady();
+        if (bugCnt == 0) fuzzy(loc);
+        else bug(loc);
+    }
+    
+    public static MapLocation bugTarget = null;
     public static int bestSoFar = 0;
     // which direction to start your checks in the next bugnav move
     public static int startDir = -1;
@@ -48,39 +64,18 @@ public class GreedyPath {
     public static boolean clockwise = false;
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
-    public void move(MapLocation loc) throws GameActionException {
-        if (!rc.isMovementReady()) return;
-        if (rc.getType() == RobotType.LAUNCHER &&
-            rc.getRoundNum()%3 == 1) return;
-        if (!loc.equals(destination)) {
-            destination = loc;
-            bestSoFar = hybridDistance(rc.getLocation(), destination);
-            startDir = 0;
-            clockwise = Math.random() < 0.5;
-            startDirMissingInARow = 0;
-            goalRound = rc.getRoundNum();
-        }
-        isReady();
-        if(rc.getLocation().equals(loc)) return;
-        if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-            (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
-            lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-            bugCnt = 10;
-        }
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
-        if(bugCnt == 0) {
-            fuzzy(loc);
-            return;
-        }
+    public void bug(MapLocation loc) throws GameActionException {
+        rc.setIndicatorString("BUG: " + loc);
         bugCnt--;
-        // If I got closer, switch back to greedy.
-        int dist = hybridDistance(rc.getLocation(), destination);
+
+        // Exit condition: got closer to the destination then when I started.
+        int dist = hybridDistance(rc.getLocation(), bugTarget);
         if (dist < bestSoFar) {
             bugCnt = 0;
+            resetGreedy(loc);
             fuzzy(loc);
             return;
         }
-        // Otherwise use standard bug.
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             if(dir == 8) dir = 0;
@@ -104,9 +99,9 @@ public class GreedyPath {
                     startDirMissingInARow = 0;
                 } else {
                     // Safeguard 2: If the obstacle that should be at startDir is missing 2/3 turns in a row
-                    // reset startDir to point towards destination
+                    // reset startDir to point towards bugTarget
                     if (++startDirMissingInARow == 3) {
-                        startDir = rc.getLocation().directionTo(destination).ordinal();
+                        startDir = rc.getLocation().directionTo(bugTarget).ordinal();
                         startDirMissingInARow = 0;
                     }
                 }
@@ -114,9 +109,9 @@ public class GreedyPath {
                 if (startDir == 8) {
                     startDir = 0;
                 }
-                // Safeguard 3: If startDir points off the map, reset startDir towards destination
+                // Safeguard 3: If startDir points off the map, reset startDir towards bugTarget
                 if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
-                    startDir = rc.getLocation().directionTo(destination).ordinal();
+                    startDir = rc.getLocation().directionTo(bugTarget).ordinal();
                 }
                 
                 return;
@@ -127,7 +122,19 @@ public class GreedyPath {
         }
     }
 
+    public static MapLocation greedyTarget = null;
     public void fuzzy(MapLocation goal) throws GameActionException {
+        // Exit condition: encountered a cycle.
+        if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
+            (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
+            lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
+            bugCnt = 10;
+            resetBug(goal);
+            bug(goal);
+            return;
+        }
+        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
+        rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -146,11 +153,23 @@ public class GreedyPath {
                 }
             }
         }
-        if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         if(!bst.equals(Direction.CENTER) && rc.canMove(bst) 
             && rc.getLocation().distanceSquaredTo(goal) >= 
             rc.getLocation().add(bst).distanceSquaredTo(goal)) 
             rc.move(bst);
+    }
+
+    void resetGreedy(MapLocation loc) {
+        greedyTarget = loc;
+        goalRound = rc.getRoundNum();
+    }
+
+    void resetBug(MapLocation loc) throws GameActionException {
+        bugTarget = loc;
+        bestSoFar = hybridDistance(rc.getLocation(), bugTarget);
+        startDir = 0;
+        clockwise = Math.random() < 0.5;
+        startDirMissingInARow = 0;
     }
 
     // hybrid between manhattan distance (dx + dy) and max distance max(dx, dy)
