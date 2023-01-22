@@ -141,10 +141,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
-            " " + symmetryChecker.rSym);
+            " " + symmetryChecker.rSym); */
         
     }
 
@@ -803,34 +803,29 @@ public class Communications {
             // Mark whether or not you can see an enemy HQ.
             if (rc.getRoundNum() != 2) return;
             if (rc.getType() != RobotType.HEADQUARTERS) return;
-            RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-            int seesHQ = 0;
-            for (RobotInfo e: robots) {
-                if (e.type == RobotType.HEADQUARTERS) {
-                    seesHQ = 1;
-                    break;
-                }
-            }
             for (int i = 0; i < 4; i++) {
                 MapLocation m = HQs[i];
                 if (m == null) continue;
                 if (hSym) {
                     MapLocation s = getHSym(m);
-                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
-                        if (seesHQ == 0) rc.writeSharedArray(H_SYM, 1);
-                    }
+                    if (!rc.canSenseLocation(s)) continue;
+                    RobotInfo e = rc.senseRobotAtLocation(s);
+                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                        rc.writeSharedArray(H_SYM, 1);
                 }
                 if (vSym) {
                     MapLocation s = getVSym(m);
-                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
-                        if (seesHQ == 0) rc.writeSharedArray(V_SYM, 1);
-                    }
+                    if (!rc.canSenseLocation(s)) continue;
+                    RobotInfo e = rc.senseRobotAtLocation(s);
+                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                        rc.writeSharedArray(H_SYM, 1);
                 }
                 if (rSym) {
                     MapLocation s = getRSym(m);
-                    if (s.distanceSquaredTo(rc.getLocation()) <= RobotType.HEADQUARTERS.visionRadiusSquared) {
-                        if (seesHQ == 0) rc.writeSharedArray(R_SYM, 1);
-                    }
+                    if (!rc.canSenseLocation(s)) continue;
+                    RobotInfo e = rc.senseRobotAtLocation(s);
+                    if (e == null || e.team != rc.getTeam().opponent() || e.type != RobotType.HEADQUARTERS)
+                        rc.writeSharedArray(H_SYM, 1);
                 }
             }
         }
