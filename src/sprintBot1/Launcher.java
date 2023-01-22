@@ -346,7 +346,7 @@ public class Launcher extends Robot {
 
 
     void hunt() throws GameActionException {
-        if (huntTarget != null) greedyPath.move(huntTarget, true);
+        if (huntTarget != null) greedyPath.move(huntTarget);
     }
 
     void advance() throws GameActionException {

@@ -22,7 +22,7 @@ public class HQ extends Robot {
     }
     void run() throws GameActionException {
         // REMEMBER TO COMMENT THIS OUT :DDDDD
-        if(rc.getRoundNum() == 500) rc.resign();
+        //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
         rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
