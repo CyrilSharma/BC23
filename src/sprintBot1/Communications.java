@@ -711,6 +711,90 @@ public class Communications {
         return best;
     }
 
+    public MapLocation estimateEnemyTerritory() throws GameActionException{
+       int xPos = 0, yPos = 0;
+       int tot = 0;
+       for(int i = 0; i < numHQ; i++){
+           if(rc.readSharedArray(H_SYM) != 1){
+               MapLocation cr = symmetryChecker.getHSym(HQs[i]);
+               xPos += cr.x;
+               yPos += cr.y;
+               tot++;
+           }
+           if(rc.readSharedArray(V_SYM) != 1){
+               MapLocation cr = symmetryChecker.getVSym(HQs[i]);
+               xPos += cr.x;
+               yPos += cr.y;
+               tot++;
+           }
+           if(rc.readSharedArray(R_SYM) != 1){
+               MapLocation cr = symmetryChecker.getRSym(HQs[i]);
+               xPos += cr.x;
+               yPos += cr.y;
+               tot++;
+           }
+           MapLocation g = getFar(HQs[i]);
+           xPos += g.x;
+           yPos += g.y;
+           tot++;
+       }
+       if(tot == 0) return null;
+       return new MapLocation(xPos / tot, yPos / tot);
+    }
+
+
+    public MapLocation[] estimateEnemyHQs() throws GameActionException{
+        MapLocation[] ret = new MapLocation[numHQ + 1];
+        for(int i = 0; i < numHQ; i++){
+            int xPos = 0, yPos = 0;
+            int tot = 0;
+            if(rc.readSharedArray(H_SYM) != 1){
+                MapLocation cr = symmetryChecker.getHSym(HQs[i]);
+                xPos += cr.x;
+                yPos += cr.y;
+                tot++;
+            }
+            if(rc.readSharedArray(V_SYM) != 1){
+                MapLocation cr = symmetryChecker.getVSym(HQs[i]);
+                xPos += cr.x;
+                yPos += cr.y;
+                tot++;
+            }
+            if(rc.readSharedArray(R_SYM) != 1){
+                MapLocation cr = symmetryChecker.getRSym(HQs[i]);
+                xPos += cr.x;
+                yPos += cr.y;
+                tot++;
+            }
+            MapLocation g = getFar(HQs[i]);
+            xPos += g.x;
+            yPos += g.y;
+            tot++;
+            ret[i] = new MapLocation(xPos / tot, yPos / tot);
+        }
+        return ret;
+    }
+
+    public MapLocation getFar(MapLocation m) throws GameActionException{
+        int d = -1;
+        MapLocation bst = null;
+        MapLocation a = new MapLocation(m.x, rc.getMapHeight() - 1 - m.y);
+        if(a.distanceSquaredTo(m) > d){
+            bst = a;
+            d = a.distanceSquaredTo(m);
+        }
+        MapLocation b = new MapLocation(rc.getMapWidth() - 1 - m.x, rc.getMapHeight() - 1 - m.y);
+        if(b.distanceSquaredTo(m) > d){
+            bst = b;
+            d = b.distanceSquaredTo(m);
+        }
+        MapLocation c = new MapLocation(rc.getMapWidth() - 1 - m.x, m.y);
+        if(c.distanceSquaredTo(m) > d){
+            bst = c;
+            d = c.distanceSquaredTo(m);
+        }
+        return bst;
+    }
 
     class AttackTarget {
         boolean low_health;

@@ -21,7 +21,7 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
-        //if(rc.getRoundNum() == 1000) rc.resign();
+        //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
         rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
@@ -37,6 +37,8 @@ public class HQ extends Robot {
                 communications.resetCounts();
         }
         build();
+        MapLocation ter = communications.estimateEnemyTerritory();
+        rc.setIndicatorDot(ter, 0, 255, 0);
         communications.last();
         //rc.setIndicatorString("Symmetry is " + communications.symmetryChecker.getSymmetry());
     }
