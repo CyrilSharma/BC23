@@ -57,7 +57,6 @@ public class Carrier extends Robot {
             case EXPLORE: explore(); break;
             default:
         }
-        //System.out.println(Clock.getBytecodesLeft());
         communications.last();
     }
 

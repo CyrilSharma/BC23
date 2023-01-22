@@ -39,9 +39,7 @@ public class HQ extends Robot {
         build();
         if(rc.getRoundNum() > 3){
             MapLocation ter = communications.estimateEnemyTerritory();
-            rc.setIndicatorDot(ter, 0, 255, 0);
-            MapLocation[] a = communications.estimateEnemyHQs();
-            for(MapLocation x : a) rc.setIndicatorDot(x, 0, 0, 255);
+            // rc.setIndicatorDot(ter, 0, 255, 0);
         }
         communications.last();
         //rc.setIndicatorString("Symmetry is " + communications.symmetryChecker.getSymmetry());
