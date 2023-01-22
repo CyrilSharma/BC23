@@ -840,6 +840,8 @@ public class Communications {
                 if (Clock.getBytecodesLeft() < 1500) return;
                 if (getSymmetry() != -1) return;
                 MapLocation m = mi.getMapLocation();
+                // already did this tile.
+                if (tiles[m.x][m.y] != null) continue;
                 int status = -1;
                 if (rc.canSenseRobotAtLocation(m)) {
                     RobotInfo r = rc.senseRobotAtLocation(m);
