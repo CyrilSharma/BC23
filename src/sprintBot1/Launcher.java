@@ -189,9 +189,8 @@ public class Launcher extends Robot {
             if (f.type == RobotType.LAUNCHER) numLaunchers++;
         }
         // Conditions!!
+        MapInfo mi = rc.senseMapInfo(rc.getLocation());
         MapLocation target = communications.findBestAttackTarget();
-        // rc.setIndicatorString(""+target);
-        // /rc.setIndicatorString(""+target);
         boolean hasTargetClose = false;
         boolean hasTargetFar = false;
         if (target != null) {
@@ -201,7 +200,9 @@ public class Launcher extends Robot {
             prevHuntRound = rc.getRoundNum();
         }
 
-        if (hasEnemy) return State.ATTACK;
+        if (hasEnemy || (previousEnemy != null && mi.hasCloud())) {
+            return State.ATTACK;
+        }
         if (hasTargetClose) {
             huntTarget = target;
             return State.HUNT;
@@ -516,9 +517,9 @@ public class Launcher extends Robot {
             if (!canMove) return;
             if (r.type == RobotType.LAUNCHER) {
                 int d = nloc.distanceSquaredTo(r.location);
-                if (d <= curActionRadius) {
+                if (d <= curActionRadius)
                     dps_targetting += currentDPS;
-                } else if (d <= curVisionRadius)
+                if (d <= curVisionRadius)
                     dps_targetting += currentDPS;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
