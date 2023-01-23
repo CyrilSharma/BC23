@@ -44,8 +44,9 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        //rc.setIndicatorString(state.toString() + " "+resourceNeeded);
+        rc.setIndicatorString(state.toString() + " "+resourceNeeded);
         communications.initial();
+        //printWells();
         attack();
         switch (state) {
             case SEARCHING: search(); break;
@@ -100,8 +101,8 @@ public class Carrier extends Robot {
             else resourceNeeded = communications.getResourceNeed();
             return State.FLEE;
         }
-
-        if (rc.getRoundNum() <= 10 && !initialGreedy) return State.EXPLORE;
+        int exploreTurns = Math.min(rc.getMapHeight(), rc.getMapWidth()) / 5;
+        if (rc.getRoundNum() <= exploreTurns && !initialGreedy) return State.EXPLORE;
 
         if (shouldDeliver) return State.DELIVERING;
 
@@ -163,8 +164,25 @@ public class Carrier extends Robot {
     void flee() throws GameActionException {
         doMine();
         findTarget();
-        if (!greedyPath.flee()) greedyPath.move(communications.findClosestHQ());
-        if (!greedyPath.flee()) greedyPath.move(communications.findClosestHQ());
+        MapLocation m = communications.findClosestHQ();
+        for (int i = 1; i <= 3; i++) {
+            ResourceType r = ResourceType.values()[i];
+            if (rc.canTransferResource(m, r, rc.getResourceAmount(r))) {
+                rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
+                shouldDeliver = false;
+                resourceNeeded = communications.getResourceNeed();
+            }
+        }
+        if (m.distanceSquaredTo(rc.getLocation()) <= 9 && (mana + adamantium + elixir > 20)) {
+            greedyPath.move(m);
+            greedyPath.move(m);
+        } else {
+            // shouldn't flee towards where it just got attacked.
+            greedyPath.flee();
+            greedyPath.flee();
+            // if (!greedyPath.flee()) greedyPath.move(m);
+            // if (!greedyPath.flee()) greedyPath.move(m);
+        }
         doMine();
     }
 
@@ -191,7 +209,7 @@ public class Carrier extends Robot {
     }
 
     void seek() throws GameActionException {
-        // rc.setIndicatorString("WellTarget: "+wellTarget);
+        rc.setIndicatorString("WellTarget: "+wellTarget);
         // initially, we don't know all the wells. re-evaluate target regularly.
         if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
@@ -370,98 +388,56 @@ public class Carrier extends Robot {
     void findTarget() throws GameActionException {
         int iters = 0;
         ResourceType r = resourceNeeded;
-        RobotInfo[] friends = rc.senseNearbyRobots(-1, rc.getTeam());
         WellInfo[] wells = rc.senseNearbyWells();
-        WellTarget[] wellTargets = new WellTarget[wells.length + 15];
+        WellTarget best = null;
         while (iters < 3) {
             if (Clock.getBytecodesLeft() < 6000) break;
 
             chosen = r;
-            int ind = 0;
-            WellTarget best = null;
-            
             for (WellInfo w : wells){
                 if (Clock.getBytecodesLeft() < 6000) break;
                 if (w.getResourceType() != r) continue;
                 if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
                     w.getMapLocation().equals(prevBadWell)) continue;
-                wellTargets[ind++] = new WellTarget(w.getMapLocation(), w.getResourceType());
+                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType());
+                System.out.println("LOCAL: "+cur.loc+" DIST: "+cur.distEnemy);
+                if (cur.isBetterThan(best)) best = cur;
             }
 
-            for (RobotInfo f: friends) {
+            for (MapLocation m: communications.readWells(r)) {
                 if (Clock.getBytecodesLeft() < 6000) break;
-                if (f.type != RobotType.CARRIER) continue;
-                for (int i = 0; i < ind; i++)
-                    wellTargets[i].updateCarrier(f);
+                if (m == null) continue;
+                if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.CARRIER.visionRadiusSquared) continue;
+                if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
+                    m.equals(prevBadWell)) continue;
+                if (communications.isEnemyTerritory(m)) continue;
+                WellTarget cur = new WellTarget(m, r);
+                System.out.println("COMMED: "+cur.loc+" DIST: "+cur.distEnemy);
+                if (cur.isBetterThan(best)) best = cur;
             }
 
-            for (int i = 0; i < ind; i++) {
-                if (wellTargets[i].isBetterThan(best)) 
-                    best = wellTargets[i];
-            }
-
-            if (best != null && !best.crowded()) {
-                //rc.setIndicatorString(""+best.loc+" c: "+best.harvestersNear);
+            if (best != null) {
                 wellTarget = best.loc;
                 return;
-            }
-
-            if (allowCommedWells) {
-                for (MapLocation m: communications.readWells(r)) {
-                    if (Clock.getBytecodesLeft() < 6000) break;
-                    if (m == null) continue;
-                    if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.CARRIER.visionRadiusSquared) continue;
-                    if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
-                        m.equals(prevBadWell)) continue;
-                    if (communications.isEnemyTerritory(m)) continue;
-                    WellTarget cur = new WellTarget(m, r);
-                    if (cur.isBetterThan(best)) best = cur;
-                }
-                if (best != null && !best.crowded()) {
-                    wellTarget = best.loc;
-                    return;
-                }
             }
             // bash through all resources.
             r = ResourceType.values()[(r.ordinal() + 2)%3];
             break;
-            // if (!mineEfficently) break;
         }
     }
 
     class WellTarget {
         MapLocation loc;
-        int harvestersNear;
-        int blocked = 0;
-        int distHQ;
+        double distHQ;
+        double distEnemy;
         double dist;
         ResourceType r;
-        WellTarget(MapLocation m, ResourceType res) throws GameActionException{
+        WellTarget(MapLocation m, ResourceType res) throws GameActionException {
             loc = m;
             dist = Util.absDistance(loc, rc.getLocation());
-            distHQ = loc.distanceSquaredTo(communications.findClosestHQto(loc));
-            harvestersNear = 0;
+            distHQ = Util.absDistance(loc, communications.findClosestHQto(loc));
+            distEnemy = Util.absDistance(loc, communications.getClosestEnemyHQTo(m));
             this.r = res;
-
-            // Count number of blocked tiles.
-            for (Direction d: directions) {
-                MapLocation a = loc.add(d);
-                if (rc.canSenseLocation(a)) {
-                    if (!rc.sensePassability(a) && !rc.isLocationOccupied(a))
-                        blocked++;
-                }
-            }
-        }
-
-        void updateCarrier(RobotInfo r) {
-            if (crowded()) return;
-            if (r.location.distanceSquaredTo(loc) <= 4) {
-                harvestersNear++;
-            }
-        }
-
-        boolean crowded() {
-            return harvestersNear >= (9 - blocked);
         }
 
         boolean bestResource() throws GameActionException {
@@ -472,11 +448,11 @@ public class Carrier extends Robot {
             if (wt == null) return true;
             if (wt.bestResource() && !bestResource()) return false;
             if (!wt.bestResource() && bestResource()) return true;
-            if (!wt.crowded() && crowded()) return false;
-            if (wt.crowded() && !crowded()) return true;
-            if (wt.dist + 12 < dist) return false;
-            if (dist + 12 < wt.dist) return true;
-            return distHQ <= wt.distHQ; 
+            if (wt.distEnemy > 3 + distEnemy) return false;
+            if (distEnemy > 3 + wt.distEnemy) return true;
+            if (wt.distHQ + 3 < distHQ) return false;
+            if (distEnemy + 3 < wt.distEnemy) return true;
+            return dist <= wt.dist;
         }
     }
 

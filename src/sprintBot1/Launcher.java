@@ -357,7 +357,10 @@ public class Launcher extends Robot {
 
 
     void hunt() throws GameActionException {
-        if (huntTarget != null) greedyPath.move(huntTarget);
+        if (huntTarget != null) {
+            rc.setIndicatorString("HUNT: "+huntTarget);
+            greedyPath.move(huntTarget);
+        }
     }
 
     void advance() throws GameActionException {
@@ -535,8 +538,9 @@ public class Launcher extends Robot {
        
         int safe() {
             if (dps_targetting > my_dps) return 1;
-            if (dps_defending < dps_targetting) return 2;
-            return 3;
+            if (hasCloud) return 2;
+            if (dps_defending < dps_targetting) return 3;
+            return 4;
         }
 
         boolean isBetterThan(MicroTarget mt) {

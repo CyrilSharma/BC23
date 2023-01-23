@@ -104,7 +104,7 @@ public class Communications {
         // scales between 0 and 1/2
         double total = 4 * numHQ;
         int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
-        int numExplore = Math.min((int) Math.round((((double) mn) / 100.0) * total), 4);
+        int numExplore = Math.min((int) Math.round((((double) mn) / 160.0) * total), 4);
         int count = rc.readSharedArray(GREEDYCOUNT);
         if (rc.canWriteSharedArray(0, 0))
             rc.writeSharedArray(GREEDYCOUNT, count+1);
@@ -345,9 +345,9 @@ public class Communications {
     }
 
     public void reportWellCache() throws GameActionException{
-        for(int i = 0; i < numWells; i++){
+        for (int i = 0; i < numWells; i++){
             boolean marked = false;
-            for(int j = 0; j < KEYLOCATIONS_WIDTH; j++){
+            for (int j = 0; j < KEYLOCATIONS_WIDTH; j++){
                 int val = rc.readSharedArray(j);
                 if(val == 0) continue;
                 MapLocation ex = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
@@ -356,17 +356,20 @@ public class Communications {
                     break;
                 }
             }
-            if(!marked){
-                for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
-                    int val = rc.readSharedArray(j);
-                    if(val != 0) continue;
-                    int msg = MANA_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
-                    if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
-                        msg = ADAMANTIUM_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
-                    }
-                    rc.writeSharedArray(j, msg);
-                    break;
+            if (marked) {
+                wellCache[i] = null;
+                continue;
+            }
+
+            for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
+                int val = rc.readSharedArray(j);
+                if(val != 0) continue;
+                int msg = MANA_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
+                if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
+                    msg = ADAMANTIUM_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
                 }
+                rc.writeSharedArray(j, msg);
+                break;
             }
         }
         numWells = 0;
