@@ -493,6 +493,7 @@ public class Launcher extends Robot {
         double dps_defending = 0;
         double my_dps;
         int minDistToEnemy = 100000;
+        int action;
         boolean canMove;
         boolean hasCloud;
         MapLocation nloc;
@@ -507,6 +508,7 @@ public class Launcher extends Robot {
                 nloc = nloc.add(mi.getCurrentDirection());
                 my_dps = RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
+            action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
@@ -520,9 +522,9 @@ public class Launcher extends Robot {
                     dps_targetting += currentDPS;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
-            } else if (r.type == RobotType.LAUNCHER) {
+            } else if (r.type == RobotType.CARRIER) {
                 int d = nloc.distanceSquaredTo(r.location);
-                if (d <= r.type.actionRadiusSquared) 
+                if (d <= curActionRadius) 
                     dps_targetting += currentDPS;
             } else if (r.type == RobotType.HEADQUARTERS) {
                 int d = nloc.distanceSquaredTo(r.location);
@@ -545,6 +547,10 @@ public class Launcher extends Robot {
             return 4;
         }
 
+        boolean inRange() {
+            return minDistToEnemy <= action;
+        }
+
         boolean isBetterThan(MicroTarget mt) {
             if (mt.canMove && !canMove) return false;
             if (!mt.canMove && canMove) return true;
@@ -555,22 +561,14 @@ public class Launcher extends Robot {
 
             // If hurt move to where enemies are targetting the least.
             if (hurt) {
-                if (mt.hasCloud && !hasCloud) return false;
-                if (!mt.hasCloud && hasCloud) return true;
                 if (mt.dps_defending > dps_defending) return false;
                 if (mt.dps_defending < dps_defending) return true;
-                // run away!!!!
-                return minDistToEnemy >= mt.minDistToEnemy;
             }
 
-            // get as far away from enemies while still being in range.
-            if (minDistToEnemy >= rc.getType().actionRadiusSquared &&
-                mt.minDistToEnemy >= rc.getType().actionRadiusSquared)
-                return minDistToEnemy <= mt.minDistToEnemy;
-            if (minDistToEnemy <= rc.getType().actionRadiusSquared &&
-                mt.minDistToEnemy <= rc.getType().actionRadiusSquared)
-                return minDistToEnemy >= mt.minDistToEnemy;
-            return minDistToEnemy <= mt.minDistToEnemy;
+            if (!mt.inRange() && inRange()) return false;
+            if (mt.inRange() && !inRange()) return true;
+            if (mt.inRange() && inRange()) return minDistToEnemy >= mt.minDistToEnemy;
+            else return minDistToEnemy <= mt.minDistToEnemy;
         }
     }
 
