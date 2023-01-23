@@ -55,10 +55,8 @@ public class Launcher extends Robot {
     boolean shouldRendevous = true;
     boolean shouldHarass = false;
     MapLocation rendevous;
-    // may want to replace this with a custom implementation.
-    private MapLocation enemyHQLoc;
-    private MapLocation huntTarget;
-    private MapLocation islandTarget;
+    MapLocation huntTarget;
+    MapLocation islandTarget;
     MapLocation harassTarget = null;
     int harassTimer = 0;
     int harassDir = -1;
@@ -184,8 +182,10 @@ public class Launcher extends Robot {
         }
 
         int numCarriers = 0;
+        int numLaunchers = 0;
         for (RobotInfo f : rc.senseNearbyRobots(-1, rc.getTeam())) {
             if (f.type == RobotType.CARRIER) numCarriers++;
+            if (f.type == RobotType.LAUNCHER) numLaunchers++;
         }
         // Conditions!!
         MapLocation target = communications.findBestAttackTarget();
@@ -215,12 +215,17 @@ public class Launcher extends Robot {
             huntTarget = target;
             return State.HUNT;
         }
-        if (knowsSymmetry || communications.EnemyHQEstimates != null) return State.HUNT_HQ;
-        if (rc.getRoundNum()-born<=exploreTurns || rc.getRoundNum()<=exploreTurns ||
-            numCarriers > 5) return State.RENDEVOUS;
-        if (hurt && islandTarget != null) return State.HEAL;
+        // If advance direction disagrees with HQ direction.
+        Direction dir = rc.getLocation().directionTo(communications.getClosestEnemyHQ());
+        if (bestNeighborDir != dir &&
+            bestNeighborDir != dir.rotateLeft() &&
+            bestNeighborDir != dir.rotateRight() &&
+            bestNeighborDir != Direction.CENTER &&
+            numLaunchers > 0) {
+            return State.ADVANCE;
+        }
         if (mi.hasCloud()) return State.IMPROVE_VISION;
-        return State.ADVANCE;
+        return State.HUNT_HQ;
     }
 
     MapLocation[] neighbors = new MapLocation[100];
@@ -242,12 +247,14 @@ public class Launcher extends Robot {
                 MapLocation prev = neighbors[r.ID%100];
                 // if a unit moved away from me, follow him. unless, he was retreating.
                 int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
-                for (int i = 0; i < nbrs.length && i < 3; i++) {
-                    RobotInfo n = nbrs[i];
+                int count = 0;
+                for (RobotInfo n: nbrs) {
+                    if (n.type != RobotType.LAUNCHER) continue;
+                    if (count == 3) break;
                     netD += r.location.distanceSquaredTo(n.location) - prev.distanceSquaredTo(n.location);
+                    count++;
                 }
-                if (prev != null && prev != r.location
-                    && r.type == RobotType.LAUNCHER && netD > 0) {
+                if (prev != null && prev != r.location && netD > 0) {
                     x += r.location.x * 6;
                     y += r.location.y * 6;
                     totalW += 6;
@@ -271,8 +278,9 @@ public class Launcher extends Robot {
             return;
         }
         MapLocation bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
-        Direction bestDir = null;
-        int bestD = 10000000;
+        // rc.setIndicatorString(""+bestNeighborLoc);
+        Direction bestDir = Direction.CENTER;
+        int bestD = rc.getLocation().distanceSquaredTo(bestNeighborLoc);
         for (Direction d: directions) {
             if (!rc.canMove(d)) continue;
             MapLocation nloc = rc.getLocation().add(d);
@@ -315,6 +323,7 @@ public class Launcher extends Robot {
 
     void hunt_hq() throws GameActionException {
         MapLocation m = communications.getClosestEnemyHQ();
+        // rc.setIndicatorDot(m, 255, 255, 255);
         if (m != null) hunt_hq(m);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
@@ -327,8 +336,10 @@ public class Launcher extends Robot {
     void hunt_hq(MapLocation m) throws GameActionException {
         int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
         if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
+            // rc.setIndicatorString("I'M TRYING 1");
             greedyPath.move(m);
         } else if (m.distanceSquaredTo(rc.getLocation()) <= rad) {
+            // rc.setIndicatorString("I'M TRYING 2");
             int bestD = 100000;
             MapLocation best = null;
             for (MapLocation a: rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), -1)) {
@@ -350,6 +361,7 @@ public class Launcher extends Robot {
     }
 
     void advance() throws GameActionException {
+        // rc.setIndicatorString("ADVANCE: "+bestNeighborDir);
         for (RobotInfo r: rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
                 hunt_hq(r.location);
@@ -402,7 +414,6 @@ public class Launcher extends Robot {
     int curVisionRadius;
     void maneuver() throws GameActionException {
         rc.setIndicatorString("Maneuvering");
-        rc.setIndicatorString("BYTECODE: "+Clock.getBytecodesLeft());
         // Needs 1k Bytecode.
         MicroTarget[] microtargets = new MicroTarget[9];
         for (Direction d: directions) {

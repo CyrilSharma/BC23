@@ -147,11 +147,10 @@ public class Communications {
 
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
-        System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
+        /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
         System.out.println("" + symmetryChecker.hSym + 
             " "  + symmetryChecker.vSym + 
-            " " + symmetryChecker.rSym);
-        
+            " " + symmetryChecker.rSym); */
     }
 
     void updateBuild(RobotType r) throws GameActionException {
@@ -693,13 +692,13 @@ public class Communications {
     }
 
     public MapLocation getClosestEnemyHQTo(MapLocation pos) throws GameActionException {
-        if (symmetryChecker.getSymmetry() == -1 && EnemyHQEstimates == null) return null;
         MapLocation[] locs = null;
         if (symmetryChecker.getSymmetry() != -1) locs = EnemyHQs;
         else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
+        else locs = new MapLocation[]{estimateEnemyTerritory()};
         int minDistEnemy = 100000;
         MapLocation best = null;
-        for(int i = 0; i < numHQ; i++){
+        for(int i = 0; i < locs.length; i++){
             MapLocation h = locs[i];
             if (h == null) continue;
             int d = pos.distanceSquaredTo(h);
@@ -770,27 +769,55 @@ public class Communications {
             }
         }
         int ind2 = 0;
-        boolean[] marked = new boolean[numHQ * 2];
+        int[] marked = new int[numHQ * 2];
+        int[] count = {1, 1, 1, 1, 1};
         MapLocation[] estimates = new MapLocation[numHQ];
         for (int i = 0; i < numHQ * 2; i++) {
-            if (marked[i]) continue;
+            if (marked[i] != 0) continue;
             if (locs[i] == null) continue;
             int bestD = 1000000;
             int bestJ = -1;
             for (int j = 0; j < numHQ * 2; j++) {
-                if (marked[j] || j == i) continue;
+                if (marked[j] != 0 || j == i) continue;
                 if (locs[j] == null) continue;
-                if (locs[j].distanceSquaredTo(locs[i]) <= bestD) {
-                    bestD = locs[j].distanceSquaredTo(locs[i]);
+                int d = locs[j].distanceSquaredTo(locs[i]);
+                if (d > 225) continue;
+                if (d <= bestD) {
+                    bestD = d;
                     bestJ = j;
                 }
             }
-            // we can't make an accurate estimate.
-            if (bestD > 225) return;
-            marked[bestJ] = true;
-            marked[i] = true;
-            estimates[ind2++] = new MapLocation((locs[i].x + locs[bestJ].x) / 2,
-                (locs[i].y + locs[bestJ].y) / 2);
+            if (bestJ != -1) {
+                marked[bestJ] = 1;
+                marked[i] = 1;
+                count[ind2]++;
+                estimates[ind2++] = new MapLocation(locs[i].x + locs[bestJ].x,
+                    locs[i].y + locs[bestJ].y);
+            } else {
+                marked[i] = -1;
+            }
+        }
+        for (int i = 0; i < numHQ * 2; i++) {
+            if (marked[i] != -1) continue;
+            int bestD = 1000000;
+            int bestJ = -1;
+            for (int j = 0; j < ind2; j++) {
+                int d = estimates[j].distanceSquaredTo(locs[i]);
+                if (d > 225) continue;
+                if (d <= bestD) {
+                    bestD = d;
+                    bestJ = j;
+                }
+            }
+            if (bestJ == -1) return;
+            count[bestJ]++;
+            estimates[bestJ] = new MapLocation(estimates[bestJ].x + locs[i].x, 
+                estimates[bestJ].y + locs[i].y);
+        }
+        for (int i = 0; i < numHQ; i++) {
+            if (estimates[i] == null) continue;
+            estimates[i] = new MapLocation(estimates[i].x / count[i],
+                estimates[i].y / count[i]);
         }
         EnemyHQEstimates = estimates;
     }
@@ -979,7 +1006,6 @@ public class Communications {
 
         void updateSymmetry() throws GameActionException {
             updateHQSymmetry();
-            if (rc.getType() == RobotType.HEADQUARTERS) return;
             if (!isReady()) return;
             pushUpdates();
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
