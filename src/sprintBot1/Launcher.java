@@ -58,6 +58,7 @@ public class Launcher extends Robot {
     MapLocation huntTarget;
     MapLocation islandTarget;
     MapLocation harassTarget = null;
+    MapLocation hqTarget;
     int harassTimer = 0;
     int harassDir = -1;
     MapLocation[] harassLoc = {new MapLocation(0, 0), new MapLocation(1, 0), 
@@ -97,7 +98,7 @@ public class Launcher extends Robot {
         communications.initial();
         if (rc.getRoundNum()%3 != 1) updateNeighbors();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        //rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -199,12 +200,7 @@ public class Launcher extends Robot {
             hasTargetFar = (d > 64);
             prevHuntRound = rc.getRoundNum();
         }
-        boolean knowsSymmetry =  (communications.symmetryChecker.getSymmetry() != -1);
-        boolean hasIslandTarget = islandTarget != null;
-        MapInfo mi = rc.senseMapInfo(rc.getLocation());
-        int exploreTurns = (rc.getMapHeight()+rc.getMapWidth())/6;
-        // until we stop them from crashing into carriers.
-        // if (rc.getRoundNum() <= 3) return State.WAIT;
+
         if (hasEnemy) return State.ATTACK;
         if (hasTargetClose) {
             huntTarget = target;
@@ -216,15 +212,18 @@ public class Launcher extends Robot {
             return State.HUNT;
         }
         // If advance direction disagrees with HQ direction.
-        Direction dir = rc.getLocation().directionTo(communications.getClosestEnemyHQ());
-        if (bestNeighborDir != dir &&
+        hqTarget = communications.getClosestEnemyHQ();
+        Direction dir = greedyPath.move(hqTarget, false);
+        rc.setIndicatorString("EHQ: "+hqTarget+" GREEDY MOVE: " + dir);
+        if (dir == null ||
+            bestNeighborDir != dir &&
             bestNeighborDir != dir.rotateLeft() &&
             bestNeighborDir != dir.rotateRight() &&
             bestNeighborDir != Direction.CENTER &&
             numLaunchers > 0) {
             return State.ADVANCE;
         }
-        if (mi.hasCloud()) return State.IMPROVE_VISION;
+        // if (mi.hasCloud()) return State.IMPROVE_VISION;
         return State.HUNT_HQ;
     }
 
@@ -322,9 +321,7 @@ public class Launcher extends Robot {
     }
 
     void hunt_hq() throws GameActionException {
-        MapLocation m = communications.getClosestEnemyHQ();
-        // rc.setIndicatorDot(m, 255, 255, 255);
-        if (m != null) hunt_hq(m);
+        if (hqTarget != null) hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
                 hunt_hq(r.location);

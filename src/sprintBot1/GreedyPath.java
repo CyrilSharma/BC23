@@ -49,9 +49,12 @@ public class GreedyPath {
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
     public void move(MapLocation loc) throws GameActionException {
-        if (!rc.isMovementReady()) return;
+        move(loc, true);
+    }
+    public Direction move(MapLocation loc, boolean shouldMove) throws GameActionException {
+        if (!rc.isMovementReady()) return null;
         if (rc.getType() == RobotType.LAUNCHER &&
-                rc.getRoundNum()%3 == 1) return;
+                rc.getRoundNum()%3 == 1) return null;
         if (!loc.equals(destination)) {
             destination = loc;
             bestSoFar = 99999;
@@ -61,7 +64,7 @@ public class GreedyPath {
             goalRound = rc.getRoundNum();
         }
         isReady();
-        if(rc.getLocation().equals(loc)) return;
+        if(rc.getLocation().equals(loc)) return Direction.CENTER;
         RobotInfo[] r = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
         if(r.length > 25){
             fuzzyCnt = 10;
@@ -71,9 +74,11 @@ public class GreedyPath {
                 lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
             fuzzyCnt = 10;
         }
-        if(fuzzyCnt > 0){
-            fuzzy(loc);
+
+        Direction out = null;
+        if (fuzzyCnt > 0){
             fuzzyCnt--;
+            out = fuzzy(loc, shouldMove);
         }
         int dist = hybridDistance(rc.getLocation(), destination);
         if (dist < bestSoFar) {
@@ -122,7 +127,7 @@ public class GreedyPath {
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
                 dir = startDir;
-            } else if (tryMove(directions[dir])) {
+            } else if (tryMove(directions[dir], shouldMove)) {
                 // Safeguard 1: dir might equal startDir if this robot was blocked by another robot last turn
                 // that has since moved.
                 if (dir != startDir) {
@@ -147,15 +152,17 @@ public class GreedyPath {
                     startDir = rc.getLocation().directionTo(destination).ordinal();
                 }
 
-                return;
+                out = directions[dir];
+                return out;
             }
 
             if (clockwise) dir = (dir + 1) % 8;
             else dir = (dir + 7) % 8;
         }
+        return out;
     }
 
-    public void fuzzy(MapLocation goal) throws GameActionException{
+    public Direction fuzzy(MapLocation goal, boolean shouldMove) throws GameActionException{
         Direction bst = Direction.CENTER;
         int mn = 10000000;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -178,8 +185,11 @@ public class GreedyPath {
         if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
         if(!bst.equals(Direction.CENTER) && rc.canMove(bst)
                 && rc.getLocation().distanceSquaredTo(goal) >=
-                rc.getLocation().add(bst).distanceSquaredTo(goal))
-            rc.move(bst);
+                rc.getLocation().add(bst).distanceSquaredTo(goal)) {
+            if (shouldMove) rc.move(bst);
+            return bst;
+        }
+        return null;
     }
 
     // hybrid between manhattan distance (dx + dy) and max distance max(dx, dy)
@@ -189,9 +199,9 @@ public class GreedyPath {
         return dy + dx + Math.max(dy, dx);
     }
 
-    public boolean tryMove(Direction dir) throws GameActionException{
+    public boolean tryMove(Direction dir, boolean shouldMove) throws GameActionException{
         if(rc.canMove(dir) && !dir.equals(Direction.CENTER)){
-            rc.move(dir);
+            if (shouldMove) rc.move(dir);
             return true;
         }
         return false;
