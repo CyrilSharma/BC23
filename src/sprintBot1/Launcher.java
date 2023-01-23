@@ -199,7 +199,7 @@ public class Launcher extends Robot {
             hasTargetFar = (d > 64);
             prevHuntRound = rc.getRoundNum();
         }
-
+        // if you see an enemy, or you just saw an enemy and you're on a cloud...
         if (hasEnemy || (previousEnemy != null && mi.hasCloud())) {
             return State.ATTACK;
         }
@@ -400,18 +400,36 @@ public class Launcher extends Robot {
         maneuver();
     }
 
-    void follow(MapLocation m) throws GameActionException {
-        ChaseTarget best = null;
-        for (Direction dir: directions) {
-            ChaseTarget cur = new ChaseTarget(dir, m);
-            if (cur.isBetterThan(best)) best = cur;
+    void harass() throws GameActionException{
+        rc.setIndicatorString("i am harass :) " + harassTarget + " " + harassTimer);
+        if(harassTimer <= 0 || (harassTarget != null && rc.getLocation().distanceSquaredTo(harassTarget) <= 9)) harassTarget = null;
+        if(harassTarget == null){
+            harassTimer = 50;
+            int ind = -1;
+            int d = 1000000;
+            for(int i = 0; i < 4; i++){
+                MapLocation cr = new MapLocation((harassLoc[i].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[i].y == 0 ? 5 : rc.getMapHeight() - 5));
+                int ds = rc.getLocation().distanceSquaredTo(cr);
+                if(ds < d){
+                    d = ds;
+                    ind = i;
+                }
+            }
+            assert(ind != -1);
+            if (harassDir == 0) harassTarget = new MapLocation((harassLoc[(ind + 1) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, 
+                (harassLoc[(ind + 1) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
+            else harassTarget = new MapLocation((harassLoc[(ind + 3) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5,
+                (harassLoc[(ind + 3) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
         }
-        if (rc.canMove(best.dir))
-            rc.move(best.dir);
+        RobotInfo[] rob = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
+        if(rob.length > 0) greedyPath.launcherFlee();
+        greedyPath.move(harassTarget);
+        harassTimer--;
     }
 
 
     double currentDPS, cooldown;
+    boolean curOnCloud;
     boolean robotOnCloud;
     int curActionRadius;
     int curVisionRadius;
@@ -424,7 +442,8 @@ public class Launcher extends Robot {
         }
 
         MapLocation m;
-        MapInfo mi;
+        MapInfo mi = rc.senseMapInfo(rc.getLocation());
+        curOnCloud = mi.hasCloud();
         for (RobotInfo r: rc.senseNearbyRobots()) {
             if (Clock.getBytecodesLeft() < 1500) break;
             if (!Util.isAttacker(r.type) || r.type == RobotType.HEADQUARTERS) continue;
@@ -459,34 +478,6 @@ public class Launcher extends Robot {
         }
         if (rc.canMove(best.dir)) rc.move(best.dir);
     }
-
-    void harass() throws GameActionException{
-        rc.setIndicatorString("i am harass :) " + harassTarget + " " + harassTimer);
-        if(harassTimer <= 0 || (harassTarget != null && rc.getLocation().distanceSquaredTo(harassTarget) <= 9)) harassTarget = null;
-        if(harassTarget == null){
-            harassTimer = 50;
-            int ind = -1;
-            int d = 1000000;
-            for(int i = 0; i < 4; i++){
-                MapLocation cr = new MapLocation((harassLoc[i].x == 0 ? 5 : rc.getMapWidth()) - 5, (harassLoc[i].y == 0 ? 5 : rc.getMapHeight() - 5));
-                int ds = rc.getLocation().distanceSquaredTo(cr);
-                if(ds < d){
-                    d = ds;
-                    ind = i;
-                }
-            }
-            assert(ind != -1);
-            if (harassDir == 0) harassTarget = new MapLocation((harassLoc[(ind + 1) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5, 
-                (harassLoc[(ind + 1) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
-            else harassTarget = new MapLocation((harassLoc[(ind + 3) % 4].x == 0 ? 5 : rc.getMapWidth()) - 5,
-                (harassLoc[(ind + 3) % 4].y == 0 ? 5 : rc.getMapHeight() - 5));
-        }
-        RobotInfo[] rob = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
-        if(rob.length > 0) greedyPath.launcherFlee();
-        greedyPath.move(harassTarget);
-        harassTimer--;
-    }
-
     // Choose best candidate for maneuvering in close encounters.
     class MicroTarget {
         Direction dir;
@@ -510,6 +501,7 @@ public class Launcher extends Robot {
                 my_dps = RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
             action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
+            // minDistToEnemy = nloc.distanceSquaredTo(previousEnemy);
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
@@ -556,7 +548,6 @@ public class Launcher extends Robot {
             if (mt.canMove && !canMove) return false;
             if (!mt.canMove && canMove) return true;
 
-            // the idea here is attack first, then move out of range.
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
@@ -566,36 +557,11 @@ public class Launcher extends Robot {
                 if (mt.dps_defending < dps_defending) return true;
             }
 
+            // the idea here is attack first, then move out of range.
             if (!mt.inRange() && inRange()) return false;
             if (mt.inRange() && !inRange()) return true;
             if (mt.inRange() && inRange()) return minDistToEnemy >= mt.minDistToEnemy;
             else return minDistToEnemy <= mt.minDistToEnemy;
-        }
-    }
-
-    // Choose best square to chase a defenseless target.
-    class ChaseTarget {
-        int d;
-        Direction dir;
-        boolean canMove;
-
-        ChaseTarget(Direction dir, MapLocation m) {
-            this.dir = dir;
-            MapLocation newloc = rc.getLocation().add(dir);
-            d = newloc.distanceSquaredTo(m);
-            canMove = rc.canMove(dir);
-        }
-
-        boolean isBetterThan(ChaseTarget ct) {
-            if (ct == null) return true;
-            if (ct.canMove && !canMove) return false;
-            if (!ct.canMove && canMove) return true;
-            // if sufficently close, do not move closer.
-            if (ct.d > RobotType.CARRIER.actionRadiusSquared &&
-                d < RobotType.CARRIER.actionRadiusSquared) return false;
-            if (ct.d < RobotType.CARRIER.actionRadiusSquared &&
-                d > RobotType.CARRIER.actionRadiusSquared) return true;
-            return d <= ct.d;
         }
     }
 }
