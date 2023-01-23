@@ -152,7 +152,7 @@ public class Communications {
             yLoc /= numHQ;
             int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
             double c = 1.0 / ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
-            //rc.setIndicatorString("danger: " + c);
+            rc.setIndicatorString("danger: " + c);
             if(c < 1.0) c = 1.0;
             if(c > 2.0) c = 2.0;
             a *= c;

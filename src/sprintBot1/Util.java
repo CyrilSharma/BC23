@@ -20,6 +20,10 @@ public class Util {
         return true;
     }
 
+    public static double sqrDist(double x1, double y1, double x2, double y2) {
+        return Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2));
+    }
+
     public static double absDistance(MapLocation a, MapLocation b) {
         return Math.sqrt(Math.pow((a.x - b.x),2) + Math.pow((a.y - b.y),2));
     }

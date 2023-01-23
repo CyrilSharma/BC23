@@ -130,28 +130,29 @@ public class GreedyPath {
             } else if (tryMove(directions[dir], shouldMove)) {
                 // Safeguard 1: dir might equal startDir if this robot was blocked by another robot last turn
                 // that has since moved.
-                if (dir != startDir) {
-                    if (clockwise) startDir = dir % 2 == 1 ? (dir + 5) % 8 : (dir + 6) % 8;
-                    else startDir = dir % 2 == 1 ? (dir + 3) % 8 : (dir + 2) % 8;
+                if (shouldMove) {
+                    if (dir != startDir) {
+                        if (clockwise) startDir = dir % 2 == 1 ? (dir + 5) % 8 : (dir + 6) % 8;
+                        else startDir = dir % 2 == 1 ? (dir + 3) % 8 : (dir + 2) % 8;
 
-                    startDirMissingInARow = 0;
-                } else {
-                    // Safeguard 2: If the obstacle that should be at startDir is missing 2/3 turns in a row
-                    // reset startDir to point towards destination
-                    if (++startDirMissingInARow == 3) {
-                        startDir = rc.getLocation().directionTo(destination).ordinal();
                         startDirMissingInARow = 0;
+                    } else {
+                        // Safeguard 2: If the obstacle that should be at startDir is missing 2/3 turns in a row
+                        // reset startDir to point towards destination
+                        if (++startDirMissingInARow == 3) {
+                            startDir = rc.getLocation().directionTo(destination).ordinal();
+                            startDirMissingInARow = 0;
+                        }
+                    }
+                    // Rare occasion when startDir gets set to Direction.CENTER
+                    if (startDir == 8) {
+                        startDir = 0;
+                    }
+                    // Safeguard 3: If startDir points off the map, reset startDir towards destination
+                    if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
+                        startDir = rc.getLocation().directionTo(destination).ordinal();
                     }
                 }
-                // Rare occasion when startDir gets set to Direction.CENTER
-                if (startDir == 8) {
-                    startDir = 0;
-                }
-                // Safeguard 3: If startDir points off the map, reset startDir towards destination
-                if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
-                    startDir = rc.getLocation().directionTo(destination).ordinal();
-                }
-
                 out = directions[dir];
                 return out;
             }

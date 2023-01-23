@@ -18,6 +18,7 @@ public class Carrier extends Robot {
     boolean shouldDeliver = false;
     boolean initialGreedy = false;
 
+
     MapLocation[][] islandCache = new MapLocation[100][];
     enum State {
         SEARCHING,
@@ -102,7 +103,7 @@ public class Carrier extends Robot {
             return State.FLEE;
         }
         int exploreTurns = Math.min(rc.getMapHeight(), rc.getMapWidth()) / 5;
-        if (rc.getRoundNum() <= exploreTurns && !initialGreedy) return State.EXPLORE;
+        //if (rc.getRoundNum() <= exploreTurns && !initialGreedy) return State.EXPLORE;
 
         if (shouldDeliver) return State.DELIVERING;
 
@@ -210,6 +211,7 @@ public class Carrier extends Robot {
 
     void seek() throws GameActionException {
         rc.setIndicatorString("WellTarget: "+wellTarget);
+        rc.setIndicatorString("SEEKING: "+resourceNeeded);
         // initially, we don't know all the wells. re-evaluate target regularly.
         if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
@@ -235,13 +237,10 @@ public class Carrier extends Robot {
 
             if (count >= (9 - blocked)) {
                 wellTarget = null;
-                /*
-                if (resourceNeeded == ResourceType.MANA) {
+                /* if (resourceNeeded == ResourceType.MANA) {
                     resourceNeeded = ResourceType.ADAMANTIUM;
                 } else
-                    resourceNeeded = ResourceType.MANA;
-
-                 */
+                    resourceNeeded = ResourceType.MANA; */
                 prevBadWell = wellTarget;
                 prevBadTurn = rc.getRoundNum();
                 findTarget();
@@ -400,7 +399,6 @@ public class Carrier extends Robot {
                 if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
                     w.getMapLocation().equals(prevBadWell)) continue;
                 WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType());
-                System.out.println("LOCAL: "+cur.loc+" DIST: "+cur.distEnemy);
                 if (cur.isBetterThan(best)) best = cur;
             }
 
@@ -412,7 +410,6 @@ public class Carrier extends Robot {
                     m.equals(prevBadWell)) continue;
                 if (communications.isEnemyTerritory(m)) continue;
                 WellTarget cur = new WellTarget(m, r);
-                System.out.println("COMMED: "+cur.loc+" DIST: "+cur.distEnemy);
                 if (cur.isBetterThan(best)) best = cur;
             }
 
@@ -448,10 +445,10 @@ public class Carrier extends Robot {
             if (wt == null) return true;
             if (wt.bestResource() && !bestResource()) return false;
             if (!wt.bestResource() && bestResource()) return true;
-            if (wt.distEnemy > 3 + distEnemy) return false;
-            if (distEnemy > 3 + wt.distEnemy) return true;
-            if (wt.distHQ + 3 < distHQ) return false;
-            if (distEnemy + 3 < wt.distEnemy) return true;
+            // if (wt.distEnemy > 3 + distEnemy) return false;
+            // if (distEnemy > 3 + wt.distEnemy) return true;
+            // if (wt.distHQ + 3 < distHQ) return false;
+            // if (distEnemy + 3 < wt.distEnemy) return true;
             return dist <= wt.dist;
         }
     }

@@ -215,13 +215,12 @@ public class Launcher extends Robot {
         // If advance direction disagrees with HQ direction.
         hqTarget = communications.getClosestEnemyHQ();
         Direction dir = greedyPath.move(hqTarget, false);
-        rc.setIndicatorString("EHQ: "+hqTarget+" GREEDY MOVE: " + dir);
+        // rc.setIndicatorString("EHQ: "+hqTarget+" GREEDY MOVE: " + dir);
         if (dir == null ||
-            bestNeighborDir != dir &&
-            bestNeighborDir != dir.rotateLeft() &&
-            bestNeighborDir != dir.rotateRight() &&
+            (bestNeighborDir != dir &&
             bestNeighborDir != Direction.CENTER &&
-            numLaunchers > 0) {
+            numLaunchers > 0)) {
+            System.out.println("HEY");
             return State.ADVANCE;
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
@@ -240,19 +239,22 @@ public class Launcher extends Robot {
         RobotInfo[] robots = rc.senseNearbyRobots(9 , rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
         for (RobotInfo r: robots) {
-            //int start = Clock.getBytecodesLeft();
+            // int start = Clock.getBytecodesLeft();
             if (Clock.getBytecodesLeft() < 6750) break;
             if (r.type != RobotType.LAUNCHER) continue;
             if (neighborStr.toString().contains(""+r.ID)) {
                 MapLocation prev = neighbors[r.ID%100];
-                // if a unit moved away from me, follow him. unless, he was retreating.
-                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
+                // if a unit moved away from me, follow him.
                 int count = 0;
+                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
                 for (RobotInfo n: nbrs) {
                     if (n.type != RobotType.LAUNCHER) continue;
                     if (count == 3) break;
-                    netD += r.location.distanceSquaredTo(n.location) - prev.distanceSquaredTo(n.location);
-                    count++;
+                    if (neighborStr.toString().contains(""+n.ID)) {
+                        MapLocation prev2 = neighbors[n.ID%100];
+                        netD += r.location.distanceSquaredTo(prev2) - prev.distanceSquaredTo(prev2);
+                        count++;
+                    }
                 }
                 if (prev != null && prev != r.location && netD > 0) {
                     x += r.location.x * 6;
@@ -265,45 +267,34 @@ public class Launcher extends Robot {
             x += r.location.x;
             y += r.location.y;
             totalW++;
-            x *= 2;
-            y *= 2;
-            totalW *= 2;
-            MapLocation enem = communications.getClosestEnemyHQ();
-            x += enem.x;
-            y += enem.y;
-            totalW++;
             nneighbors[r.ID%100] = r.location;
             nneighborStr.append("|"+r.ID);
-            //int end = Clock.getBytecodesLeft();
-            //System.out.println("iter cost: " + (start-end));
+            // int end = Clock.getBytecodesLeft();
+            // System.out.println("iter cost: " + (start-end));
         }
         //System.out.println(iters);
         neighbors = nneighbors;
         neighborStr = nneighborStr;
-        if (totalW == 0) {
+        if (!friendsMoved) {
             bestNeighborDir = Direction.CENTER;
             return;
         }
-        MapLocation bestNeighborLoc = new MapLocation((int)(x/totalW), (int)(y/totalW));
+        x /= totalW;
+        y /= totalW;
+        rc.setIndicatorString(""+x+" "+y);
         // rc.setIndicatorString(""+bestNeighborLoc);
         Direction bestDir = Direction.CENTER;
-        int bestD = rc.getLocation().distanceSquaredTo(bestNeighborLoc);
-        MapLocation enemy = communications.getClosestEnemyHQ();
-        int hqDist = rc.getLocation().distanceSquaredTo(enemy);
+        MapLocation cur = rc.getLocation();
+        double bestD = Util.sqrDist(cur.x,cur.y,x,y);
         for (Direction d: directions) {
             if (!rc.canMove(d)) continue;
-            MapLocation nloc = rc.getLocation().add(d);
+            MapLocation nloc = cur.add(d);
             MapInfo mi = rc.senseMapInfo(nloc);
             nloc = nloc.add(mi.getCurrentDirection());
-            int dist = nloc.distanceSquaredTo(bestNeighborLoc);
-            if (dist < bestD) {
+            double dist = Util.sqrDist(nloc.x,nloc.y,x,y);
+            if (dist + 0.25 < bestD) {
                 bestD = dist;
-                bestDir = d;
-                hqDist = nloc.distanceSquaredTo(enemy);
-            }
-            if(dist == bestD && nloc.distanceSquaredTo(enemy) < hqDist){
-                bestDir = d;
-                hqDist = nloc.distanceSquaredTo(enemy);
+                bestDir = d; 
             }
         }
         bestNeighborDir = bestDir;
@@ -336,6 +327,7 @@ public class Launcher extends Robot {
     }
 
     void hunt_hq() throws GameActionException {
+        rc.setIndicatorDot(hqTarget, 0, 255, 0);
         if (hqTarget != null) hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {

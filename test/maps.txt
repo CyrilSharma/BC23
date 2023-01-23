@@ -1,8 +1,36 @@
 
 > Task :listMaps
 AllElements
+ArtistRendition
+BatSignal
+BowAndArrow
+Cat
+Clown
 DefaultMap
+Diagonal
+Dreamy
+Eyelands
+Forest
+Frog
+Grievance
+Hah
+Jail
+KingdomRush
+Minefield
+Movepls
+Orbit
+PairedProgramming
+Pathfind
+Pit
+Pizza
+Quiet
+Rectangle
+Rewind
+Scatter
 SmallElements
+Sun
+Tacocat
+Turtle
 maptestsmall
 zzCornerTrouble
 zzConcentricEvil
