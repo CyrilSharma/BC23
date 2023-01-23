@@ -134,15 +134,51 @@ public class Communications {
 
     public void setMineRatio() throws GameActionException {
         // Add more complex logic!! prob should account for mapsize and roundnum.
-        if (rc.getType() == RobotType.HEADQUARTERS) {
-            if(rc.getRoundNum() <= 250){
-                setResourceNeed(ResourceType.MANA, 4);
-                setResourceNeed(ResourceType.ADAMANTIUM, 2);
-            } else {
-                setResourceNeed(ResourceType.MANA, 9);
-                setResourceNeed(ResourceType.ADAMANTIUM, 3);
+        if(rc.getType() != RobotType.HEADQUARTERS) return;
+        //start with 2 2
+        double a = 2.0, b = 2.0;
+        //then scale mana by some danger coefficient
+        if(rc.getRoundNum() > 2){
+            //find the danger coef
+            //consider manhattan distance, 2 * (dx + dy) / width + height
+            //what if we take 1 / ratio
+            MapLocation en = estimateEnemyTerritory();
+            int xLoc = 0, yLoc = 0;
+            for(int i = 0; i < numHQ; i++){
+                xLoc += HQs[i].x;
+                yLoc += HQs[i].y;
             }
+            xLoc /= numHQ;
+            yLoc /= numHQ;
+            int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
+            double c = 1.0 / ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
+            //rc.setIndicatorString("danger: " + c);
+            if(c < 1.0) c = 1.0;
+            if(c > 2.0) c = 2.0;
+            a *= c;
         }
+
+
+        //scale mana by the coefficient that corresponds to number of miners
+        int numMiners = readBuild(RobotType.CARRIER);
+        //f(100) ~= 5
+        //f(1) ~= 1.3
+        a *= 1.0 + Math.exp((double)numMiners / 40.0) / 3.0;
+        //round thingy?
+        a *= 100.0;
+        b *= 100.0;
+        rc.setIndicatorString("MANA: " + (int)(a) + ", ADA: " + (int)(b));
+        setResourceNeed(ResourceType.MANA, (int)a);
+        setResourceNeed(ResourceType.ADAMANTIUM, (int)b);
+        /*
+        if(rc.getRoundNum() <= 250){
+            setResourceNeed(ResourceType.MANA, 4);
+            setResourceNeed(ResourceType.ADAMANTIUM, 2);
+        } else {
+            setResourceNeed(ResourceType.MANA, 9);
+            setResourceNeed(ResourceType.ADAMANTIUM, 3);
+        }
+        */
     }
 
     public void last() throws GameActionException {

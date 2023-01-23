@@ -24,7 +24,7 @@ public class HQ extends Robot {
         // REMEMBER TO COMMENT THIS OUT :DDDDD
         //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
-        rc.setIndicatorString("Built: Nothing");
+        //rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
         if(rc.getRoundNum() == 2) communications.findOurHQs();
         if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
@@ -82,7 +82,7 @@ public class HQ extends Robot {
             if (rc.canBuildRobot(r, loc)) {
                 rc.buildRobot(r, loc);
                 communications.updateBuild(r);
-                rc.setIndicatorString("Built: " + r);
+                //rc.setIndicatorString("Built: " + r);
             }
         }
     }

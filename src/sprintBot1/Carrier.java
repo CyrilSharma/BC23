@@ -217,10 +217,13 @@ public class Carrier extends Robot {
 
             if (count >= (9 - blocked)) {
                 wellTarget = null;
+                /*
                 if (resourceNeeded == ResourceType.MANA) {
                     resourceNeeded = ResourceType.ADAMANTIUM;
                 } else
                     resourceNeeded = ResourceType.MANA;
+
+                 */
                 prevBadWell = wellTarget;
                 prevBadTurn = rc.getRoundNum();
                 findTarget();
