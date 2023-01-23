@@ -264,6 +264,13 @@ public class Launcher extends Robot {
             x += r.location.x;
             y += r.location.y;
             totalW++;
+            x *= 2;
+            y *= 2;
+            totalW *= 2;
+            MapLocation enem = communications.getClosestEnemyHQ();
+            x += enem.x;
+            y += enem.y;
+            totalW++;
             nneighbors[r.ID%100] = r.location;
             nneighborStr.append("|"+r.ID);
             //int end = Clock.getBytecodesLeft();
@@ -280,6 +287,8 @@ public class Launcher extends Robot {
         // rc.setIndicatorString(""+bestNeighborLoc);
         Direction bestDir = Direction.CENTER;
         int bestD = rc.getLocation().distanceSquaredTo(bestNeighborLoc);
+        MapLocation enemy = communications.getClosestEnemyHQ();
+        int hqDist = rc.getLocation().distanceSquaredTo(enemy);
         for (Direction d: directions) {
             if (!rc.canMove(d)) continue;
             MapLocation nloc = rc.getLocation().add(d);
@@ -288,7 +297,12 @@ public class Launcher extends Robot {
             int dist = nloc.distanceSquaredTo(bestNeighborLoc);
             if (dist < bestD) {
                 bestD = dist;
-                bestDir = d; 
+                bestDir = d;
+                hqDist = nloc.distanceSquaredTo(enemy);
+            }
+            if(dist == bestD && nloc.distanceSquaredTo(enemy) < hqDist){
+                bestDir = d;
+                hqDist = nloc.distanceSquaredTo(enemy);
             }
         }
         bestNeighborDir = bestDir;
