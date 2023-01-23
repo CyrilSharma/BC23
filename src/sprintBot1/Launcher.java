@@ -396,19 +396,7 @@ public class Launcher extends Robot {
     }   
 
     void attack() throws GameActionException {
-        boolean attacker = false;
-        for (RobotInfo e: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
-            if (Util.isAttacker(e.getType())) {
-                attacker = true;
-            }
-        }
-        if (!attacker) {
-            RobotInfo r = util.getBestAttackTarget();
-            if (r == null) return;
-            follow(r.location);
-        } else {
-            maneuver();
-        }
+        maneuver();
     }
 
     void follow(MapLocation m) throws GameActionException {
@@ -532,8 +520,11 @@ public class Launcher extends Robot {
                     dps_targetting += currentDPS;
                 if (d <= minDistToEnemy)
                     minDistToEnemy = d;
-            }
-            if (r.type == RobotType.HEADQUARTERS) {
+            } else if (r.type == RobotType.LAUNCHER) {
+                int d = nloc.distanceSquaredTo(r.location);
+                if (d <= r.type.actionRadiusSquared) 
+                    dps_targetting += currentDPS;
+            } else if (r.type == RobotType.HEADQUARTERS) {
                 int d = nloc.distanceSquaredTo(r.location);
                 if (d <= r.type.actionRadiusSquared) 
                     dps_targetting += currentDPS;

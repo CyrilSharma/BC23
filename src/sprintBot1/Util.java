@@ -88,7 +88,6 @@ public class Util {
         int health;
         boolean canAttack;
         RobotInfo r;
-        int soldiersAttacking = 0;
         int d;
 
         AttackTarget(RobotInfo r) throws GameActionException {
