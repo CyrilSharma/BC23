@@ -169,7 +169,7 @@ public class Carrier extends Robot {
         for (int i = 1; i <= 3; i++) {
             ResourceType r = ResourceType.values()[i];
             if (rc.canTransferResource(m, r, rc.getResourceAmount(r))) {
-                rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
+                rc.transferResource(m, r, rc.getResourceAmount(r));
                 shouldDeliver = false;
                 resourceNeeded = communications.getResourceNeed();
             }
