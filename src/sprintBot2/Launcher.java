@@ -222,7 +222,8 @@ public class Launcher extends Robot {
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
         hqTarget = communications.getClosestEnemyHQ();
-        if (rc.getLocation().distanceSquaredTo(hqTarget) > 25) 
+        int distHQ = rc.getLocation().distanceSquaredTo(hqTarget);
+        if (distHQ > 25 || distHQ <= RobotType.HEADQUARTERS.actionRadiusSquared) 
             return State.HUNT_HQ;
         return State.WAIT;
     }
