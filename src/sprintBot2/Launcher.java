@@ -265,27 +265,30 @@ public class Launcher extends Robot {
             if (Clock.getBytecodesLeft() < 6750) break;
             if (r.type != RobotType.LAUNCHER) continue;
             if (neighborStr.toString().contains(""+r.ID)) {
-                MapLocation prev = neighbors[r.ID%100].location;
+                RobotInfo prev = neighbors[r.ID%100];
                 // if a unit moved away from me, follow him.
                 int count = 0;
-                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
+                int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.location.distanceSquaredTo(rc.getLocation());
                 for (RobotInfo n: nbrs) {
                     if (n.type != RobotType.LAUNCHER) continue;
                     if (count == 3) break;
                     if (neighborStr.toString().contains(""+n.ID)) {
                         MapLocation prev2 = neighbors[n.ID%100].location;
-                        netD += r.location.distanceSquaredTo(prev2) - prev.distanceSquaredTo(prev2);
+                        netD += r.location.distanceSquaredTo(prev2) - prev.location.distanceSquaredTo(prev2);
                         count++;
                     }
                 }
-                if (prev != null && prev != r.location && netD > 0) {
-                    x += r.location.x * 6;
-                    y += r.location.y * 6;
-                    totalW += 6;
-                    friendsMoved = true;
-                }
-                if (r.health < neighbors[r.ID%100].health) {
+                int weight = 6;
+                if (prev.health > r.health) {
                     neighborsAttacked = true;
+                    weight = 12;
+                }
+                if ((prev != null && prev.location != r.location && netD > 0) ||
+                    prev.health > r.health) {
+                    x += r.location.x * weight;
+                    y += r.location.y * weight;
+                    totalW += weight;
+                    friendsMoved = true;
                 }
             }
             // add in average position.
