@@ -66,7 +66,6 @@ public class Launcher extends Robot {
             new MapLocation(1, 1), new MapLocation(0, 1)};
     enum State {
         WAIT,
-        RENDEVOUS,
         ADVANCE,
         CHASE,
         ATTACK,
@@ -103,7 +102,6 @@ public class Launcher extends Robot {
         doAttack(true);
         switch (state) {
             case WAIT: break;
-            case RENDEVOUS: rendevous(); break;
             case CHASE: chase(); break;
             case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
@@ -337,10 +335,6 @@ public class Launcher extends Robot {
             }
         }
         islandTarget = closestTarget;
-    }
- 
-    void rendevous() throws GameActionException {
-        greedyPath.move(rendevous);
     }
 
     void hunt_hq() throws GameActionException {
