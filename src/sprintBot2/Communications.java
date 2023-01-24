@@ -954,9 +954,9 @@ public class Communications {
         }
 
         int getSymmetry() throws GameActionException {
-            hSym = (rc.readSharedArray(H_SYM) == 0);
-            vSym = (rc.readSharedArray(V_SYM) == 0);
-            rSym = (rc.readSharedArray(R_SYM) == 0);
+            hSym = (rc.readSharedArray(H_SYM) == 0) & !updates[0];
+            vSym = (rc.readSharedArray(V_SYM) == 0) & !updates[1];
+            rSym = (rc.readSharedArray(R_SYM) == 0) & !updates[2];
             if (hSym && !vSym && !rSym) return 0;
             if (!hSym && vSym && !rSym) return 1;
             if (!hSym && !vSym && rSym) return 2;
