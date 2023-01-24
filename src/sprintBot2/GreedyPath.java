@@ -55,7 +55,7 @@ public class GreedyPath {
         if (!rc.isMovementReady()) return null;
         if (rc.getType() == RobotType.LAUNCHER &&
                 rc.getRoundNum()%3 == 1) return null;
-        if (!loc.equals(destination)) {
+        if (destination == null || loc.distanceSquaredTo(destination) >= 1000) {
             destination = loc;
             bestSoFar = 99999;
             startDir = -1;
@@ -79,6 +79,7 @@ public class GreedyPath {
         if (fuzzyCnt > 0){
             fuzzyCnt--;
             out = fuzzy(loc, shouldMove);
+            return out;
         }
         int dist = hybridDistance(rc.getLocation(), destination);
         if (dist < bestSoFar) {
@@ -170,13 +171,7 @@ public class GreedyPath {
         for (int i = 0; i < 8; i++) {
             Direction dir = directions[(curDirStart + i) % 8];
             MapLocation nxt = rc.getLocation().add(dir);
-            int f = 1;
-            if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 &&
-                    rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y] < 10 &&
-                    lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
-                f = 0;
-            }
-            if (rc.canMove(dir) && f > 0) {
+            if (rc.canMove(dir)) {
                 if (goal.distanceSquaredTo(nxt) < mn) {
                     bst = dir;
                     mn = goal.distanceSquaredTo(nxt);
@@ -184,9 +179,7 @@ public class GreedyPath {
             }
         }
         if (ready) lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum();
-        if(!bst.equals(Direction.CENTER) && rc.canMove(bst)
-                && rc.getLocation().distanceSquaredTo(goal) >=
-                rc.getLocation().add(bst).distanceSquaredTo(goal)) {
+        if (!bst.equals(Direction.CENTER) && rc.canMove(bst)) {
             if (shouldMove) rc.move(bst);
             return bst;
         }
