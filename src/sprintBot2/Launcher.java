@@ -54,6 +54,7 @@ public class Launcher extends Robot {
     boolean friendsMoved = false;
     boolean shouldRendevous = true;
     boolean shouldHarass = false;
+    boolean neighborsAttacked = false;
     MapLocation rendevous;
     MapLocation huntTarget;
     MapLocation islandTarget;
@@ -90,6 +91,7 @@ public class Launcher extends Robot {
         islandTarget = null;
         huntTarget = null;
         friendsMoved = false;
+        neighborsAttacked = false;
         hurt = rc.getHealth() < 100;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
@@ -169,6 +171,7 @@ public class Launcher extends Robot {
 
     State determineState() throws GameActionException {
         //if (shouldHarass) return State.HARASS;
+        advanceTurns--;
         if (rc.getRoundNum()%3 == 1) return State.WAIT;
 
         boolean seesHQ = false;
@@ -203,21 +206,24 @@ public class Launcher extends Robot {
             advanceTurns = 10;
             return State.ATTACK;
         }
+
         if (hasTargetClose) {
+            advanceTurns = 10;
             huntTarget = target;
             return State.HUNT;
         }
         if (previousEnemy != null) {
-            advanceTurns = 10;
+            // advanceTurns = 10;
             return State.CHASE;
         }
         if (hasTargetFar) {
             huntTarget = target;
             return State.HUNT;
         }
+        hqTarget = communications.getClosestEnemyHQ();
         // advance if you recently encountered a threat.
-        if (advanceTurns > 0) {
-            advanceTurns--;
+        // or neighbor was attacked!.
+        if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
@@ -243,23 +249,23 @@ public class Launcher extends Robot {
         return best;
     }
 
-    MapLocation[] neighbors = new MapLocation[100];
+    RobotInfo[] neighbors = new RobotInfo[100];
     StringBuilder neighborStr = new StringBuilder();
     void updateNeighbors() throws GameActionException {
         double x = 0;
         double y = 0;
         double totalW = 0;
         //HashMap<Integer,RobotInfo> nneighbors = new HashMap<Integer,RobotInfo>();
-        MapLocation[] nneighbors = new MapLocation[100];
+        RobotInfo[] nneighbors = new RobotInfo[100];
         StringBuilder nneighborStr = new StringBuilder();
-        RobotInfo[] robots = rc.senseNearbyRobots(9 , rc.getTeam());
+        RobotInfo[] robots = rc.senseNearbyRobots(-1 , rc.getTeam());
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, rc.getTeam());
         for (RobotInfo r: robots) {
             // int start = Clock.getBytecodesLeft();
             if (Clock.getBytecodesLeft() < 6750) break;
             if (r.type != RobotType.LAUNCHER) continue;
             if (neighborStr.toString().contains(""+r.ID)) {
-                MapLocation prev = neighbors[r.ID%100];
+                MapLocation prev = neighbors[r.ID%100].location;
                 // if a unit moved away from me, follow him.
                 int count = 0;
                 int netD = r.location.distanceSquaredTo(rc.getLocation()) - prev.distanceSquaredTo(rc.getLocation());
@@ -267,7 +273,7 @@ public class Launcher extends Robot {
                     if (n.type != RobotType.LAUNCHER) continue;
                     if (count == 3) break;
                     if (neighborStr.toString().contains(""+n.ID)) {
-                        MapLocation prev2 = neighbors[n.ID%100];
+                        MapLocation prev2 = neighbors[n.ID%100].location;
                         netD += r.location.distanceSquaredTo(prev2) - prev.distanceSquaredTo(prev2);
                         count++;
                     }
@@ -278,12 +284,15 @@ public class Launcher extends Robot {
                     totalW += 6;
                     friendsMoved = true;
                 }
+                if (r.health < neighbors[r.ID%100].health) {
+                    neighborsAttacked = true;
+                }
             }
             // add in average position.
             x += r.location.x;
             y += r.location.y;
             totalW++;
-            nneighbors[r.ID%100] = r.location;
+            nneighbors[r.ID%100] = r;
             nneighborStr.append("|"+r.ID);
             // int end = Clock.getBytecodesLeft();
             // System.out.println("iter cost: " + (start-end));
