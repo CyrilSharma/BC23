@@ -216,10 +216,10 @@ public class Launcher extends Robot {
             // advanceTurns = 10;
             return State.CHASE;
         }
-        if (hasTargetFar) {
+        /* if (hasTargetFar) {
             huntTarget = target;
             return State.HUNT;
-        }
+        } */
         hqTarget = communications.getClosestEnemyHQ();
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
