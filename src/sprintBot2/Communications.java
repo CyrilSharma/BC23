@@ -87,16 +87,32 @@ public class Communications {
         checkEnemyHQs();
         clearTargets();
         broadcastAttackTargets();
-        setMineRatio();
         estimateEnemyHQs();
         displayEstimates();
+        displaySaturation();
+    }
+
+    public void displaySaturation() throws GameActionException {
+        if (rc.getType() != RobotType.HEADQUARTERS) return;
+        String s = "";
+        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+            if (rc.readSharedArray(i) == 0) continue;
+            int val = rc.readSharedArray(i);
+            int typ = val & (0b11);
+            if (typ == 3) continue;
+            int x = (val >> 2) & (0b111111);
+            int y = (val >> 8) & (0b111111);
+            int sat = (val >> 14) & (0b11);
+            s += String.format("[%d %d]: %d | ", x, y, sat);
+        }
+        rc.setIndicatorString(s);
     }
 
     public void updateSaturation(MapLocation loc, int amt) throws GameActionException {
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b111);
+            int typ = val & (0b11);
             if (typ == 3) continue;
             int x = (val >> 2) & (0b111111);
             int y = (val >> 8) & (0b111111);
@@ -153,55 +169,6 @@ public class Communications {
         return rc.readSharedArray(ANCHOR) == 0;
     }
 
-    public void setMineRatio() throws GameActionException {
-        // Add more complex logic!! prob should account for mapsize and roundnum.
-        if(rc.getType() != RobotType.HEADQUARTERS) return;
-        //start with 2 2
-        double a = 2.0, b = 2.0;
-        //then scale mana by some danger coefficient
-        if(rc.getRoundNum() > 2){
-            //find the danger coef
-            //consider manhattan distance, 2 * (dx + dy) / width + height
-            //what if we take 1 / ratio
-            MapLocation en = estimateEnemyTerritory();
-            int xLoc = 0, yLoc = 0;
-            for(int i = 0; i < numHQ; i++){
-                xLoc += HQs[i].x;
-                yLoc += HQs[i].y;
-            }
-            xLoc /= numHQ;
-            yLoc /= numHQ;
-            int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
-            double c = 1.0 / ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
-            rc.setIndicatorString("danger: " + c);
-            if(c < 1.0) c = 1.0;
-            if(c > 2.0) c = 2.0;
-            a *= c;
-        }
-
-
-        //scale mana by the coefficient that corresponds to number of miners
-        int numMiners = readBuild(RobotType.CARRIER);
-        //f(100) ~= 5
-        //f(1) ~= 1.3
-        a *= 1.0 + Math.exp((double)numMiners / 40.0) / 3.0;
-        //round thingy?
-        a *= 100.0;
-        b *= 100.0;
-        rc.setIndicatorString("MANA: " + (int)(a) + ", ADA: " + (int)(b));
-        setResourceNeed(ResourceType.MANA, (int)a);
-        setResourceNeed(ResourceType.ADAMANTIUM, (int)b);
-        /*
-        if(rc.getRoundNum() <= 250){
-            setResourceNeed(ResourceType.MANA, 4);
-            setResourceNeed(ResourceType.ADAMANTIUM, 2);
-        } else {
-            setResourceNeed(ResourceType.MANA, 9);
-            setResourceNeed(ResourceType.ADAMANTIUM, 3);
-        }
-        */
-    }
-
     public void last() throws GameActionException {
         symmetryChecker.updateSymmetry();
         /* System.out.println("Symmetry is...: " + symmetryChecker.getSymmetry());
@@ -230,38 +197,24 @@ public class Communications {
         }
     }
 
-    // the idea here is the value will be weights.
-    // the weight will be used to sample from a random distribution to determine
-    // the desired resource whilst mantaining a raio.
-    public void setResourceNeed(ResourceType r, int val) throws GameActionException {
-        int type = 10000000;
-        if (r == ResourceType.ADAMANTIUM) type = 0;
-        if (r == ResourceType.MANA) type = 1;
-        if (r == ResourceType.ELIXIR) type = 2;
-        rc.writeSharedArray(RESOURCE_NEED + type, val);
-    }
-
     public ResourceType getResourceNeed() throws GameActionException {
-        int sum = 0;
-        int prev=0;
-        int cur;
-        int[] bounds = new int[3];
-        for(int i = 0; i < 3; i++){
-            cur = rc.readSharedArray(RESOURCE_NEED + i);
-            sum += cur;
-            bounds[i] = prev + cur;
-            prev = bounds[i];
+        MapLocation en = estimateEnemyTerritory();
+        int xLoc = 0, yLoc = 0;
+        for(int i = 0; i < numHQ; i++){
+            xLoc += HQs[i].x;
+            yLoc += HQs[i].y;
         }
-        ResourceType[] res = {ResourceType.ADAMANTIUM, ResourceType.MANA, ResourceType.ELIXIR};
-        if (sum == 0) return res[rng.nextInt(3)];
-        int val = rng.nextInt(sum);
-
-        for (int i = 0; i < 3; i++) {
-            if (val < bounds[i]) {
-                return res[i];
-            }
+        xLoc /= numHQ;
+        yLoc /= numHQ;
+        int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
+        double c = 1.0 / ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
+        double val = rng.nextDouble();
+        // The larger c is, the more likely we are to mine mana.
+        if (val < (c / (10 + c))) {
+            return ResourceType.MANA;
+        } else {
+            return ResourceType.ADAMANTIUM;
         }
-        return res[rng.nextInt(3)];
     }
 
     public void resetResourceCounts() throws GameActionException{
@@ -339,7 +292,7 @@ public class Communications {
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b111);
+            int typ = val & (0b11);
             if (typ == 3) continue;
             if(resources[typ] == r){
                 MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
@@ -354,7 +307,7 @@ public class Communications {
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b111);
+            int typ = val & (0b11);
             if (typ == 3) continue;
             if(resources[typ] == r){
                 MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
@@ -405,7 +358,7 @@ public class Communications {
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if(rc.readSharedArray(i) != 0){
                 int val = rc.readSharedArray(i);
-                int typ = val & (0b111);
+                int typ = val & (0b11);
                 if(typ == MANA_WELL) cntMana++;
                 if(typ == ADAMANTIUM_WELL) cntAda++;
                 if(typ == ELIXIR_WELL) cntElixir++;
@@ -607,7 +560,7 @@ public class Communications {
 
     public void findOurHQs() throws GameActionException{
         for (int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
-            if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
+            if ((rc.readSharedArray(i) & (0b11)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
             MapLocation hq = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
             if (hq.equals(rc.getLocation())) hqIndex = numHQ;
@@ -629,6 +582,7 @@ public class Communications {
                 bestD = d;
                 best = m;
             }
+            System.out.println(m);
         }
         return best;
     }
@@ -903,6 +857,59 @@ public class Communications {
         return bst;
     }
 
+    // Find best well using only comms [i think that's ok].
+    public MapLocation findBestWell(ResourceType want) throws GameActionException {
+        WellTarget best = null;
+        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+            if (rc.readSharedArray(i) == 0) continue;
+            int val = rc.readSharedArray(i);
+            int typ = val & (0b11);
+            if (typ == 3) continue;
+            int x = (val >> 2) & (0b111111);
+            int y = (val >> 8) & (0b111111);
+            int sat = (val >> 14) & (0b11);
+            WellTarget cur = new WellTarget(new MapLocation(x, y),
+                resources[typ], want, sat);
+            if (cur.isBetterThan(best)) best = cur;
+        }
+        return best.loc;
+    }
+
+    class WellTarget {
+        MapLocation loc;
+        double dist;
+        ResourceType r;
+        ResourceType want;
+        int sat;
+        WellTarget(MapLocation m, ResourceType res, ResourceType want, int sat) 
+            throws GameActionException {
+            loc = m;
+            dist = Util.absDistance(loc, rc.getLocation());
+            this.sat = sat;
+            this.r = res;
+            this.want = want;
+        }
+
+        boolean bestResource() throws GameActionException {
+            return r == want;
+        }
+
+        boolean crowded() throws GameActionException {
+            return sat >= 2;
+        }
+
+        boolean isBetterThan(WellTarget wt) throws GameActionException {
+            if (wt == null) return true;
+            if (!wt.crowded() && crowded()) return false;
+            if (wt.crowded() && !crowded()) return true;
+            if (wt.bestResource() && !bestResource()) return false;
+            if (!wt.bestResource() && bestResource()) return true;
+            if (wt.sat < sat) return false;
+            if (wt.sat > sat) return true;
+            return dist <= wt.dist;
+        }
+    }
+
     class AttackTarget {
         boolean low_health;
         int priority;
@@ -1042,7 +1049,7 @@ public class Communications {
                 if (Clock.getBytecodesLeft() < 500) break;
                 if (rc.readSharedArray(i) == 0) continue;
                 int val = rc.readSharedArray(i);
-                int typ = val & (0b111);
+                int typ = val & (0b11);
                 if (typ == 3) continue;
                 MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                 if (hSym) {

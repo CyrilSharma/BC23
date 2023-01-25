@@ -7,7 +7,8 @@ public class Carrier extends Robot {
     int fleeTurns = 0;
     int numGreedy = 0;
     int prevBadTurn = 0;
-    int carrierEstimate = 0;
+    int carrierEstimate = -1;
+    MapLocation prevWellTarget;
     MapLocation wellTarget;
     MapLocation islandTarget;
     MapLocation depositLoc = null;
@@ -50,6 +51,7 @@ public class Carrier extends Robot {
         rc.setIndicatorString(state.toString() + " "+resourceNeeded);
         communications.initial();
         //printWells();
+        updateSaturation();
         attack();
         switch (state) {
             case SEARCHING: search(); break;
@@ -62,6 +64,14 @@ public class Carrier extends Robot {
             default:
         }
         communications.last();
+    }
+
+    void updateSaturation() throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
+        if (carrierEstimate != -1) {
+            communications.updateSaturation(prevWellTarget, carrierEstimate);
+            carrierEstimate = -1;
+        }
     }
 
     void printWells() throws GameActionException {
@@ -212,8 +222,7 @@ public class Carrier extends Robot {
     }
 
     void seek() throws GameActionException {
-        rc.setIndicatorString("WellTarget: "+wellTarget);
-        rc.setIndicatorString("SEEKING: "+resourceNeeded);
+        rc.setIndicatorString("R: "+resourceNeeded+" T: "+wellTarget);
         // initially, we don't know all the wells. re-evaluate target regularly.
         if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
@@ -258,6 +267,7 @@ public class Carrier extends Robot {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
                 carrierEstimate = estimateCarriers25Turns(rc.senseWell(wellTarget));
+                prevWellTarget = wellTarget;
                 wellTarget = null;
             } else if (rc.canCollectResource(wellTarget, -1)) {
                 rc.collectResource(wellTarget, -1);
@@ -266,21 +276,16 @@ public class Carrier extends Robot {
     }
 
     void deliver() throws GameActionException {
-        int dist = 1000000;
-        for(int i = 0; i < communications.numHQ; i++){
-            if(rc.getLocation().distanceSquaredTo(communications.HQs[i]) < dist){
-                depositLoc = communications.HQs[i];
-                dist = rc.getLocation().distanceSquaredTo(communications.HQs[i]);
-            }
-        }
-        if (depositLoc.distanceSquaredTo(rc.getLocation()) > 1) {
-            greedyPath.move(depositLoc);
+        MapLocation m = communications.findClosestHQ();
+        rc.setIndicatorString("DELIVERING: " + m);
+        if (m.distanceSquaredTo(rc.getLocation()) > 1) {
+            greedyPath.move(m);
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
             for (ResourceType r: resources) {
                 if (rc.getResourceAmount(r) == 0) continue;
-                if (rc.canTransferResource(depositLoc, r, rc.getResourceAmount(r))) {
-                    rc.transferResource(depositLoc, r, rc.getResourceAmount(r));
+                if (rc.canTransferResource(m, r, rc.getResourceAmount(r))) {
+                    rc.transferResource(m, r, rc.getResourceAmount(r));
                     shouldDeliver = false;
                     resourceNeeded = communications.getResourceNeed();
                 }
@@ -399,73 +404,9 @@ public class Carrier extends Robot {
         }
     }
 
+    // 
     void findTarget() throws GameActionException {
-        int iters = 0;
-        ResourceType r = resourceNeeded;
-        WellInfo[] wells = rc.senseNearbyWells();
-        WellTarget best = null;
-        while (iters < 3) {
-            if (Clock.getBytecodesLeft() < 6000) break;
-
-            chosen = r;
-            for (WellInfo w : wells){
-                if (Clock.getBytecodesLeft() < 6000) break;
-                if (w.getResourceType() != r) continue;
-                if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
-                    w.getMapLocation().equals(prevBadWell)) continue;
-                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType());
-                if (cur.isBetterThan(best)) best = cur;
-            }
-
-            for (MapLocation m: communications.readWells(r)) {
-                if (Clock.getBytecodesLeft() < 6000) break;
-                if (m == null) continue;
-                if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.CARRIER.visionRadiusSquared) continue;
-                if (prevBadWell != null && rc.getRoundNum() - 10 < prevBadTurn && 
-                    m.equals(prevBadWell)) continue;
-                if (communications.isEnemyTerritory(m)) continue;
-                WellTarget cur = new WellTarget(m, r);
-                if (cur.isBetterThan(best)) best = cur;
-            }
-
-            if (best != null) {
-                wellTarget = best.loc;
-                return;
-            }
-            // bash through all resources.
-            r = ResourceType.values()[(r.ordinal() + 2)%3];
-            break;
-        }
-    }
-
-    class WellTarget {
-        MapLocation loc;
-        double distHQ;
-        double distEnemy;
-        double dist;
-        ResourceType r;
-        WellTarget(MapLocation m, ResourceType res) throws GameActionException {
-            loc = m;
-            dist = Util.absDistance(loc, rc.getLocation());
-            distHQ = Util.absDistance(loc, communications.findClosestHQto(loc));
-            distEnemy = Util.absDistance(loc, communications.getClosestEnemyHQTo(m));
-            this.r = res;
-        }
-
-        boolean bestResource() throws GameActionException {
-            return r == resourceNeeded;
-        }
-
-        boolean isBetterThan(WellTarget wt) throws GameActionException {
-            if (wt == null) return true;
-            if (wt.bestResource() && !bestResource()) return false;
-            if (!wt.bestResource() && bestResource()) return true;
-            // if (wt.distEnemy > 3 + distEnemy) return false;
-            // if (distEnemy > 3 + wt.distEnemy) return true;
-            // if (wt.distHQ + 3 < distHQ) return false;
-            // if (distEnemy + 3 < wt.distEnemy) return true;
-            return dist <= wt.dist;
-        }
+        wellTarget = communications.findBestWell(resourceNeeded);
     }
 
     class IslandTarget {
