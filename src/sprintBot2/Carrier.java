@@ -1,5 +1,6 @@
 package sprintBot2;
 import battlecode.common.*;
+import battlecode.world.Well;
 
 public class Carrier extends Robot {
     int adamantium, mana, elixir;
@@ -293,6 +294,20 @@ public class Carrier extends Robot {
             rc.takeAnchor(depositLoc, Anchor.STANDARD);
             hasAnchor = true;
         }
+    }
+
+    int estimateCarriers25Turns(WellInfo well) throws GameActionException {
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
+        ResourceType wellType = well.getResourceType();
+        int count = 0;
+        for (RobotInfo r: robots) {
+            if (r.type != RobotType.CARRIER) continue;
+            double mineRate = (10.0 / RobotType.CARRIER.actionCooldown);
+            int resourceRemaining = (GameConstants.CARRIER_CAPACITY-1) - r.getResourceAmount(wellType);
+            if (resourceRemaining / mineRate <= 25)
+                count++;
+        }   
+        return count;
     }
 
     void deliver_anchor() throws GameActionException {
