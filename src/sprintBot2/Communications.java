@@ -336,7 +336,6 @@ public class Communications {
         if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = 0; i < numWells; i++){
             boolean marked = false;
-            System.out.println("CHECKING LOCS");
             for (int j = 0; j < KEYLOCATIONS_WIDTH; j++){
                 int val = rc.readSharedArray(j);
                 if (val == 0) continue;
@@ -358,7 +357,6 @@ public class Communications {
                 if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM) {
                     msg = ADAMANTIUM_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
                 }
-                System.out.println("WROTE CACHE");
                 rc.writeSharedArray(j, msg);
                 break;
             }
@@ -367,19 +365,17 @@ public class Communications {
     }
 
     public void reportWells() throws GameActionException {
-        System.out.println("RAN METHOD");
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length == 0) return;
         int ind = 0;
         int[] freeSlots = new int[wells.length];
-        int cntMana = 0, cntAda = 0, cntElixir = 0;
+        int[] cnts = {0, 0, 0};
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if(rc.readSharedArray(i) != 0){
                 int val = rc.readSharedArray(i);
                 int typ = val & (0b11);
-                if (typ == MANA_WELL) cntMana++;
-                else if (typ == ADAMANTIUM_WELL) cntAda++;
-                else if (typ == ELIXIR_WELL) cntElixir++;
+                if (typ == 3) continue;
+                cnts[typ]++;
             } else if (ind < wells.length){
                 freeSlots[ind++] = i;
             }
@@ -389,7 +385,7 @@ public class Communications {
             for (WellInfo w : wells) {
                 boolean marked = false;
                 for (int i = 0; i < numWells; i++) {
-                    if(w.getMapLocation().equals(wellCache[i].getMapLocation())){
+                    if(w.getMapLocation().equals(wellCache[i].getMapLocation())) {
                         marked = true;
                         break;
                     }
@@ -397,9 +393,9 @@ public class Communications {
                 //now check in messages
                 for(int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
                     int val = rc.readSharedArray(i);
-                    if(val == 0) continue;
+                    if (val == 0) continue;
                     MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
-                    if(w.getMapLocation().equals(ex)){
+                    if (w.getMapLocation().equals(ex)) {
                         marked = true;
                         break;
                     }
@@ -413,23 +409,14 @@ public class Communications {
         
         int addInd = 0;
         for (WellInfo w : wells) {
-            int typ = -1, cur = -1;
+            int typ = -1;
             switch (w.getResourceType()) {
-                case MANA: 
-                    typ = MANA_WELL; 
-                    cur = cntMana;
-                    break;
-                case ADAMANTIUM: 
-                    typ = ADAMANTIUM_WELL; 
-                    cur = cntAda;
-                    break;
-                case ELIXIR: 
-                    typ = ELIXIR_WELL; 
-                    cur = cntElixir;
-                    break;
+                case MANA: typ = MANA_WELL; break;
+                case ADAMANTIUM: typ = ADAMANTIUM_WELL; break;
+                case ELIXIR: typ = ELIXIR_WELL; break;
                 default:
             }
-            if (cur >= MAX_WELLS_FOR_TYPE) continue;
+            if (cnts[typ] >= MAX_WELLS_FOR_TYPE) continue;
             int msg = typ + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
             boolean marked = false;
             for (int i = 0; i < KEYLOCATIONS_WIDTH; i++){
@@ -439,7 +426,8 @@ public class Communications {
                 }
             }
             if (marked) continue;
-            rc.writeSharedArray(freeSlots[addInd++], msg);;
+            rc.writeSharedArray(freeSlots[addInd++], msg);
+            cnts[typ]++;
         }
     }
 
