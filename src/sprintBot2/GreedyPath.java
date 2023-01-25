@@ -75,7 +75,7 @@ public class GreedyPath {
         //rc.setIndicatorString("BUG: " + loc);
         // Exit condition: got closer to the destination then when I started.
         int dist = hybridDistance(rc.getLocation(), bugTarget);
-        rc.setIndicatorString("D: "+dist+" BEST: "+bestSoFar);
+        //rc.setIndicatorString("D: "+dist+" BEST: "+bestSoFar);
         if (dist < bestSoFar || hasCycle()) {
             shouldBug = false;
             resetGreedy(loc);

@@ -225,6 +225,7 @@ public class Carrier extends Robot {
 
     void seek() throws GameActionException {
         // initially, we don't know all the wells. re-evaluate target regularly.
+        if (rc.getRoundNum()%3 == 0) findTarget();
         // if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);

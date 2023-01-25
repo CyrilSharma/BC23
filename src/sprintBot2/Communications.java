@@ -923,6 +923,8 @@ public class Communications {
 
         boolean isBetterThan(WellTarget wt) throws GameActionException {
             if (wt == null) return true;
+            if (wt.dist + 8 < dist) return false;
+            if (wt.dist > dist + 8) return true;
             if (!wt.crowded() && crowded()) return false;
             if (wt.crowded() && !crowded()) return true;
             if (wt.bestResource() && !bestResource()) return false;
