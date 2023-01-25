@@ -37,8 +37,9 @@ public class Carrier extends Robot {
         super(rc);
         communications.findOurHQs();
         initialGreedy = communications.getGreedy();
-        if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
-        else resourceNeeded = communications.getResourceNeed();
+        resourceNeeded = communications.getResourceNeed();
+        /* if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
+        else resourceNeeded = communications.getResourceNeed(); */
     }
 
     void run() throws GameActionException {
@@ -266,6 +267,7 @@ public class Carrier extends Robot {
         while (rc.isActionReady()) {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
+                // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
                 carrierEstimate = estimateCarriers25Turns(rc.senseWell(wellTarget));
                 prevWellTarget = wellTarget;
                 wellTarget = null;
@@ -277,7 +279,6 @@ public class Carrier extends Robot {
 
     void deliver() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
-        rc.setIndicatorString("DELIVERING: " + m);
         if (m.distanceSquaredTo(rc.getLocation()) > 1) {
             greedyPath.move(m);
         } else {

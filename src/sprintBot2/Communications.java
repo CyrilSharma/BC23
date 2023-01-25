@@ -24,6 +24,19 @@ public class Communications {
     int numEnemyHQ = 0;
     int lastReported = -10;
     int hqIndex = -1;
+
+    static final Direction[] directions = {
+        Direction.NORTH,
+        Direction.NORTHEAST,
+        Direction.EAST,
+        Direction.SOUTHEAST,
+        Direction.SOUTH,
+        Direction.SOUTHWEST,
+        Direction.WEST,
+        Direction.NORTHWEST,
+        Direction.CENTER
+    };
+
     //constants
     static final int MAX_WELLS_FOR_TYPE = 4;
 
@@ -198,7 +211,7 @@ public class Communications {
     }
 
     public ResourceType getResourceNeed() throws GameActionException {
-        MapLocation en = estimateEnemyTerritory();
+        MapLocation en = getClosestEnemyHQ();
         int xLoc = 0, yLoc = 0;
         for(int i = 0; i < numHQ; i++){
             xLoc += HQs[i].x;
@@ -207,13 +220,20 @@ public class Communications {
         xLoc /= numHQ;
         yLoc /= numHQ;
         int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
-        double c = 1.0 / ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
+        double dangerDistRatio = ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
+        double c = 1.0 / dangerDistRatio;
         double val = rng.nextDouble();
+
         // The larger c is, the more likely we are to mine mana.
-        if (val < (c / (10 + c))) {
-            return ResourceType.MANA;
+        if (rc.getRoundNum() <= 50) {
+            if (val < (c / (10 + c))) {
+                return ResourceType.MANA;
+            } else {
+                return ResourceType.ADAMANTIUM;
+            }
         } else {
-            return ResourceType.ADAMANTIUM;
+            if (val < 0.5) return ResourceType.MANA;
+            else return ResourceType.ADAMANTIUM;
         }
     }
 
@@ -518,6 +538,23 @@ public class Communications {
         numEnemyHQCache = 0;
     }
 
+    public MapLocation[] getEnemyHQs() throws GameActionException {
+        MapLocation[] locs = new MapLocation[4];
+        int ind = 0;
+        for (MapLocation m: HQs) {
+            if (m == null) continue;
+            MapLocation s = null;
+            switch (symmetryChecker.getSymmetry()) {
+                case 0: s = symmetryChecker.getHSym(m); break;
+                case 1: s = symmetryChecker.getVSym(m); break;
+                case 2: s = symmetryChecker.getRSym(m); break;
+                default:
+            }
+            locs[ind++] = s;
+        }
+        return locs;
+    }
+
     public void checkEnemyHQs() throws GameActionException {
         if (symmetryChecker.getSymmetry() != -1) {
             int ind = 0;
@@ -582,7 +619,6 @@ public class Communications {
                 bestD = d;
                 best = m;
             }
-            System.out.println(m);
         }
         return best;
     }
@@ -707,7 +743,7 @@ public class Communications {
 
     public MapLocation getClosestEnemyHQTo(MapLocation pos) throws GameActionException {
         MapLocation[] locs = null;
-        if (symmetryChecker.getSymmetry() != -1) locs = EnemyHQs;
+        if (symmetryChecker.getSymmetry() != -1) locs = getEnemyHQs();
         else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
         else locs = new MapLocation[]{estimateEnemyTerritory()};
         int minDistEnemy = 100000;
@@ -868,9 +904,28 @@ public class Communications {
             int x = (val >> 2) & (0b111111);
             int y = (val >> 8) & (0b111111);
             int sat = (val >> 14) & (0b11);
+            // can do a better estimate.
+            if (rc.canSenseLocation(new MapLocation(x, y))) continue;
             WellTarget cur = new WellTarget(new MapLocation(x, y),
                 resources[typ], want, sat);
             if (cur.isBetterThan(best)) best = cur;
+        }
+        for (WellInfo w: rc.senseNearbyWells()) {
+            int available = 0;
+            for (Direction dir: directions) {
+                MapLocation m = w.getMapLocation().add(dir);
+                if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
+                    !rc.isLocationOccupied(m)) {
+                    available++;
+                }
+            }
+            int sat;
+            if (available > 5) sat = 0;
+            else if (available > 3) sat = 2;
+            else if (available >= 1) sat = 1;
+            else sat = 3;
+            WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, sat);
+            if (cur.isBetterThan(best)) cur = best;
         }
         return best.loc;
     }
@@ -904,8 +959,6 @@ public class Communications {
             if (wt.crowded() && !crowded()) return true;
             if (wt.bestResource() && !bestResource()) return false;
             if (!wt.bestResource() && bestResource()) return true;
-            if (wt.sat < sat) return false;
-            if (wt.sat > sat) return true;
             return dist <= wt.dist;
         }
     }
