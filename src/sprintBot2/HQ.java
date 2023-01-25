@@ -25,7 +25,7 @@ public class HQ extends Robot {
         //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
         //rc.setIndicatorString("Built: Nothing");
-        if(rc.getRoundNum() == 1) communications.writeTypeLoc(Communications.HQ_LOCATION, rc.getLocation());
+        if(rc.getRoundNum() == 1) communications.postHQ();
         if(rc.getRoundNum() == 2) communications.findOurHQs();
         if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
             // we're trying to go Comms-less, so for now just use these.

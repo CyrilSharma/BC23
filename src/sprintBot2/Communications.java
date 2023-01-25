@@ -38,22 +38,21 @@ public class Communications {
     };
 
     //constants
-    static final int MAX_WELLS_FOR_TYPE = 4;
+    static final int HQ_LOCATIONS = 0;
+    static final int HQ_LOCATIONS_WIDTH = 4;
 
-    //message types
-    static final int ADAMANTIUM_WELL = 0;
-    static final int MANA_WELL = 1;
-    static final int ELIXIR_WELL = 2;
-    static final int HQ_LOCATION = 3;
+    static final int ADAMANTIUM_LOCATIONS = HQ_LOCATIONS + HQ_LOCATIONS_WIDTH;
+    static final int ADAMANTIUM_LOCATIONS_WIDTH = 5;
 
-    //stuff like our HQs and resource locations
-    static final int KEYLOCATIONS = 0;
-    static final int KEYLOCATIONS_WIDTH = 15;
+    static final int MANA_LOCATIONS = ADAMANTIUM_LOCATIONS + ADAMANTIUM_LOCATIONS_WIDTH;
+    static final int MANA_LOCATIONS_WIDTH = 5;
 
-    static final int ATTACK_TARGETS = KEYLOCATIONS + KEYLOCATIONS_WIDTH;
+    static final int ELIXIR_LOCATIONS = MANA_LOCATIONS + MANA_LOCATIONS_WIDTH;
+    static final int ELIXIR_LOCATIONS_WIDTH = 2;
+
+    static final int ATTACK_TARGETS = ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH;
     static final int ATTACK_TARGETS_WIDTH = 10;
 
-    //for maintaining unit counts
     static final int UNIT_COUNTS = ATTACK_TARGETS + ATTACK_TARGETS_WIDTH;
     static final int UNIT_COUNTS_WIDTH = 8;
 
@@ -108,30 +107,26 @@ public class Communications {
     public void displaySaturation() throws GameActionException {
         if (rc.getType() != RobotType.HEADQUARTERS) return;
         String s = "";
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b11);
-            if (typ == 3) continue;
-            int x = (val >> 2) & (0b111111);
-            int y = (val >> 8) & (0b111111);
-            int sat = (val >> 14) & (0b11);
+            int x = (val) & (0b111111);
+            int y = (val >> 6) & (0b111111);
+            int sat = (val >> 12) & (0b1111);
             s += String.format("[%d %d]: %d | ", x, y, sat);
         }
         rc.setIndicatorString(s);
     }
 
     public void updateSaturation(MapLocation loc, int sat) throws GameActionException {
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b11);
-            if (typ == 3) continue;
-            int x = (val >> 2) & (0b111111);
-            int y = (val >> 8) & (0b111111);
+            int x = (val) & (0b111111);
+            int y = (val >> 6) & (0b111111);
             if (loc.x != x || loc.y != y) continue;
             // I CHANGED THE MESSAGE FORMAT, YOU HAVE BEEN WARNED.
-            int message = typ + (x << 2) + (y << 8) + (sat << 14);
+            int message = x + (y << 6) + (sat << 12);
             rc.writeSharedArray(i, message);
             break;
         }
@@ -285,61 +280,66 @@ public class Communications {
         return rc.readSharedArray(UNIT_COUNTS + r.ordinal());
     }
 
-    public boolean writeTypeLoc(int type, MapLocation loc) throws GameActionException{
-        int xLoc = loc.x, yLoc = loc.y;
-        // 10 so we reserve other space. we can play w this.
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+    public void postHQ() throws GameActionException{
+        assert(rc.getType() == RobotType.HEADQUARTERS);
+        MapLocation cur = rc.getLocation();
+        for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) != 0) continue;
-            int msg = type + (1 << 2) * (xLoc) + (1 << 8) * yLoc;
-            if (rc.canWriteSharedArray(i, msg)){
-                rc.writeSharedArray(i, msg);
-                return true;
-            }
-            break;
-        }
-        return false;
-    }
-
-    public void getWell(ResourceType r) throws GameActionException {
-        int ind = 0;
-        MapLocation[] locs = new MapLocation[15];
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
-            if (rc.readSharedArray(i) == 0) continue;
-            int val = rc.readSharedArray(i);
-            int typ = val & (0b11);
-            if (typ == 3) continue;
-            if(resources[typ] == r){
-                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
-            }
+            int msg = cur.x + (1 << 6) * cur.y;
+            rc.writeSharedArray(i, msg);
+            return;
         }
     }
 
     // return all wells
     public MapLocation[] readWells(ResourceType r) throws GameActionException{
-        MapLocation[] locs = new MapLocation[15];
         int ind = 0;
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+        int[] start_stop = getStartStop(r);
+        MapLocation[] locs = new MapLocation[5];
+        for (int i = start_stop[0]; i < start_stop[1]; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b11);
-            if (typ == 3) continue;
-            if(resources[typ] == r){
-                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
-                locs[ind] = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
-                ind++;
-            }
+            locs[ind++] = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
         }
         return locs;
+    }
+
+    public ResourceType getTypeFromIndex(int i) throws GameActionException {
+        if (i < MANA_LOCATIONS) return ResourceType.ADAMANTIUM;
+        else if (i < ELIXIR_LOCATIONS) return ResourceType.MANA;
+        else return ResourceType.ELIXIR;
+    }
+
+    public int[] getStartStop(ResourceType r) {
+        int start = -1;
+        int stop = -1;
+        switch (r) {
+            case ADAMANTIUM: 
+                start = ADAMANTIUM_LOCATIONS;
+                stop = ADAMANTIUM_LOCATIONS + ADAMANTIUM_LOCATIONS_WIDTH;
+                break;
+            case MANA: 
+                start = MANA_LOCATIONS;
+                stop = MANA_LOCATIONS + MANA_LOCATIONS_WIDTH;
+                break;
+            case ELIXIR:
+                start = ELIXIR_LOCATIONS;
+                stop = ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH;
+                break;
+            default:
+        }
+        return new int[]{start, stop};
     }
 
     public void reportWellCache() throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = 0; i < numWells; i++){
             boolean marked = false;
-            for (int j = 0; j < KEYLOCATIONS_WIDTH; j++){
+            int[] start_stop = getStartStop(wellCache[i].getResourceType());
+            for (int j = start_stop[0]; j < start_stop[1]; j++) {
                 int val = rc.readSharedArray(j);
                 if (val == 0) continue;
-                MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
+                MapLocation ex = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
                 if(wellCache[i].getMapLocation().equals(ex)){
                     marked = true;
                     break;
@@ -350,13 +350,10 @@ public class Communications {
                 continue;
             }
 
-            for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
+            for (int j = start_stop[0]; j < start_stop[1]; j++) {
                 int val = rc.readSharedArray(j);
                 if (val != 0) continue;
-                int msg = MANA_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
-                if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM) {
-                    msg = ADAMANTIUM_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
-                }
+                int msg = wellCache[i].getMapLocation().x + (1 << 6) * (wellCache[i].getMapLocation().y);
                 rc.writeSharedArray(j, msg);
                 break;
             }
@@ -364,62 +361,51 @@ public class Communications {
         numWells = 0;
     }
 
+    public void updateWellCache(WellInfo[] wells) throws GameActionException {
+        for (WellInfo w : wells) {
+            boolean marked = false;
+            for (int i = 0; i < numWells; i++) {
+                if(w.getMapLocation().equals(wellCache[i].getMapLocation())) {
+                    marked = true;
+                    break;
+                }
+            }
+            //now check in messages
+            int[] start_stop = getStartStop(w.getResourceType());
+            for(int i = start_stop[0]; i < start_stop[1]; i++) {
+                int val = rc.readSharedArray(i);
+                if (val == 0) continue;
+                MapLocation ex = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+                if (w.getMapLocation().equals(ex)) {
+                    marked = true;
+                    break;
+                }
+            }
+            if(!marked && numWells < MAX_WELL_STORED) {
+                wellCache[numWells++] = w;
+            }
+        }
+    }
+
     public void reportWells() throws GameActionException {
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length == 0) return;
         int ind = 0;
         int[] freeSlots = new int[wells.length];
-        int[] cnts = {0, 0, 0};
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
-            if(rc.readSharedArray(i) != 0){
-                int val = rc.readSharedArray(i);
-                int typ = val & (0b11);
-                if (typ == 3) continue;
-                cnts[typ]++;
-            } else if (ind < wells.length){
-                freeSlots[ind++] = i;
-            }
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
+            if (ind < wells.length) freeSlots[ind++] = i;
         }
         if (!rc.canWriteSharedArray(0, 0)) {
-            //remember the wells
-            for (WellInfo w : wells) {
-                boolean marked = false;
-                for (int i = 0; i < numWells; i++) {
-                    if(w.getMapLocation().equals(wellCache[i].getMapLocation())) {
-                        marked = true;
-                        break;
-                    }
-                }
-                //now check in messages
-                for(int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
-                    int val = rc.readSharedArray(i);
-                    if (val == 0) continue;
-                    MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
-                    if (w.getMapLocation().equals(ex)) {
-                        marked = true;
-                        break;
-                    }
-                }
-                if(!marked && numWells < MAX_WELL_STORED) {
-                    wellCache[numWells++] = w;
-                }
-            }
+            updateWellCache(wells);
             return;
         }
-        
+
         int addInd = 0;
         for (WellInfo w : wells) {
-            int typ = -1;
-            switch (w.getResourceType()) {
-                case MANA: typ = MANA_WELL; break;
-                case ADAMANTIUM: typ = ADAMANTIUM_WELL; break;
-                case ELIXIR: typ = ELIXIR_WELL; break;
-                default:
-            }
-            if (cnts[typ] >= MAX_WELLS_FOR_TYPE) continue;
-            int msg = typ + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
             boolean marked = false;
-            for (int i = 0; i < KEYLOCATIONS_WIDTH; i++){
+            int msg = w.getMapLocation().x + (1 << 6) * (w.getMapLocation().y);
+            int[] start_stop = getStartStop(w.getResourceType());
+            for (int i = start_stop[0]; i < start_stop[1]; i++){
                 if (rc.readSharedArray(i) == msg) {
                     marked = true;
                     break;
@@ -427,17 +413,6 @@ public class Communications {
             }
             if (marked) continue;
             rc.writeSharedArray(freeSlots[addInd++], msg);
-            cnts[typ]++;
-        }
-    }
-
-    public void reportCount() throws GameActionException{
-        if(rc.getType() == RobotType.HEADQUARTERS) return;
-        if(!rc.canWriteSharedArray(0, 0)) return;
-        int val = rc.readSharedArray(UNIT_COUNTS + rc.getType().ordinal());
-        if(lastReported < rc.getRoundNum() - (rc.getRoundNum() % Constants.REPORT_FREQ)) {
-            rc.writeSharedArray(UNIT_COUNTS + rc.getType().ordinal(), val + 1);
-            lastReported = rc.getRoundNum();
         }
     }
 
@@ -557,15 +532,13 @@ public class Communications {
             reportWellCache();
             reportWells();
         }
-        reportCount();
         reportEnemyHQs();
     }
 
     public void findOurHQs() throws GameActionException{
-        for (int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
-            if ((rc.readSharedArray(i) & (0b11)) != HQ_LOCATION) continue;
+        for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             int val = rc.readSharedArray(i);
-            MapLocation hq = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
+            MapLocation hq = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
             if (hq.equals(rc.getLocation())) hqIndex = numHQ;
             HQs[numHQ++] = hq;
         }
@@ -663,13 +636,11 @@ public class Communications {
 
     public MapLocation findBestAttackTarget() throws GameActionException {
         AttackTarget best = null;
-        int count = 0;
         for (int i = ATTACK_TARGETS; i < ATTACK_TARGETS + ATTACK_TARGETS_WIDTH; i++) {
             int message = rc.readSharedArray(i);
             if (message == 0) continue;
             AttackTarget cur = new AttackTarget(rc.readSharedArray(i));
             if (cur.isBetterThan(best)) best = cur;
-            count++;
         }
         //rc.setIndicatorString("Number of targets: " + count);
         if (best == null) return null;
@@ -862,14 +833,14 @@ public class Communications {
     // Find best well using only comms [i think that's ok].
     public MapLocation findBestWell(ResourceType want) throws GameActionException {
         WellTarget best = null;
-        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             int typ = val & (0b11);
             if (typ == 3) continue;
-            int x = (val >> 2) & (0b111111);
-            int y = (val >> 8) & (0b111111);
-            int sat = (val >> 14) & (0b11);
+            int x = val & (0b111111);
+            int y = (val >> 6) & (0b111111);
+            int sat = (val >> 12) & (0b1111);
             // can do a better estimate.
             if (rc.canSenseLocation(new MapLocation(x, y))) continue;
             WellTarget cur = new WellTarget(new MapLocation(x, y),
@@ -1068,18 +1039,20 @@ public class Communications {
 
         void updateWellSymmetry() throws GameActionException {
             if (getSymmetry() != -1) return;
-            for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+            for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
                 if (Clock.getBytecodesLeft() < 500) break;
-                if (rc.readSharedArray(i) == 0) continue;
                 int val = rc.readSharedArray(i);
-                int typ = val & (0b11);
-                if (typ == 3) continue;
-                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
+                if (val == 0) continue;
+                MapLocation m = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+
+                // get resource type.
+                ResourceType r = getTypeFromIndex(i);
+
                 if (hSym) {
                     MapLocation s = getHSym(m);
                     if (rc.canSenseLocation(s)) {
                         WellInfo w = rc.senseWell(s);
-                        if (w == null || w.getResourceType() != resources[typ])
+                        if (w == null || w.getResourceType() != r)
                             hSym = false;
                     }
                 }
@@ -1087,7 +1060,7 @@ public class Communications {
                     MapLocation s = getVSym(m);
                     if (rc.canSenseLocation(s)) {
                         WellInfo w = rc.senseWell(s);
-                        if (w == null || w.getResourceType() != resources[typ])
+                        if (w == null || w.getResourceType() != r)
                             vSym = false;
                     }
                 }
@@ -1095,7 +1068,7 @@ public class Communications {
                     MapLocation s = getRSym(m);
                     if (rc.canSenseLocation(s)) {
                         WellInfo w = rc.senseWell(s);
-                        if (w == null || w.getResourceType() != resources[typ])
+                        if (w == null || w.getResourceType() != r)
                             rSym = false;
                     }
                 }
