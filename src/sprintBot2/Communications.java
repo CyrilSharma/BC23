@@ -121,7 +121,7 @@ public class Communications {
         rc.setIndicatorString(s);
     }
 
-    public void updateSaturation(MapLocation loc, int amt) throws GameActionException {
+    public void updateSaturation(MapLocation loc, int sat) throws GameActionException {
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
@@ -130,12 +130,7 @@ public class Communications {
             int x = (val >> 2) & (0b111111);
             int y = (val >> 8) & (0b111111);
             if (loc.x != x || loc.y != y) continue;
-            int sat;
-            if (amt < 3) sat = 0;
-            else if (amt < 5) sat = 1;
-            else if (amt < 7) sat = 2;
-            else sat = 3;
-            // I CHANGED THIS. THIS MAY INTRODUCE BUGS!!!!
+            // I CHANGED THE MESSAGE FORMAT, YOU HAVE BEEN WARNED.
             int message = typ + (x << 2) + (y << 8) + (sat << 14);
             rc.writeSharedArray(i, message);
             break;
@@ -221,15 +216,14 @@ public class Communications {
         yLoc /= numHQ;
         int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
         double dangerDistRatio = ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
-        double c = 1.0 / dangerDistRatio;
         double val = rng.nextDouble();
 
         // The larger c is, the more likely we are to mine mana.
-        if (rc.getRoundNum() <= 50) {
-            if (val < (c / (10 + c))) {
-                return ResourceType.MANA;
-            } else {
+        if (rc.getRoundNum() <= 25) {
+            if (val < dangerDistRatio) {
                 return ResourceType.ADAMANTIUM;
+            } else {
+                return ResourceType.MANA;
             }
         } else {
             if (val < 0.5) return ResourceType.MANA;

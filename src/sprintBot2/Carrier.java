@@ -7,7 +7,7 @@ public class Carrier extends Robot {
     int fleeTurns = 0;
     int numGreedy = 0;
     int prevBadTurn = 0;
-    int carrierEstimate = -1;
+    int saturation = -1;
     MapLocation prevWellTarget;
     MapLocation wellTarget;
     MapLocation islandTarget;
@@ -38,8 +38,8 @@ public class Carrier extends Robot {
         communications.findOurHQs();
         initialGreedy = communications.getGreedy();
         resourceNeeded = communications.getResourceNeed();
-        /* if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
-        else resourceNeeded = communications.getResourceNeed(); */
+        if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
+        else resourceNeeded = communications.getResourceNeed();
     }
 
     void run() throws GameActionException {
@@ -69,9 +69,9 @@ public class Carrier extends Robot {
 
     void updateSaturation() throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return;
-        if (carrierEstimate != -1) {
-            communications.updateSaturation(prevWellTarget, carrierEstimate);
-            carrierEstimate = -1;
+        if (saturation != -1) {
+            communications.updateSaturation(prevWellTarget, saturation);
+            saturation = -1;
         }
     }
 
@@ -225,7 +225,7 @@ public class Carrier extends Robot {
     void seek() throws GameActionException {
         rc.setIndicatorString("R: "+resourceNeeded+" T: "+wellTarget);
         // initially, we don't know all the wells. re-evaluate target regularly.
-        if (rc.getRoundNum() <= 15) findTarget();
+        // if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
         // recompute if crowded.
@@ -268,7 +268,7 @@ public class Carrier extends Robot {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
                 // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
-                carrierEstimate = estimateCarriers25Turns(rc.senseWell(wellTarget));
+                saturation = estimateCarriers25Turns(rc.senseWell(wellTarget));
                 prevWellTarget = wellTarget;
                 wellTarget = null;
             } else if (rc.canCollectResource(wellTarget, -1)) {
@@ -305,15 +305,25 @@ public class Carrier extends Robot {
     int estimateCarriers25Turns(WellInfo well) throws GameActionException {
         RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         ResourceType wellType = well.getResourceType();
-        int count = 0;
+        int available = 0;
+        for (Direction dir: directions) {
+            MapLocation m = well.getMapLocation().add(dir);
+            if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
+                !rc.isLocationOccupied(m)) {
+                available++;
+            }
+        }
         for (RobotInfo r: robots) {
             if (r.type != RobotType.CARRIER) continue;
             double mineRate = (10.0 / RobotType.CARRIER.actionCooldown);
             int resourceRemaining = (GameConstants.CARRIER_CAPACITY-1) - r.getResourceAmount(wellType);
             if (resourceRemaining / mineRate <= 25)
-                count++;
+                available++;
         }   
-        return count;
+        if (available > 5) return 0;
+        else if (available > 3) return 1;
+        else if (available >= 1) return 2;
+        return 3;
     }
 
     void deliver_anchor() throws GameActionException {
