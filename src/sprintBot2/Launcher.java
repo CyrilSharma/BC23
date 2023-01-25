@@ -86,6 +86,7 @@ public class Launcher extends Robot {
             shouldHarass = true;
             harassDir = rng.nextInt(2);
         }
+        rc.disintegrate();
     }
     void run() throws GameActionException {
         islandTarget = null;
@@ -172,7 +173,7 @@ public class Launcher extends Robot {
     State determineState() throws GameActionException {
         //if (shouldHarass) return State.HARASS;
         advanceTurns--;
-        if (rc.getRoundNum()%3 == 1) return State.WAIT;
+        if (rc.getRoundNum()%2 == 0) return State.WAIT;
 
         boolean seesHQ = false;
         boolean hasEnemy = false;

@@ -332,12 +332,14 @@ public class Communications {
         return locs;
     }
 
-    public void reportWellCache() throws GameActionException{
+    public void reportWellCache() throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = 0; i < numWells; i++){
             boolean marked = false;
+            System.out.println("CHECKING LOCS");
             for (int j = 0; j < KEYLOCATIONS_WIDTH; j++){
                 int val = rc.readSharedArray(j);
-                if(val == 0) continue;
+                if (val == 0) continue;
                 MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                 if(wellCache[i].getMapLocation().equals(ex)){
                     marked = true;
@@ -351,11 +353,12 @@ public class Communications {
 
             for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
                 int val = rc.readSharedArray(j);
-                if(val != 0) continue;
+                if (val != 0) continue;
                 int msg = MANA_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
-                if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
+                if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM) {
                     msg = ADAMANTIUM_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
                 }
+                System.out.println("WROTE CACHE");
                 rc.writeSharedArray(j, msg);
                 break;
             }
@@ -363,9 +366,10 @@ public class Communications {
         numWells = 0;
     }
 
-    public void reportWells() throws GameActionException{
+    public void reportWells() throws GameActionException {
+        System.out.println("RAN METHOD");
         WellInfo[] wells = rc.senseNearbyWells();
-        if(wells.length == 0) return;
+        if (wells.length == 0) return;
         int ind = 0;
         int[] freeSlots = new int[wells.length];
         int cntMana = 0, cntAda = 0, cntElixir = 0;
@@ -373,26 +377,25 @@ public class Communications {
             if(rc.readSharedArray(i) != 0){
                 int val = rc.readSharedArray(i);
                 int typ = val & (0b11);
-                if(typ == MANA_WELL) cntMana++;
-                if(typ == ADAMANTIUM_WELL) cntAda++;
-                if(typ == ELIXIR_WELL) cntElixir++;
-            }
-            else if(ind < wells.length){
+                if (typ == MANA_WELL) cntMana++;
+                else if (typ == ADAMANTIUM_WELL) cntAda++;
+                else if (typ == ELIXIR_WELL) cntElixir++;
+            } else if (ind < wells.length){
                 freeSlots[ind++] = i;
             }
         }
-        if(!rc.canWriteSharedArray(0, 0)){
+        if (!rc.canWriteSharedArray(0, 0)) {
             //remember the wells
-            for(WellInfo w : wells){
+            for (WellInfo w : wells) {
                 boolean marked = false;
-                for(int i = 0; i < numWells; i++){
+                for (int i = 0; i < numWells; i++) {
                     if(w.getMapLocation().equals(wellCache[i].getMapLocation())){
                         marked = true;
                         break;
                     }
                 }
                 //now check in messages
-                for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
+                for(int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
                     int val = rc.readSharedArray(i);
                     if(val == 0) continue;
                     MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
@@ -401,64 +404,43 @@ public class Communications {
                         break;
                     }
                 }
-                if(!marked && numWells < MAX_WELL_STORED){
+                if(!marked && numWells < MAX_WELL_STORED) {
                     wellCache[numWells++] = w;
                 }
             }
             return;
         }
-        reportWellCache();
+        
         int addInd = 0;
-        for (WellInfo w : wells){
-            if (w.getResourceType().equals(ResourceType.MANA)) {
-               if (cntMana < MAX_WELLS_FOR_TYPE) {
-                   int msg = MANA_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
-                   int not_marked = 1;
-                   for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
-                       if(rc.readSharedArray(i) == msg){
-                           not_marked = 0;
-                           break;
-                       }
-                   }
-                   if(not_marked > 0) {
-                       rc.writeSharedArray(freeSlots[addInd++], msg);
-                       cntMana++;
-                   }
-               }
-           }
-           if(w.getResourceType().equals(ResourceType.ADAMANTIUM)) {
-                if (cntAda < MAX_WELLS_FOR_TYPE) {
-                    int msg = ADAMANTIUM_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
-                    int not_marked = 1;
-                    for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
-                        if(rc.readSharedArray(i) == msg){
-                            not_marked = 0;
-                            break;
-                        }
-                    }
-                    if(not_marked > 0){
-                        rc.writeSharedArray(freeSlots[addInd++], msg);
-                        cntAda++;
-                    }
-                }
-           }
-           if (w.getResourceType().equals(ResourceType.ELIXIR)) {
-                if (cntElixir < MAX_WELLS_FOR_TYPE) {
-                    int msg = ELIXIR_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
-                    int not_marked = 1;
-                    for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
-                        if(rc.readSharedArray(i) == msg){
-                            not_marked = 0;
-                            break;
-                        }
-                    }
-                    if(not_marked > 0) {
-                        rc.writeSharedArray(freeSlots[addInd++], msg);
-                        cntElixir++;
-                    }
+        for (WellInfo w : wells) {
+            int typ = -1, cur = -1;
+            switch (w.getResourceType()) {
+                case MANA: 
+                    typ = MANA_WELL; 
+                    cur = cntMana;
+                    break;
+                case ADAMANTIUM: 
+                    typ = ADAMANTIUM_WELL; 
+                    cur = cntAda;
+                    break;
+                case ELIXIR: 
+                    typ = ELIXIR_WELL; 
+                    cur = cntElixir;
+                    break;
+                default:
+            }
+            if (cur >= MAX_WELLS_FOR_TYPE) continue;
+            int msg = typ + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
+            boolean marked = false;
+            for (int i = 0; i < KEYLOCATIONS_WIDTH; i++){
+                if (rc.readSharedArray(i) == msg) {
+                    marked = true;
+                    break;
                 }
             }
-       }
+            if (marked) continue;
+            rc.writeSharedArray(freeSlots[addInd++], msg);;
+        }
     }
 
     public void reportCount() throws GameActionException{
@@ -519,7 +501,7 @@ public class Communications {
                     break;
                 }
             }
-            if(!marked){
+            if (!marked){
                 for(int j = ENEMY_HQ; j < ENEMY_HQ + ENEMY_HQ_WIDTH; j++){
                     int val = rc.readSharedArray(j);
                     if(val == 0){
@@ -583,7 +565,10 @@ public class Communications {
 
     public void report() throws GameActionException{
         //maybe dont report something on amplifiers bcz they are close (or at) bytecode limit
-        if(rc.getType() != RobotType.AMPLIFIER) reportWells();
+        if(rc.getType() != RobotType.AMPLIFIER) {
+            reportWellCache();
+            reportWells();
+        }
         reportCount();
         reportEnemyHQs();
         //TODO: add reporting for other stuff - enemy HQs, enemy units, islands, etc.
@@ -921,6 +906,7 @@ public class Communications {
             WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, sat);
             if (cur.isBetterThan(best)) cur = best;
         }
+        if (best == null) return null;
         return best.loc;
     }
 

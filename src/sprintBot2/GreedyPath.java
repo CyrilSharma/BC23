@@ -49,7 +49,7 @@ public class GreedyPath {
     public Direction move(MapLocation loc, boolean avoidClouds) throws GameActionException {
         if (!rc.isMovementReady()) return null;
         if (rc.getType() == RobotType.LAUNCHER &&
-            rc.getRoundNum()%3 == 1) return null;
+            rc.getRoundNum()%2 == 0) return null;
         if (rc.getLocation().equals(loc)) return Direction.CENTER;
         if (previous == null || loc.distanceSquaredTo(previous) > 25) {
             shoudAvoidClouds = avoidClouds;
