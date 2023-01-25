@@ -101,10 +101,10 @@ public class Communications {
         broadcastAttackTargets();
         estimateEnemyHQs();
         displayEstimates();
-        displaySaturation();
+        displayAvailability();
     }
 
-    public void displaySaturation() throws GameActionException {
+    public void displayAvailability() throws GameActionException {
         if (rc.getType() != RobotType.HEADQUARTERS) return;
         String s = "";
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
@@ -112,13 +112,14 @@ public class Communications {
             int val = rc.readSharedArray(i);
             int x = (val) & (0b111111);
             int y = (val >> 6) & (0b111111);
-            int sat = (val >> 12) & (0b1111);
-            s += String.format("[%d %d]: %d | ", x, y, sat);
+            int availability = (val >> 12) & (0b1111);
+            s += String.format("[%d %d]: %d | ", x, y, availability);
         }
         rc.setIndicatorString(s);
     }
 
-    public void updateSaturation(MapLocation loc, int sat) throws GameActionException {
+    public void updateAvailability(MapLocation loc, int availability) throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
@@ -126,7 +127,7 @@ public class Communications {
             int y = (val >> 6) & (0b111111);
             if (loc.x != x || loc.y != y) continue;
             // I CHANGED THE MESSAGE FORMAT, YOU HAVE BEEN WARNED.
-            int message = x + (y << 6) + (sat << 12);
+            int message = x + (y << 6) + (availability << 12);
             rc.writeSharedArray(i, message);
             break;
         }
@@ -532,12 +533,24 @@ public class Communications {
             reportWellCache();
             reportWells();
         }
+        reportCount();
         reportEnemyHQs();
+    }
+
+    public void reportCount() throws GameActionException{
+        if(rc.getType() == RobotType.HEADQUARTERS) return;
+        if(!rc.canWriteSharedArray(0, 0)) return;
+        int val = rc.readSharedArray(UNIT_COUNTS + rc.getType().ordinal());
+        if(lastReported < rc.getRoundNum() - (rc.getRoundNum() % Constants.REPORT_FREQ)) {
+            rc.writeSharedArray(UNIT_COUNTS + rc.getType().ordinal(), val + 1);
+            lastReported = rc.getRoundNum();
+        }
     }
 
     public void findOurHQs() throws GameActionException{
         for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             int val = rc.readSharedArray(i);
+            if (val == 0) continue;
             MapLocation hq = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
             if (hq.equals(rc.getLocation())) hqIndex = numHQ;
             HQs[numHQ++] = hq;
@@ -840,11 +853,11 @@ public class Communications {
             if (typ == 3) continue;
             int x = val & (0b111111);
             int y = (val >> 6) & (0b111111);
-            int sat = (val >> 12) & (0b1111);
+            int available = (val >> 12) & (0b1111);
             // can do a better estimate.
             if (rc.canSenseLocation(new MapLocation(x, y))) continue;
             WellTarget cur = new WellTarget(new MapLocation(x, y),
-                resources[typ], want, sat);
+                resources[typ], want, available);
             if (cur.isBetterThan(best)) best = cur;
         }
 
@@ -857,15 +870,12 @@ public class Communications {
                     available++;
                 }
             }
-            int sat;
-            if (available > 5) sat = 0;
-            else if (available > 3) sat = 1;
-            else if (available >= 1) sat = 2;
-            else sat = 3;
-            WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, sat);
+            WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, available);
             if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
+        // decrement it. now we dynamically specify availability!!
+        updateAvailability(best.loc, Math.max(best.avail - 1, 0));
         return best.loc;
     }
 
@@ -874,12 +884,12 @@ public class Communications {
         double dist;
         ResourceType r;
         ResourceType want;
-        int sat;
-        WellTarget(MapLocation m, ResourceType res, ResourceType want, int sat) 
+        int avail;
+        WellTarget(MapLocation m, ResourceType res, ResourceType want, int avail) 
             throws GameActionException {
             loc = m;
             dist = Util.absDistance(loc, rc.getLocation());
-            this.sat = sat;
+            this.avail = avail;
             this.r = res;
             this.want = want;
         }
@@ -889,7 +899,7 @@ public class Communications {
         }
 
         boolean crowded() throws GameActionException {
-            return sat >= 2;
+            return avail <= 2;
         }
 
         boolean isBetterThan(WellTarget wt) throws GameActionException {
