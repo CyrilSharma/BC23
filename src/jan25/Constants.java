@@ -1,4 +1,4 @@
-package sprintBot2;
+package jan25;
 
 public class Constants {
     public static int BYTECODE_AMPLIFY = 1000;

@@ -1,4 +1,4 @@
-package sprintBot2;
+package jan25;
 import battlecode.common.*;
 public class BFS {
 	static RobotController rc;

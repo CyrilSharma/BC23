@@ -1,4 +1,4 @@
-package sprintBot2;
+package jan25;
 import java.util.Random;
 import battlecode.common.*;
 
