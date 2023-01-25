@@ -75,20 +75,22 @@ public class GreedyPath {
         //rc.setIndicatorString("BUG: " + loc);
         // Exit condition: got closer to the destination then when I started.
         int dist = hybridDistance(rc.getLocation(), bugTarget);
-        if (dist < bestSoFar) {
+        rc.setIndicatorString("D: "+dist+" BEST: "+bestSoFar);
+        if (dist < bestSoFar || hasCycle()) {
             shouldBug = false;
             resetGreedy(loc);
             return fuzzy(loc);
         }
+        markLoc();
         int dir = startDir;
         for (int i = 0; i < 8; i++) {
             if (dir == 8) dir = 0;
             MapLocation next = rc.adjacentLocation(directions[dir]);
-            for (int iter = 0; iter < 1; iter++) {
-                if (!rc.canSenseLocation(next)) break;
-                MapInfo mi = rc.senseMapInfo(next);
+            if (!rc.canSenseLocation(next)) break;
+            MapInfo mi = rc.senseMapInfo(next);
+            // if this is my final move...
+            if (rc.getMovementCooldownTurns() + rc.getType().movementCooldown >= 10)
                 next = next.add(mi.getCurrentDirection());
-            }
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
@@ -130,18 +132,13 @@ public class GreedyPath {
     public static MapLocation greedyTarget = null;
     public Direction fuzzy(MapLocation goal) throws GameActionException {
         // Exit condition: encountered a cycle.
-        if (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-            (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
-            lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound) {
+        if (hasCycle()) {
             // rc.setIndicatorString("I WAS HERE: "+lastLoc[rc.getLocation().x][rc.getLocation().y]);
             shouldBug = true;
             resetBug(goal);
             return bug(goal);
         }
-        if (ready) {
-            // rc.setIndicatorString("LOGGING: "+rc.getLocation()+" "+(rc.getRoundNum() - 1));
-            lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum() - 1;
-        }
+        markLoc();
         // rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
@@ -151,7 +148,8 @@ public class GreedyPath {
             MapLocation nxt = rc.getLocation().add(dir);
             if (!rc.onTheMap(nxt)) continue;
             MapInfo mi = rc.senseMapInfo(nxt);
-            nxt = nxt.add(mi.getCurrentDirection());
+            if (rc.getMovementCooldownTurns() + rc.getType().movementCooldown >= 10)
+                nxt = nxt.add(mi.getCurrentDirection());
             if (rc.canMove(dir) && !(shoudAvoidClouds && mi.hasCloud())) {
                 if (goal.distanceSquaredTo(nxt) < mn) {
                     bst = dir;
@@ -179,13 +177,25 @@ public class GreedyPath {
         startDir = rc.getLocation().directionTo(loc).ordinal();
         clockwise = true; // all units should orbit in same dir -> Math.random() < 0.5;
         startDirMissingInARow = 0;
+        goalRound = rc.getRoundNum();
+    }
+
+    boolean hasCycle() {
+        return (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
+        (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
+        lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound);
+    }
+
+    void markLoc() {
+        if (!ready) return;
+        lastLoc[rc.getLocation().x][rc.getLocation().y] = rc.getRoundNum() - 1;
     }
 
     // hybrid between manhattan distance (dx + dy) and max distance max(dx, dy)
     public static int hybridDistance(MapLocation a, MapLocation b) {
         int dy = Math.abs(a.y - b.y);
         int dx = Math.abs(a.x - b.x);
-        return dy + dx + Math.max(dy, dx);
+        return dy + dx;
     }
 
     public boolean tryMove(Direction dir) throws GameActionException{

@@ -163,7 +163,7 @@ public class Carrier extends Robot {
             if (prev != null) {
                 distPrev = m.distanceSquaredTo(prev);
             }
-            if (distHQ + distPrev > bestD) {
+            if (distHQ + 2 * distPrev > bestD) {
                 bestD = distHQ + distPrev;
                 best = m;
             }
