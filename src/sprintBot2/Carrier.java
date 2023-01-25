@@ -7,6 +7,7 @@ public class Carrier extends Robot {
     int fleeTurns = 0;
     int numGreedy = 0;
     int prevBadTurn = 0;
+    int carrierEstimate = 0;
     MapLocation wellTarget;
     MapLocation islandTarget;
     MapLocation depositLoc = null;
@@ -256,9 +257,8 @@ public class Carrier extends Robot {
         while (rc.isActionReady()) {
             if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
                 rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
-                if (!rc.isActionReady()) {
-                    wellTarget = null;
-                }
+                carrierEstimate = estimateCarriers25Turns(rc.senseWell(wellTarget));
+                wellTarget = null;
             } else if (rc.canCollectResource(wellTarget, -1)) {
                 rc.collectResource(wellTarget, -1);
             }

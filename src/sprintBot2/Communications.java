@@ -92,6 +92,27 @@ public class Communications {
         displayEstimates();
     }
 
+    public void updateSaturation(MapLocation loc, int amt) throws GameActionException {
+        for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
+            if (rc.readSharedArray(i) == 0) continue;
+            int val = rc.readSharedArray(i);
+            int typ = val & (0b111);
+            if (typ == 3) continue;
+            int x = (val >> 2) & (0b111111);
+            int y = (val >> 8) & (0b111111);
+            if (loc.x != x || loc.y != y) continue;
+            int sat;
+            if (amt < 3) sat = 0;
+            else if (amt < 5) sat = 1;
+            else if (amt < 7) sat = 2;
+            else sat = 3;
+            // I CHANGED THIS. THIS MAY INTRODUCE BUGS!!!!
+            int message = typ + (x << 2) + (y << 8) + (sat << 14);
+            rc.writeSharedArray(i, message);
+            break;
+        }
+    }
+
     public void displayEstimates() throws GameActionException {
         if (EnemyHQEstimates == null) return;
         for (MapLocation m: EnemyHQEstimates) {
@@ -302,7 +323,7 @@ public class Communications {
         // 10 so we reserve other space. we can play w this.
         for (int i = KEYLOCATIONS; i < KEYLOCATIONS + KEYLOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) != 0) continue;
-            int msg = type + (1 << 3) * (xLoc) + (1 << 9) * yLoc;
+            int msg = type + (1 << 2) * (xLoc) + (1 << 8) * yLoc;
             if (rc.canWriteSharedArray(i, msg)){
                 rc.writeSharedArray(i, msg);
                 return true;
@@ -321,7 +342,7 @@ public class Communications {
             int typ = val & (0b111);
             if (typ == 3) continue;
             if(resources[typ] == r){
-                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
             }
         }
     }
@@ -336,8 +357,8 @@ public class Communications {
             int typ = val & (0b111);
             if (typ == 3) continue;
             if(resources[typ] == r){
-                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
-                locs[ind] = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
+                locs[ind] = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                 ind++;
             }
         }
@@ -350,7 +371,7 @@ public class Communications {
             for (int j = 0; j < KEYLOCATIONS_WIDTH; j++){
                 int val = rc.readSharedArray(j);
                 if(val == 0) continue;
-                MapLocation ex = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                 if(wellCache[i].getMapLocation().equals(ex)){
                     marked = true;
                     break;
@@ -364,9 +385,9 @@ public class Communications {
             for(int j = 0; j < KEYLOCATIONS_WIDTH; j++) {
                 int val = rc.readSharedArray(j);
                 if(val != 0) continue;
-                int msg = MANA_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
+                int msg = MANA_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
                 if (wellCache[i].getResourceType() == ResourceType.ADAMANTIUM){
-                    msg = ADAMANTIUM_WELL + (1 << 3) * (wellCache[i].getMapLocation().x) + (1 << 9) * (wellCache[i].getMapLocation().y);
+                    msg = ADAMANTIUM_WELL + (1 << 2) * (wellCache[i].getMapLocation().x) + (1 << 8) * (wellCache[i].getMapLocation().y);
                 }
                 rc.writeSharedArray(j, msg);
                 break;
@@ -407,7 +428,7 @@ public class Communications {
                 for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                     int val = rc.readSharedArray(i);
                     if(val == 0) continue;
-                    MapLocation ex = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                    MapLocation ex = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                     if(w.getMapLocation().equals(ex)){
                         marked = true;
                         break;
@@ -424,7 +445,7 @@ public class Communications {
         for (WellInfo w : wells){
             if (w.getResourceType().equals(ResourceType.MANA)) {
                if (cntMana < MAX_WELLS_FOR_TYPE) {
-                   int msg = MANA_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
+                   int msg = MANA_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
                    int not_marked = 1;
                    for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                        if(rc.readSharedArray(i) == msg){
@@ -440,7 +461,7 @@ public class Communications {
            }
            if(w.getResourceType().equals(ResourceType.ADAMANTIUM)) {
                 if (cntAda < MAX_WELLS_FOR_TYPE) {
-                    int msg = ADAMANTIUM_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
+                    int msg = ADAMANTIUM_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
                     int not_marked = 1;
                     for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                         if(rc.readSharedArray(i) == msg){
@@ -456,7 +477,7 @@ public class Communications {
            }
            if (w.getResourceType().equals(ResourceType.ELIXIR)) {
                 if (cntElixir < MAX_WELLS_FOR_TYPE) {
-                    int msg = ELIXIR_WELL + (1 << 3) * (w.getMapLocation().x) + (1 << 9) * (w.getMapLocation().y);
+                    int msg = ELIXIR_WELL + (1 << 2) * (w.getMapLocation().x) + (1 << 8) * (w.getMapLocation().y);
                     int not_marked = 1;
                     for(int i = 0; i < KEYLOCATIONS_WIDTH; i++){
                         if(rc.readSharedArray(i) == msg){
@@ -588,7 +609,7 @@ public class Communications {
         for (int i = 0; i < KEYLOCATIONS_WIDTH; i++) {
             if ((rc.readSharedArray(i) & (0b111)) != HQ_LOCATION) continue;
             int val = rc.readSharedArray(i);
-            MapLocation hq = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+            MapLocation hq = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
             if (hq.equals(rc.getLocation())) hqIndex = numHQ;
             HQs[numHQ++] = hq;
         }
@@ -1023,7 +1044,7 @@ public class Communications {
                 int val = rc.readSharedArray(i);
                 int typ = val & (0b111);
                 if (typ == 3) continue;
-                MapLocation m = new MapLocation((val >> 3) & (0b111111), (val >> 9) & (0b111111));
+                MapLocation m = new MapLocation((val >> 2) & (0b111111), (val >> 8) & (0b111111));
                 if (hSym) {
                     MapLocation s = getHSym(m);
                     if (rc.canSenseLocation(s)) {
