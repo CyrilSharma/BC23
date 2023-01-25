@@ -226,7 +226,7 @@ public class Communications {
                 return ResourceType.MANA;
             }
         } else {
-            if (val < 0.5) return ResourceType.MANA;
+            if (val < 0.75) return ResourceType.MANA;
             else return ResourceType.ADAMANTIUM;
         }
     }

@@ -86,7 +86,7 @@ public class Launcher extends Robot {
             shouldHarass = true;
             harassDir = rng.nextInt(2);
         }
-        rc.disintegrate();
+        //rc.disintegrate();
     }
     void run() throws GameActionException {
         islandTarget = null;
