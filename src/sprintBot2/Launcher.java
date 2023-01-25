@@ -55,6 +55,7 @@ public class Launcher extends Robot {
     boolean shouldRendevous = true;
     boolean shouldHarass = false;
     boolean neighborsAttacked = false;
+    boolean shouldAvoidClouds = false;
     MapLocation rendevous;
     MapLocation huntTarget;
     MapLocation islandTarget;
@@ -93,6 +94,7 @@ public class Launcher extends Robot {
         huntTarget = null;
         friendsMoved = false;
         neighborsAttacked = false;
+        shouldAvoidClouds = false;
         hurt = rc.getHealth() < 100;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
@@ -283,6 +285,7 @@ public class Launcher extends Robot {
                 if (prev.health > r.health) {
                     neighborsAttacked = true;
                     weight = 12;
+                    shouldAvoidClouds = true;
                 }
                 if ((prev != null && prev.location != r.location && netD > 0) ||
                     prev.health > r.health) {
@@ -314,16 +317,19 @@ public class Launcher extends Robot {
         // rc.setIndicatorString(""+bestNeighborLoc);
         Direction bestDir = Direction.CENTER;
         MapLocation cur = rc.getLocation();
+        boolean bestCloud = true;
         double bestD = Util.sqrDist(cur.x,cur.y,x,y);
         for (Direction d: directions) {
             if (!rc.canMove(d)) continue;
             MapLocation nloc = cur.add(d);
             MapInfo mi = rc.senseMapInfo(nloc);
+            if (shouldAvoidClouds && (mi.hasCloud() && !bestCloud)) continue;
             nloc = nloc.add(mi.getCurrentDirection());
             double dist = Util.sqrDist(nloc.x,nloc.y,x,y);
             if (dist + 0.25 < bestD) {
                 bestD = dist;
                 bestDir = d; 
+                bestCloud = mi.hasCloud();
             }
         }
         bestNeighborDir = bestDir;
@@ -366,7 +372,7 @@ public class Launcher extends Robot {
         int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
         if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
             // rc.setIndicatorString("I'M TRYING 1");
-            greedyPath.move(m);
+            greedyPath.move(m, shouldAvoidClouds);
         } else if (m.distanceSquaredTo(rc.getLocation()) <= rad) {
             // rc.setIndicatorString("I'M TRYING 2");
             int bestD = 100000;
@@ -380,7 +386,7 @@ public class Launcher extends Robot {
                     best = a;
                 }
             }
-            if (best != null) greedyPath.move(best);
+            if (best != null) greedyPath.move(best, shouldAvoidClouds);
         }
     }
 
@@ -388,7 +394,7 @@ public class Launcher extends Robot {
     void hunt() throws GameActionException {
         if (huntTarget != null) {
             rc.setIndicatorString("HUNT: "+huntTarget);
-            greedyPath.move(huntTarget);
+            greedyPath.move(huntTarget, shouldAvoidClouds);
         }
     }
 
@@ -406,7 +412,7 @@ public class Launcher extends Robot {
 
     void chase() throws GameActionException {
         if (rc.getLocation().distanceSquaredTo(previousEnemy) > 4)
-            greedyPath.move(previousEnemy);
+            greedyPath.move(previousEnemy, true);
         else if (rc.canSenseLocation(previousEnemy)) {
             RobotInfo r = rc.senseRobotAtLocation(previousEnemy);
             if (r == null) previousEnemy = null;
@@ -551,8 +557,8 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            if (dps_targetting > my_dps) return 1;
-            if (hasCloud) return 2;
+            if (hasCloud) return 1;
+            if (dps_targetting > my_dps) return 2;
             if (dps_defending < dps_targetting) return 3;
             return 4;
         }
