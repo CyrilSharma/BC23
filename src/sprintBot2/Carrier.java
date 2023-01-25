@@ -49,7 +49,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        rc.setIndicatorString(state.toString() + " "+resourceNeeded);
+        rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
         communications.initial();
         //printWells();
         updateSaturation();
@@ -218,12 +218,12 @@ public class Carrier extends Robot {
             seek();
             return;
         }
-        exploration.move(communications.HQs, communications.numHQ);
-        exploration.move(communications.HQs, communications.numHQ);
+        explore();
+        //exploration.move(communications.HQs, communications.numHQ);
+        //exploration.move(communications.HQs, communications.numHQ);
     }
 
     void seek() throws GameActionException {
-        rc.setIndicatorString("R: "+resourceNeeded+" T: "+wellTarget);
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum() <= 15) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
@@ -415,7 +415,6 @@ public class Carrier extends Robot {
         }
     }
 
-    // 
     void findTarget() throws GameActionException {
         wellTarget = communications.findBestWell(resourceNeeded);
     }

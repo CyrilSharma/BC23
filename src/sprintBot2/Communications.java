@@ -479,7 +479,7 @@ public class Communications {
     }
 
     public void reportEnemyHQCache() throws GameActionException{
-        for(int i = 0; i < numEnemyHQCache; i++){
+        for (int i = 0; i < numEnemyHQCache; i++){
             int msg = 1 + (1 << 1) * EnemyHQsCache[i].x + (1 << 7) * EnemyHQsCache[i].y;
             boolean marked = false;
             for(int j = ENEMY_HQ; j < ENEMY_HQ + ENEMY_HQ_WIDTH; j++){
@@ -559,7 +559,6 @@ public class Communications {
         }
         reportCount();
         reportEnemyHQs();
-        //TODO: add reporting for other stuff - enemy HQs, enemy units, islands, etc.
     }
 
     public void findOurHQs() throws GameActionException{
@@ -877,6 +876,7 @@ public class Communications {
                 resources[typ], want, sat);
             if (cur.isBetterThan(best)) best = cur;
         }
+
         for (WellInfo w: rc.senseNearbyWells()) {
             int available = 0;
             for (Direction dir: directions) {
@@ -888,11 +888,11 @@ public class Communications {
             }
             int sat;
             if (available > 5) sat = 0;
-            else if (available > 3) sat = 2;
-            else if (available >= 1) sat = 1;
+            else if (available > 3) sat = 1;
+            else if (available >= 1) sat = 2;
             else sat = 3;
             WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, sat);
-            if (cur.isBetterThan(best)) cur = best;
+            if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
         return best.loc;
