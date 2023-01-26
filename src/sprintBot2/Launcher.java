@@ -207,33 +207,36 @@ public class Launcher extends Robot {
             prevHuntRound = rc.getRoundNum();
         }
         // if you see an enemy, or you just saw an enemy and you're on a cloud...
-        if (hasEnemy) {
+        if (hasEnemy || (previousEnemy != null && mi.hasCloud())) {
             advanceTurns = 10;
             return State.ATTACK;
         }
 
-        if (hasTargetClose && !neighborsAttacked) {
+        if (hasTargetClose) {
             advanceTurns = 10;
             huntTarget = target;
             return State.HUNT;
         }
-        if (previousEnemy != null && !neighborsAttacked) {
-            advanceTurns = 10;
+        if (previousEnemy != null) {
+            // advanceTurns = 10;
             return State.CHASE;
         }
         /* if (hasTargetFar) {
             huntTarget = target;
             return State.HUNT;
         } */
-        //assert(hqTarget != null);
+        hqTarget = communications.getClosestEnemyHQ();
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
         if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
-        
-        return State.HUNT_HQ;
+        hqTarget = communications.getClosestEnemyHQ();
+        int distHQ = rc.getLocation().distanceSquaredTo(hqTarget);
+        if (distHQ > 25 || distHQ <= RobotType.HEADQUARTERS.actionRadiusSquared) 
+            return State.HUNT_HQ;
+        return State.WAIT;
     }
 
     public Direction getMoveEstimate(MapLocation m) throws GameActionException {
@@ -357,10 +360,11 @@ public class Launcher extends Robot {
     }
 
     void hunt_hq() throws GameActionException {
-        hqTarget = findClosestLivingHQ();
+        /* hqTarget = findClosestLivingHQ();
         if (hqTarget == null) {
             hqTarget = communications.getClosestEnemyHQ(true);
-        }
+        } */
+        hqTarget = communications.getClosestEnemyHQ(true);
         if (hqTarget != null) hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
@@ -406,6 +410,7 @@ public class Launcher extends Robot {
     }
 
     MapLocation findClosestLivingHQ() throws GameActionException {
+        if (communications.symmetryChecker.getSymmetry() == -1) return null;
         int bestD = 10000000;
         MapLocation bestM = null;
         for (MapLocation e: communications.getEnemyHQs()) {

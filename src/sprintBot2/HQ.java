@@ -5,7 +5,7 @@ import battlecode.common.*;
 public class HQ extends Robot {
     int MAX_MINERS = 20;
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
-    int anchorRound = 0;
+    int anchorRound = 100;
     boolean makingAnchor = false;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
@@ -194,7 +194,7 @@ public class HQ extends Robot {
         }
         
         // Game is probably over, build anchors.
-        int anchorFreq = 250;
+        int anchorFreq = 100;
         if (rc.getRoundNum() > anchorRound && rc.canBuildAnchor(Anchor.STANDARD) &&
             ((communications.shouldBuildAnchor() && (rc.getRoundNum()%anchorFreq == 0)) || makingAnchor)) {
             communications.updateAnchor(1);

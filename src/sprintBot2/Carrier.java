@@ -99,7 +99,6 @@ public class Carrier extends Robot {
         elixir = rc.getResourceAmount(ResourceType.ELIXIR);
     }
 
-    // No Seeking state until we have comms.
     State determineState() throws GameActionException {
         for (RobotInfo r: rc.senseNearbyRobots(-1)) {
             if (r.team == rc.getTeam().opponent() && Util.isAttacker(r.type)) {
@@ -119,12 +118,11 @@ public class Carrier extends Robot {
             return State.FLEE;
         }
 
+        if (hasAnchor) return State.DELIVER_ANCHOR;
         if (born%10 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
-
         if (shouldDeliver) return State.DELIVERING;
 
         //System.out.println("good resource: " + communications.readResourceNeed());
-        if (hasAnchor) return State.DELIVER_ANCHOR;
         if (wellTarget == null && 
             adamantium == 0 &&
             mana == 0 && 
@@ -214,6 +212,11 @@ public class Carrier extends Robot {
             greedyPath.flee();
             // if (!greedyPath.flee()) greedyPath.move(m);
             // if (!greedyPath.flee()) greedyPath.move(m);
+        }
+        if (rc.canPlaceAnchor()) {
+            rc.placeAnchor();
+            islandTarget = null;
+            hasAnchor = false;
         }
         doMine();
     }
@@ -319,9 +322,10 @@ public class Carrier extends Robot {
     }
 
     void grab_anchor() throws GameActionException {
-        if (depositLoc == null) return;
-        if (rc.canTakeAnchor(depositLoc, Anchor.STANDARD)) {
-            rc.takeAnchor(depositLoc, Anchor.STANDARD);
+        MapLocation m = communications.findClosestHQ();
+        if (m == null) return;
+        if (rc.canTakeAnchor(m, Anchor.STANDARD)) {
+            rc.takeAnchor(m, Anchor.STANDARD);
             hasAnchor = true;
         }
     }
