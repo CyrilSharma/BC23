@@ -354,7 +354,7 @@ public class Communications {
             for (int j = start_stop[0]; j < start_stop[1]; j++) {
                 int val = rc.readSharedArray(j);
                 if (val != 0) continue;
-                int msg = wellCache[i].getMapLocation().x + (1 << 6) * (wellCache[i].getMapLocation().y);
+                int msg = wellCache[i].getMapLocation().x + (1 << 6) * (wellCache[i].getMapLocation().y) + (1 << 12) * 9;
                 rc.writeSharedArray(j, msg);
                 break;
             }
@@ -404,10 +404,12 @@ public class Communications {
         int addInd = 0;
         for (WellInfo w : wells) {
             boolean marked = false;
-            int msg = w.getMapLocation().x + (1 << 6) * (w.getMapLocation().y);
+            int msg = w.getMapLocation().x + (1 << 6) * (w.getMapLocation().y) + (1 << 12) * 9;
             int[] start_stop = getStartStop(w.getResourceType());
-            for (int i = start_stop[0]; i < start_stop[1]; i++){
-                if (rc.readSharedArray(i) == msg) {
+            for (int i = start_stop[0]; i < start_stop[1]; i++) {
+                int val = rc.readSharedArray(i);
+                MapLocation m = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+                if (w.getMapLocation().equals(m)) {
                     marked = true;
                     break;
                 }

@@ -8,6 +8,8 @@ public class Carrier extends Robot {
     int numGreedy = 0;
     int prevBadTurn = 0;
     int available = -1;
+    int targetRound = -1;
+    int born;
     MapLocation prevWellTarget;
     MapLocation wellTarget;
     MapLocation islandTarget;
@@ -38,6 +40,7 @@ public class Carrier extends Robot {
         communications.findOurHQs();
         initialGreedy = communications.getGreedy();
         resourceNeeded = communications.getResourceNeed();
+        born = rc.getRoundNum();
         if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
         else resourceNeeded = communications.getResourceNeed();
     }
@@ -115,8 +118,8 @@ public class Carrier extends Robot {
             else resourceNeeded = communications.getResourceNeed();
             return State.FLEE;
         }
-        int exploreTurns = Math.min(rc.getMapHeight(), rc.getMapWidth()) / 5;
-        //if (rc.getRoundNum() <= exploreTurns && !initialGreedy) return State.EXPLORE;
+
+        if (born%10 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
 
         if (shouldDeliver) return State.DELIVERING;
 
@@ -226,7 +229,7 @@ public class Carrier extends Robot {
     void seek() throws GameActionException {
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum()%3 == 0) findTarget();
-        // if (rc.getRoundNum() <= 15) findTarget();
+        if (rc.getRoundNum() - targetRound > 10) findTarget();
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
         // recompute if crowded.
@@ -323,7 +326,7 @@ public class Carrier extends Robot {
             if (r.type != RobotType.CARRIER) continue;
             double mineRate = (10.0 / RobotType.CARRIER.actionCooldown);
             int resourceRemaining = (GameConstants.CARRIER_CAPACITY-1) - r.getResourceAmount(wellType);
-            if (resourceRemaining / mineRate <= 25)
+            if (resourceRemaining / mineRate <= 5)
                 available++;
         }   
         return available;
@@ -420,6 +423,7 @@ public class Carrier extends Robot {
 
     void findTarget() throws GameActionException {
         wellTarget = communications.findBestWell(resourceNeeded);
+        targetRound = rc.getRoundNum();
     }
 
     class IslandTarget {
