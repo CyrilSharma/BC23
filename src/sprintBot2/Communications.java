@@ -62,10 +62,7 @@ public class Communications {
     static final int RESOURCE_COUNT = BUILD_COUNT + BUILD_COUNT_WIDTH;
     static final int RESOURCE_COUNT_WIDTH = 3;
 
-    static final int RESOURCE_NEED = RESOURCE_COUNT + RESOURCE_COUNT_WIDTH;
-    static final int RESOURCE_NEED_WIDTH = 3;
-
-    static final int ENEMY_HQ = RESOURCE_NEED + RESOURCE_NEED_WIDTH;
+    static final int ENEMY_HQ = RESOURCE_COUNT + RESOURCE_COUNT_WIDTH;
     static final int ENEMY_HQ_WIDTH = 4;
 
     static final int H_SYM = ENEMY_HQ + ENEMY_HQ_WIDTH;
@@ -420,44 +417,74 @@ public class Communications {
         }
     }
 
-    public void reportEnemyHQs() throws GameActionException{
+    public boolean isHQDead(MapLocation m) throws GameActionException {
+        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+            int val = rc.readSharedArray(i);
+            MapLocation cur = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
+            if (cur.equals(m)) {
+                int ans = ((val >> 13) & (0b1));
+                return ans == 1;
+            }
+        }
+        return false;
+    }
+
+    public void markHQDead(MapLocation m) throws GameActionException {
+        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+            int val = rc.readSharedArray(i);
+            MapLocation cur = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
+            if (cur.equals(m)) {
+                int message = 1 + (1 << 1) * m.x + (1 << 7) * m.y + (1 << 13) * 1;
+                if (rc.canWriteSharedArray(0, 0))
+                    rc.writeSharedArray(i, message);
+                break;
+            }
+        }
+    }
+
+    public void reportEnemyHQs() throws GameActionException {
+        if (symmetryChecker.getSymmetry() != -1) return;
         RobotInfo[] rb = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
-        for(RobotInfo r : rb) if(r.getType() == RobotType.HEADQUARTERS){
-            if(!rc.canWriteSharedArray(0, 0)){
-                boolean alr = false;
-                for(int i = 0; i < numEnemyHQCache; i++){
-                    if(r.getLocation().equals(EnemyHQsCache[i])){
-                        alr = true;
-                    }
-                }
-                if(!alr){
-                    EnemyHQsCache[numEnemyHQCache++] = r.getLocation();
-                }
+        for(RobotInfo r : rb) {
+            if (r.getType() != RobotType.HEADQUARTERS) continue;
+            if (!rc.canWriteSharedArray(0, 0)){
+                updateEnemyHQCache(r);
                 continue;
             }
             int msg = 1 + (1 << 1) * r.getLocation().x + (1 << 7) * r.getLocation().y;
             boolean marked = false;
-            for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+            for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
                 int val = rc.readSharedArray(i);
-                if(val == msg){
+                MapLocation m = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
+                if (r.location.equals(m)) {
                     marked = true;
                     break;
                 }
             }
-            if(!marked){
-                for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
-                    int val = rc.readSharedArray(i);
-                    if(val == 0){
-                        rc.writeSharedArray(i, msg);
-                        break;
-                    }
+            if (marked) continue;
+            for(int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+                int val = rc.readSharedArray(i);
+                if(val == 0){
+                    rc.writeSharedArray(i, msg);
+                    break;
                 }
             }
         }
-        if(rc.canWriteSharedArray(0, 0)) reportEnemyHQCache();
+        reportEnemyHQCache();
     }
 
-    public void reportEnemyHQCache() throws GameActionException{
+    public void updateEnemyHQCache(RobotInfo r) throws GameActionException {
+        for(int i = 0; i < numEnemyHQCache; i++){
+            if (r.getLocation().equals(EnemyHQsCache[i])){
+                return;
+            }
+        }
+        EnemyHQsCache[numEnemyHQCache++] = r.getLocation();
+    }
+
+    public void reportEnemyHQCache() throws GameActionException {
+        if (symmetryChecker.getSymmetry() != -1) return;
+        if (!rc.canWriteSharedArray(0, 0)) return;
         for (int i = 0; i < numEnemyHQCache; i++){
             int msg = 1 + (1 << 1) * EnemyHQsCache[i].x + (1 << 7) * EnemyHQsCache[i].y;
             boolean marked = false;
@@ -691,10 +718,14 @@ public class Communications {
     }
 
     public MapLocation getClosestEnemyHQ() throws GameActionException {
-        return getClosestEnemyHQTo(rc.getLocation());
+        return getClosestEnemyHQ(true);
     }
 
-    public MapLocation getClosestEnemyHQTo(MapLocation pos) throws GameActionException {
+    public MapLocation getClosestEnemyHQ(boolean countDead) throws GameActionException {
+        return getClosestEnemyHQTo(rc.getLocation(), countDead);
+    }
+
+    public MapLocation getClosestEnemyHQTo(MapLocation pos, boolean countDead) throws GameActionException {
         MapLocation[] locs = null;
         if (symmetryChecker.getSymmetry() != -1) locs = getEnemyHQs();
         else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
@@ -704,6 +735,7 @@ public class Communications {
         for(int i = 0; i < locs.length; i++){
             MapLocation h = locs[i];
             if (h == null) continue;
+            if (isHQDead(h) && !countDead) continue;
             int d = pos.distanceSquaredTo(h);
             if (d < minDistEnemy) {
                 minDistEnemy = d;

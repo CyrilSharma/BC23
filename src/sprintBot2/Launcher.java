@@ -223,18 +223,17 @@ public class Launcher extends Robot {
             huntTarget = target;
             return State.HUNT;
         } */
-        hqTarget = communications.getClosestEnemyHQ();
+        hqTarget = communications.getClosestEnemyHQ(false);
+        if (hqTarget == null) {
+            hqTarget = communications.getClosestEnemyHQ(true);
+        }
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
         if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
-        hqTarget = communications.getClosestEnemyHQ();
-        int distHQ = rc.getLocation().distanceSquaredTo(hqTarget);
-        if (distHQ > 25 || distHQ <= RobotType.HEADQUARTERS.actionRadiusSquared) 
-            return State.HUNT_HQ;
-        return State.WAIT;
+        return State.HUNT_HQ;
     }
 
     public Direction getMoveEstimate(MapLocation m) throws GameActionException {
@@ -370,6 +369,18 @@ public class Launcher extends Robot {
 
     void hunt_hq(MapLocation m) throws GameActionException {
         int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
+        if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
+            int enemyLaunchers = 0;
+            int friendLaunchers = 0;
+            for (RobotInfo r: rc.senseNearbyRobots()) {
+                if (r.type != RobotType.LAUNCHER) continue;
+                if (rc.getTeam() == r.team) friendLaunchers++;
+                else enemyLaunchers++;
+            }
+            if (friendLaunchers > 3 && enemyLaunchers == 0) {
+                communications.markHQDead(m);
+            }
+        }
         if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
             // rc.setIndicatorString("I'M TRYING 1");
             greedyPath.move(m, shouldAvoidClouds);
@@ -420,7 +431,29 @@ public class Launcher extends Robot {
     }   
 
     void attack() throws GameActionException {
-        maneuver();
+        boolean attacker = false;
+        for (RobotInfo e: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
+            if (Util.isAttacker(e.getType())) {
+                attacker = true;
+            }
+        }
+        if (!attacker) {
+            RobotInfo r = util.getBestAttackTarget();
+            if (r == null) return;
+            follow(r.location);
+        } else {
+            maneuver();
+        }
+    }
+
+    void follow(MapLocation m) throws GameActionException {
+        ChaseTarget best = null;
+        for (Direction dir: directions) {
+            ChaseTarget cur = new ChaseTarget(dir, m);
+            if (cur.isBetterThan(best)) best = cur;
+        }
+        if (rc.canMove(best.dir))
+            rc.move(best.dir);
     }
 
     void harass() throws GameActionException{
@@ -500,6 +533,29 @@ public class Launcher extends Robot {
                 best = microtargets[i];
         }
         if (rc.canMove(best.dir)) rc.move(best.dir);
+    }
+    
+    // Choose best square to chase a defenseless target.
+    class ChaseTarget {
+        int d;
+        Direction dir;
+        boolean canMove;
+
+        ChaseTarget(Direction dir, MapLocation m) {
+            this.dir = dir;
+            MapLocation newloc = rc.getLocation().add(dir);
+            d = newloc.distanceSquaredTo(m);
+            canMove = rc.canMove(dir);
+        }
+
+        boolean isBetterThan(ChaseTarget ct) {
+            if (ct == null) return true;
+            if (ct.canMove && !canMove) return false;
+            if (!ct.canMove && canMove) return true;
+            // if sufficently close, do not move closer.
+            if (d <= rc.getType().actionRadiusSquared / 2) return true;
+            return d <= ct.d;
+        }
     }
     // Choose best candidate for maneuvering in close encounters.
     class MicroTarget {

@@ -33,6 +33,7 @@ def play(a, b, maps):
     b_wins = 0
     history = []
 
+    random.shuffle(maps)
     for map in maps:
         print(f"{a} wins: {a_wins} | {b} wins: {b_wins} | running: {map}" + ' '*25, end="\r", flush=True)
         a_won, b_won = run_set(a, b, map)
