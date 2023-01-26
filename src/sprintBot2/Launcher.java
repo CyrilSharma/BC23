@@ -61,6 +61,8 @@ public class Launcher extends Robot {
     MapLocation islandTarget;
     MapLocation harassTarget = null;
     MapLocation hqTarget;
+    int killedHQInd = 0;
+    MapLocation[] killedHQs = new MapLocation[5];
     int harassTimer = 0;
     int harassDir = -1;
     int advanceTurns = 0;
@@ -101,7 +103,7 @@ public class Launcher extends Robot {
         // if (rc.getRoundNum() - prevHuntRound > 5) huntTarget = null;
         
         communications.initial();
-        if (rc.getRoundNum()%3 != 1) updateNeighbors();
+        if (rc.getRoundNum()%2 == 1) updateNeighbors();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
@@ -205,34 +207,32 @@ public class Launcher extends Robot {
             prevHuntRound = rc.getRoundNum();
         }
         // if you see an enemy, or you just saw an enemy and you're on a cloud...
-        if (hasEnemy || (previousEnemy != null && mi.hasCloud())) {
+        if (hasEnemy) {
             advanceTurns = 10;
             return State.ATTACK;
         }
 
-        if (hasTargetClose) {
+        if (hasTargetClose && !neighborsAttacked) {
             advanceTurns = 10;
             huntTarget = target;
             return State.HUNT;
         }
-        if (previousEnemy != null) {
-            // advanceTurns = 10;
+        if (previousEnemy != null && !neighborsAttacked) {
+            advanceTurns = 10;
             return State.CHASE;
         }
         /* if (hasTargetFar) {
             huntTarget = target;
             return State.HUNT;
         } */
-        hqTarget = communications.getClosestEnemyHQ(false);
-        if (hqTarget == null) {
-            hqTarget = communications.getClosestEnemyHQ(true);
-        }
+        //assert(hqTarget != null);
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
         if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
         // if (mi.hasCloud()) return State.IMPROVE_VISION;
+        
         return State.HUNT_HQ;
     }
 
@@ -357,7 +357,10 @@ public class Launcher extends Robot {
     }
 
     void hunt_hq() throws GameActionException {
-        rc.setIndicatorDot(hqTarget, 0, 255, 0);
+        hqTarget = findClosestLivingHQ();
+        if (hqTarget == null) {
+            hqTarget = communications.getClosestEnemyHQ(true);
+        }
         if (hqTarget != null) hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
@@ -369,23 +372,7 @@ public class Launcher extends Robot {
 
     void hunt_hq(MapLocation m) throws GameActionException {
         int rad = RobotType.HEADQUARTERS.actionRadiusSquared;
-        if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
-            int enemyLaunchers = 0;
-            int friendLaunchers = 0;
-            for (RobotInfo r: rc.senseNearbyRobots()) {
-                if (r.type != RobotType.LAUNCHER) continue;
-                if (rc.getTeam() == r.team) friendLaunchers++;
-                else enemyLaunchers++;
-            }
-            if (friendLaunchers > 3 && enemyLaunchers == 0) {
-                communications.markHQDead(m);
-            }
-        }
-        if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
-            // rc.setIndicatorString("I'M TRYING 1");
-            greedyPath.move(m, shouldAvoidClouds);
-        } else if (m.distanceSquaredTo(rc.getLocation()) <= rad) {
-            // rc.setIndicatorString("I'M TRYING 2");
+        if (m.distanceSquaredTo(rc.getLocation()) <= rad) {
             int bestD = 100000;
             MapLocation best = null;
             for (MapLocation a: rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), -1)) {
@@ -398,7 +385,45 @@ public class Launcher extends Robot {
                 }
             }
             if (best != null) greedyPath.move(best, shouldAvoidClouds);
+            return;
+        } else if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
+            int enemyLaunchers = 0;
+            int friendLaunchers = 0;
+            for (RobotInfo r: rc.senseNearbyRobots()) {
+                if (r.type != RobotType.LAUNCHER) continue;
+                if (rc.getTeam() == r.team) friendLaunchers++;
+                else enemyLaunchers++;
+            }
+            if (friendLaunchers > 3 && enemyLaunchers == 0) {
+                for (int i = 0; i < communications.numHQ; i++) {
+                    if (killedHQs[i] != null) continue;
+                    killedHQs[i] = m;
+                }
+            }
         }
+        if (m.distanceSquaredTo(rc.getLocation()) > rad + 10)
+            greedyPath.move(m, shouldAvoidClouds);
+    }
+
+    MapLocation findClosestLivingHQ() throws GameActionException {
+        int bestD = 10000000;
+        MapLocation bestM = null;
+        for (MapLocation e: communications.getEnemyHQs()) {
+            if (e == null) continue;
+            //System.out.println("HI");
+            boolean marked = false;
+            for (MapLocation a : killedHQs) {
+                if (a == null) continue;
+                if (a.equals(e)) marked = true;
+            }
+            if (marked) continue;
+            if (e.distanceSquaredTo(rc.getLocation()) < bestD) {
+                bestM = e;
+                bestD = e.distanceSquaredTo(rc.getLocation());
+            }
+        }
+        System.out.println(bestM);
+        return bestM;
     }
 
 

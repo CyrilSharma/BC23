@@ -1,4 +1,5 @@
 package sprintBot2;
+import java.util.Map;
 import java.util.Random;
 
 import battlecode.common.*;
@@ -17,8 +18,10 @@ public class Communications {
     
     static final int MAX_WELL_STORED = 10;
     WellInfo[] wellCache = new WellInfo[MAX_WELL_STORED];
-    int numWells = 0;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.MANA, ResourceType.ELIXIR};
+
+    boolean pushedHQs = false;
+    int numWells = 0;
     int numHQ = 0;
     int numEnemyHQCache = 0;
     int numEnemyHQ = 0;
@@ -94,6 +97,7 @@ public class Communications {
         sendMemory();
         report();
         checkEnemyHQs();
+        getEnemyHQs();
         clearTargets();
         broadcastAttackTargets();
         estimateEnemyHQs();
@@ -430,8 +434,9 @@ public class Communications {
     }
 
     public void markHQDead(MapLocation m) throws GameActionException {
-        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
+        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++) {
             int val = rc.readSharedArray(i);
+            if (val == 0) continue;
             MapLocation cur = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
             if (cur.equals(m)) {
                 int message = 1 + (1 << 1) * m.x + (1 << 7) * m.y + (1 << 13) * 1;
@@ -508,7 +513,34 @@ public class Communications {
         numEnemyHQCache = 0;
     }
 
+    public void checkEnemyHQs() throws GameActionException {
+        if (symmetryChecker.getSymmetry() == -1 || pushedHQs) return;
+        int count = 0;
+        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++) {
+            int val = rc.readSharedArray(i);
+            if (val != 0) count++;
+        }
+        if (count == numHQ) return;
+        int ind = 0;
+        for (MapLocation m: HQs) {
+            if (m == null) continue;
+            MapLocation s = null;
+            switch (symmetryChecker.getSymmetry()) {
+                case 0: s = symmetryChecker.getHSym(m); break;
+                case 1: s = symmetryChecker.getVSym(m); break;
+                case 2: s = symmetryChecker.getRSym(m); break;
+                default:
+            }
+            int message = 1 + (1 << 1) * s.x + (1 << 7) * s.y;
+            if (rc.canWriteSharedArray(0, 0))
+                rc.writeSharedArray(ENEMY_HQ + ind, message);
+        }
+        pushedHQs = true;
+        numEnemyHQ = numHQ;
+    }
+
     public MapLocation[] getEnemyHQs() throws GameActionException {
+        if (symmetryChecker.getSymmetry() == -1) return null;
         MapLocation[] locs = new MapLocation[4];
         int ind = 0;
         for (MapLocation m: HQs) {
@@ -523,38 +555,6 @@ public class Communications {
             locs[ind++] = s;
         }
         return locs;
-    }
-
-    public void checkEnemyHQs() throws GameActionException {
-        if (symmetryChecker.getSymmetry() != -1) {
-            int ind = 0;
-            for (MapLocation m: HQs) {
-                if (m == null) continue;
-                MapLocation s = null;
-                switch (symmetryChecker.getSymmetry()) {
-                    case 0: s = symmetryChecker.getHSym(m); break;
-                    case 1: s = symmetryChecker.getVSym(m); break;
-                    case 2: s = symmetryChecker.getRSym(m); break;
-                    default:
-                }
-                EnemyHQs[ind++] = s;
-            }
-            numEnemyHQ = numHQ;
-            return;
-        }
-        for (int i = ENEMY_HQ; i < ENEMY_HQ + ENEMY_HQ_WIDTH; i++){
-            int val = rc.readSharedArray(i);
-            if(val == 0) continue;
-            MapLocation cr = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
-            boolean marked = false;
-            for(int j = 0; j < numEnemyHQ; j++){
-                if(cr.equals(EnemyHQs[j])){
-                    marked = true;
-                    break;
-                }
-            }
-            if(!marked) EnemyHQs[numEnemyHQ++] = cr;
-        }
     }
 
     public void report() throws GameActionException{
@@ -735,7 +735,7 @@ public class Communications {
         for(int i = 0; i < locs.length; i++){
             MapLocation h = locs[i];
             if (h == null) continue;
-            if (isHQDead(h) && !countDead) continue;
+            // if (isHQDead(h) && !countDead) continue;
             int d = pos.distanceSquaredTo(h);
             if (d < minDistEnemy) {
                 minDistEnemy = d;
@@ -746,31 +746,32 @@ public class Communications {
     }
 
     public MapLocation estimateEnemyTerritory() throws GameActionException{
-       int xPos = 0, yPos = 0;
-       int tot = 0;
-       for(int i = 0; i < numHQ; i++){
-           if(rc.readSharedArray(H_SYM) != 1){
+        int xPos = 0, yPos = 0;
+        int tot = 0;
+        for (int i = 0; i < numHQ; i++) {
+            if (HQs[i] == null) continue;
+            if (rc.readSharedArray(H_SYM) != 1){
                MapLocation cr = symmetryChecker.getHSym(HQs[i]);
                xPos += cr.x;
                yPos += cr.y;
                tot++;
-           }
-           if(rc.readSharedArray(V_SYM) != 1){
+            }
+            if (rc.readSharedArray(V_SYM) != 1){
                MapLocation cr = symmetryChecker.getVSym(HQs[i]);
                xPos += cr.x;
                yPos += cr.y;
                tot++;
-           }
-           if(rc.readSharedArray(R_SYM) != 1){
+            }
+            if (rc.readSharedArray(R_SYM) != 1){
                MapLocation cr = symmetryChecker.getRSym(HQs[i]);
                xPos += cr.x;
                yPos += cr.y;
                tot++;
-           }
-           MapLocation g = getFar(HQs[i]);
-           xPos += g.x;
-           yPos += g.y;
-           tot++;
+            }
+            MapLocation g = getFar(HQs[i]);
+            xPos += g.x;
+            yPos += g.y;
+            tot++;
        }
        if(tot == 0) return null;
        return new MapLocation(xPos / tot, yPos / tot);
@@ -849,11 +850,14 @@ public class Communications {
             estimates[bestJ] = new MapLocation(estimates[bestJ].x + locs[i].x, 
                 estimates[bestJ].y + locs[i].y);
         }
+        int nonNull = 0;
         for (int i = 0; i < numHQ; i++) {
             if (estimates[i] == null) continue;
             estimates[i] = new MapLocation(estimates[i].x / count[i],
                 estimates[i].y / count[i]);
+            nonNull++;
         }
+        if (nonNull == 0) return;
         EnemyHQEstimates = estimates;
     }
 

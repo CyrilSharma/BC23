@@ -51,7 +51,7 @@ public class GreedyPath {
         if (rc.getType() == RobotType.LAUNCHER &&
             rc.getRoundNum()%2 == 0) return null;
         if (rc.getLocation().equals(loc)) return Direction.CENTER;
-        if (previous == null || loc.distanceSquaredTo(previous) > 25) {
+        if (previous == null || loc.distanceSquaredTo(previous) > 100) {
             shoudAvoidClouds = avoidClouds;
             previous = loc;
             resetGreedy(loc);
