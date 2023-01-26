@@ -151,23 +151,38 @@ public class Carrier extends Robot {
 
     MapLocation prev = null;
     void explore() throws GameActionException {
+        if (born%10 == 0) exploreSafe();
+        else exploreUnsafe();
+    }
+
+    void exploreUnsafe() throws GameActionException {
+        exploration.move(communications.HQs, communications.numHQ);
+        exploration.move(communications.HQs, communications.numHQ);
+    }
+
+    void exploreSafe() throws GameActionException {
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 8);
-        int bestD = -1;
-        int sqrD = (int) Math.pow((Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 4), 2);
+        double bestD = -1;
+        double d = Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 6;
         MapLocation best = rc.getLocation();
         for (MapLocation m: locs) {
             if (m.distanceSquaredTo(rc.getLocation()) <= 2) continue;
             if (rc.canSenseLocation(m)) {
                 if (!rc.sensePassability(m)) continue;
             }
-            int distHQ = m.distanceSquaredTo(communications.findClosestHQ());
-            if (distHQ > sqrD) continue;
-            int distPrev = 0;
+            double distHQ = Util.absDistance(m, communications.findClosestHQ());
+            if (distHQ > d) continue;
+            double distPrev = 0;
             if (prev != null) {
-                distPrev = m.distanceSquaredTo(prev);
+                distPrev = Util.absDistance(m, prev);
             }
-            if (distHQ + 2 * distPrev > bestD) {
-                bestD = distHQ + distPrev;
+            double carrierDist = 0;
+            for (RobotInfo r : rc.senseNearbyRobots(-1, rc.getTeam())) {
+                if (r.type != RobotType.CARRIER) continue;
+                carrierDist += Util.absDistance(r.location, m);
+            }
+            if (distHQ + carrierDist + 2 * distPrev > bestD) {
+                bestD = distHQ + carrierDist + 2 * distPrev;
                 best = m;
             }
         }

@@ -105,7 +105,7 @@ public class Communications {
     }
 
     public void displayAvailability() throws GameActionException {
-        if (rc.getType() != RobotType.HEADQUARTERS) return;
+        if (hqIndex != 0) return;
         String s = "";
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
@@ -115,7 +115,8 @@ public class Communications {
             int availability = (val >> 12) & (0b1111);
             s += String.format("[%d %d]: %d | ", x, y, availability);
         }
-        rc.setIndicatorString(s);
+        //rc.setIndicatorString(s);
+        //System.out.println(s);
     }
 
     public void updateAvailability(MapLocation loc, int availability) throws GameActionException {
@@ -851,15 +852,13 @@ public class Communications {
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
-            int typ = val & (0b11);
-            if (typ == 3) continue;
             int x = val & (0b111111);
             int y = (val >> 6) & (0b111111);
             int available = (val >> 12) & (0b1111);
             // can do a better estimate.
             if (rc.canSenseLocation(new MapLocation(x, y))) continue;
             WellTarget cur = new WellTarget(new MapLocation(x, y),
-                resources[typ], want, available);
+                getTypeFromIndex(i), want, available);
             if (cur.isBetterThan(best)) best = cur;
         }
 
