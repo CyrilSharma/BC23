@@ -94,7 +94,6 @@ public class Carrier extends Robot {
     }
 
     boolean determineReport() throws GameActionException {
-        if (communications.readWells(ResourceType.MANA) != null) return false;
         if (takenReportTarget != null) return false;
         boolean hasMana = false;
         MapLocation manaWell = null;
@@ -106,6 +105,16 @@ public class Carrier extends Robot {
             }
         }
         if (!hasMana) return false;
+
+        // Check if manaWell is already in comms.
+        MapLocation[] locs = communications.readWells(ResourceType.MANA);
+        if (locs != null) {
+            for (MapLocation loc: locs) {
+                if (loc == null) continue;
+                if (loc.equals(manaWell)) 
+                    return false;
+            }
+        }
         // Check if somebody is already reporting.
         for (RobotInfo r: neighbors) {
             if (r == null) continue;
@@ -185,7 +194,6 @@ public class Carrier extends Robot {
             return State.FLEE;
         }
         if (determineReport()) shouldReport = true;
-        System.out.println(shouldReport);
         if (shouldReport) return State.REPORT;
         if (hasAnchor) return State.DELIVER_ANCHOR;
         if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
