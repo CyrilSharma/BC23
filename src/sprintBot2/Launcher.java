@@ -294,13 +294,9 @@ public class Launcher extends Robot {
         for (LauncherInfo n: neighbors) {
             if (n == null) continue;
             if (marked[n.ID%sz]) continue;
-            int d = myloc.distanceSquaredTo(n.location);
-            if (d < 16 || lastUpdate[n.ID%sz] + 3 < round) {
+            if (lastUpdate[n.ID%sz] + 3 < round) {
                 neighbors[n.ID%sz] = null;
                 continue;
-            } else if (d >= 16 && d <= RobotType.LAUNCHER.visionRadiusSquared) {
-                // If I can't eliminate it, it's out of vision radius, here's an estimate.
-                n.location = n.location.add(rc.getLocation().directionTo(n.location));
             }
             rc.setIndicatorDot(n.location, 100, 0, 0);
             nneighborStr.append("|"+n.ID);
