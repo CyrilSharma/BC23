@@ -470,7 +470,6 @@ public class Launcher extends Robot {
         for (RobotInfo r: rc.senseNearbyRobots()) {
             if (Clock.getBytecodesLeft() < 1500) break;
             if (!Util.isAttacker(r.type) || r.type == RobotType.HEADQUARTERS) continue;
-
             m = r.location;
             mi = rc.senseMapInfo(m);
             if (r.team == rc.getTeam()) {

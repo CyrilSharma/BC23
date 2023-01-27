@@ -1140,7 +1140,7 @@ public class Communications {
             MapInfo[] area = rc.senseNearbyMapInfos(-1);
             int iters = 0;
             for (MapInfo mi: area) {
-                if (Clock.getBytecodesLeft() < 500) break;
+                if (Clock.getBytecodesLeft() < 750) break;
                 if (getSymmetry() != -1) break;
                 MapLocation m = mi.getMapLocation();
                 int status = -1;
