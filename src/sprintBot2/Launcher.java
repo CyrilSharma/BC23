@@ -217,9 +217,22 @@ public class Launcher extends Robot {
     boolean hasCarriersNear = false;
     boolean hasLaunchersNear = false;
 
+    class LauncherInfo {
+        int health;
+        int ID;
+        MapLocation location;
+        Team team;
+        LauncherInfo(int health, int ID, MapLocation loc, Team t) {
+            this.health = health;
+            this.ID = ID;
+            this.location = loc;
+            this.team = t;
+        }
+    }
+
     int sz = 50;
     int[] lastUpdate = new int[sz];
-    RobotInfo[] neighbors = new RobotInfo[sz];
+    LauncherInfo[] neighbors = new LauncherInfo[sz];
     StringBuilder neighborStr = new StringBuilder();
     // totally not scuffed.
     void updateNeighbors() throws GameActionException {
@@ -246,7 +259,7 @@ public class Launcher extends Robot {
             contains = neighborStr.toString().contains(""+r.ID);
             // keep track of average position of my team, prioritizing those who moved.
             if (contains && r.team == rc.getTeam()) {
-                RobotInfo prev = neighbors[r.ID%sz];
+                LauncherInfo prev = neighbors[r.ID%sz];
                 // if a unit moved away from me, follow him.
                 int netD = r.location.distanceSquaredTo(myloc) - prev.location.distanceSquaredTo(myloc);
                 for (int i = 0; i < 2; i++) {
@@ -273,25 +286,26 @@ public class Launcher extends Robot {
             if (r.team == opponentTeam)
                 hasLaunchersNear = true;
             rc.setIndicatorDot(r.location, 100, 0, 0);
-            neighbors[r.ID%sz] = r;
+            neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
             lastUpdate[r.ID%sz] = round;
             marked[r.ID%sz] = true;
         }
         // purge outdated info.
-        for (RobotInfo n: neighbors) {
+        for (LauncherInfo n: neighbors) {
             if (n == null) continue;
             if (marked[n.ID%sz]) continue;
-            if (n.location.distanceSquaredTo(myloc) >= 49 ||
-                myloc.distanceSquaredTo(n.location) < 16 ||
-                lastUpdate[n.ID%sz] + 3 < round) {
+            int d = myloc.distanceSquaredTo(n.location);
+            if (d < 16 || lastUpdate[n.ID%sz] + 3 < round) {
                 neighbors[n.ID%sz] = null;
-            } else {
-                // If I can't eliminate it, it's still here.
-                rc.setIndicatorDot(n.location, 100, 0, 0);
-                nneighborStr.append("|"+n.ID);
-                if (n.team == opponentTeam)
-                    hasLaunchersNear = true;
+                continue;
+            } else if (d >= 16 && d <= RobotType.LAUNCHER.visionRadiusSquared) {
+                // If I can't eliminate it, it's out of vision radius, here's an estimate.
+                n.location = n.location.add(rc.getLocation().directionTo(n.location));
             }
+            rc.setIndicatorDot(n.location, 100, 0, 0);
+            nneighborStr.append("|"+n.ID);
+            if (n.team == opponentTeam)
+                hasLaunchersNear = true;
         }
         x /= totalW;
         y /= totalW;
@@ -325,8 +339,10 @@ public class Launcher extends Robot {
         if (hqTarget == null) {
             hqTarget = communications.getClosestEnemyHQ(true);
         } */
-        hqTarget = communications.getClosestEnemyHQ(true);
-        if (hqTarget != null) hunt_hq(hqTarget);
+        hqTarget = communications.getClosestEnemyHQ(killedHQs);
+        if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
+        // no nullpointers in theory?
+        hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
                 hunt_hq(r.location);
@@ -516,22 +532,18 @@ public class Launcher extends Robot {
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         curOnCloud = mi.hasCloud();
         int iters = 0;
-        int nenemy = 0;
-        int nfriend = 0;
-        for (RobotInfo r: neighbors) {
+        for (LauncherInfo r: neighbors) {
             if (r == null) continue;
             if (Clock.getBytecodesLeft() < 1500) break;
-            if (!Util.isAttacker(r.type) || r.type == RobotType.HEADQUARTERS) continue;
-            iters++;
             m = r.location;
             boolean canSense = rc.canSenseLocation(m);
             if (canSense) mi = rc.senseMapInfo(m);
             if (r.team == myTeam) {
                 cooldown = (canSense) ? mi.getCooldownMultiplier(myTeam) : 1;
                 robotOnCloud = (canSense) ? mi.hasCloud() : false;
-                currentDPS = (double) r.type.damage * (1.0 / cooldown);
-                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
-                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;
+                currentDPS = (double) RobotType.LAUNCHER.damage * (1.0 / cooldown);
+                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
+                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
                 microtargets[0].addAlly(r);
                 microtargets[1].addAlly(r);
                 microtargets[2].addAlly(r);
@@ -543,10 +555,10 @@ public class Launcher extends Robot {
                 microtargets[8].addAlly(r);
             } else {
                 cooldown = (canSense) ? mi.getCooldownMultiplier(opponentTeam) : 1;
-                currentDPS = (double) r.type.damage * (1.0 / cooldown);
+                currentDPS = (double) RobotType.LAUNCHER.damage * (1.0 / cooldown);
                 robotOnCloud = (canSense) ? mi.hasCloud() : false;
-                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.actionRadiusSquared;
-                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : r.type.visionRadiusSquared;
+                curActionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
+                curVisionRadius = (robotOnCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
                 microtargets[0].addEnemy(r);
                 microtargets[1].addEnemy(r);
                 microtargets[2].addEnemy(r);
@@ -557,6 +569,7 @@ public class Launcher extends Robot {
                 microtargets[7].addEnemy(r);
                 microtargets[8].addEnemy(r);
             }
+            iters++;
         }
         // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
@@ -570,6 +583,11 @@ public class Launcher extends Robot {
         if (microtargets[7].isBetterThan(best)) best = microtargets[7];
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
+
+        /* rc.setIndicatorString("ITERS: "+iters);
+        for (MicroTarget mt: microtargets) {
+            rc.setIndicatorDot(mt.nloc, 0, mt.safe() * 50, 0);
+        } */
     }
     
     // Choose best square to chase a defenseless target.
@@ -585,13 +603,19 @@ public class Launcher extends Robot {
             canMove = rc.canMove(dir);
         }
 
+        boolean inRange() {
+            return d <= rc.getType().actionRadiusSquared;
+        }
+
         boolean isBetterThan(ChaseTarget ct) {
             if (ct == null) return true;
             if (ct.canMove && !canMove) return false;
             if (!ct.canMove && canMove) return true;
             // if sufficently close, do not move closer.
-            if (d <= rc.getType().actionRadiusSquared / 2) return true;
-            return d <= ct.d;
+            if (ct.inRange() && !inRange()) return false;
+            if (!ct.inRange() && inRange()) return true;
+            if (ct.inRange() && inRange()) return d >= ct.d;
+            else return d <= ct.d;
         }
     }
     // Choose best candidate for maneuvering in close encounters.
@@ -620,22 +644,20 @@ public class Launcher extends Robot {
             // minDistToEnemy = nloc.distanceSquaredTo(previousEnemy);
         }
         
-        void addEnemy(RobotInfo r) throws GameActionException {
+        void addEnemy(LauncherInfo r) throws GameActionException {
             //int start = Clock.getBytecodesLeft();
             if (!canMove) return;
-            if (r.type == RobotType.LAUNCHER) {
-                int d = nloc.distanceSquaredTo(r.location);
-                if (d <= curVisionRadius) {
-                    net_dps += currentDPS;
-                    dps_targetting += currentDPS;
-                }
-                if (d <= minDistToEnemy)
-                    minDistToEnemy = d;
-            }
+            int d = nloc.distanceSquaredTo(r.location);
+            if (d <= curActionRadius)
+                net_dps += currentDPS;
+            if (d <= curVisionRadius)
+                dps_targetting += currentDPS;
+            if (d <= minDistToEnemy)
+                minDistToEnemy = d;
         } 
 
         
-        void addAlly(RobotInfo r) throws GameActionException {
+        void addAlly(LauncherInfo r) throws GameActionException {
             if (!canMove) return;
             if (nloc.distanceSquaredTo(r.location) <= curVisionRadius)
                 dps_defending += currentDPS;

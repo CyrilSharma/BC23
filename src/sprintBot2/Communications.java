@@ -718,14 +718,14 @@ public class Communications {
     }
 
     public MapLocation getClosestEnemyHQ() throws GameActionException {
-        return getClosestEnemyHQ(true);
+        return getClosestEnemyHQ(null);
     }
 
-    public MapLocation getClosestEnemyHQ(boolean countDead) throws GameActionException {
-        return getClosestEnemyHQTo(rc.getLocation(), countDead);
+    public MapLocation getClosestEnemyHQ(MapLocation[] dead) throws GameActionException {
+        return getClosestEnemyHQTo(rc.getLocation(), dead);
     }
 
-    public MapLocation getClosestEnemyHQTo(MapLocation pos, boolean countDead) throws GameActionException {
+    public MapLocation getClosestEnemyHQTo(MapLocation pos, MapLocation[] dead) throws GameActionException {
         MapLocation[] locs = null;
         if (symmetryChecker.getSymmetry() != -1) locs = getEnemyHQs();
         else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
@@ -735,6 +735,17 @@ public class Communications {
         for(int i = 0; i < locs.length; i++){
             MapLocation h = locs[i];
             if (h == null) continue;
+            if (dead != null) {
+                boolean bad = false;
+                for (MapLocation d: dead) {
+                    if (d == null) continue;
+                    if (d.distanceSquaredTo(h) <= 25) {
+                        bad = true;
+                        break;
+                    }
+                }
+                if (bad) continue;
+            }
             // if (isHQDead(h) && !countDead) continue;
             int d = pos.distanceSquaredTo(h);
             if (d < minDistEnemy) {
