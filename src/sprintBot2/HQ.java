@@ -62,6 +62,12 @@ public class HQ extends Robot {
             return;
         }
 
+        // if we have the resources, build a convoy.
+        if (rc.getResourceAmount(ResourceType.MANA)
+            >= 3 * RobotType.LAUNCHER.buildCostMana) 
+            buildConvoy();
+
+        // splurge otherwise.
         RobotType needed = buildToRobotType(b);
         buildIfCan(needed);
         for (RobotType r: RobotType.values()) {
@@ -70,6 +76,17 @@ public class HQ extends Robot {
             if (r == RobotType.AMPLIFIER) continue;
             buildIfCan(r);
         }
+    }
+
+    boolean isSurrounded() throws GameActionException {
+        int allies = 0;
+        int enemies = 0;
+        for (RobotInfo r: rc.senseNearbyRobots(-1)) {
+            if (r.type != RobotType.LAUNCHER) continue;
+            if (r.team == rc.getTeam()) allies++;
+            else enemies++;
+        }
+        return (allies <= 1 && enemies >= 3);
     }
 
     void buildIfCan(RobotType r) throws GameActionException{
@@ -106,7 +123,7 @@ public class HQ extends Robot {
             }
         }
         if (rc.canBuildRobot(RobotType.LAUNCHER, best))
-                rc.buildRobot(RobotType.LAUNCHER, best);
+            rc.buildRobot(RobotType.LAUNCHER, best);
         for (MapLocation m: rc.getAllLocationsWithinRadiusSquared(best, 1)) {
             if (m.distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared) continue;
             if (rc.canBuildRobot(RobotType.LAUNCHER, m))
@@ -171,8 +188,15 @@ public class HQ extends Robot {
         return best.mloc;
     }
 
-    Build getBuildType() throws GameActionException{
-        //use unit counts to get ratios, unless we are in danger
+    Build getBuildType() throws GameActionException {
+        boolean surrounded = isSurrounded();
+        if (surrounded && rc.getResourceAmount(ResourceType.MANA)
+                < 3 * RobotType.LAUNCHER.buildCostMana) {
+            return Build.NONE;
+        } else if (surrounded) {
+            return Build.LAUNCHER;
+        }
+
         RobotInfo[] enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         boolean defend = false;
         for(RobotInfo r : enemies){

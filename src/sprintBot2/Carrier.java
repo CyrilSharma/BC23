@@ -375,6 +375,7 @@ public class Carrier extends Robot {
 
         // Make space!
         for (Direction d: directions) {
+            if (!rc.canMove(d)) continue;
             MapLocation nloc = rc.getLocation().add(d);
             if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
                 .distanceSquaredTo(wellTarget) < 2) {

@@ -371,7 +371,7 @@ public class Launcher extends Robot {
                 if (rc.getTeam() == r.team) friendLaunchers++;
                 else enemyLaunchers++;
             }
-            if (friendLaunchers > 3 && enemyLaunchers == 0) {
+            if (friendLaunchers > 2 && enemyLaunchers == 0) {
                 for (int i = 0; i < communications.numHQ; i++) {
                     if (killedHQs[i] != null) continue;
                     killedHQs[i] = m;
