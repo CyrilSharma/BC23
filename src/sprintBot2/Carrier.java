@@ -46,8 +46,8 @@ public class Carrier extends Robot {
         born = rc.getRoundNum();
         //if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
         //else
-        // resourceNeeded = communications.getResourceNeed();
-        resourceNeeded = ResourceType.MANA;
+        resourceNeeded = communications.getResourceNeed();
+        // resourceNeeded = ResourceType.MANA;
     }
 
     void run() throws GameActionException {

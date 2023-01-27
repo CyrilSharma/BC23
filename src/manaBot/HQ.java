@@ -21,7 +21,7 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
-        // if (rc.getRobotCount() < 4 && rc.getRoundNum() > 400) rc.resign();
+        if (rc.getRobotCount() < 4 && rc.getRoundNum() > 400) rc.resign();
         // REMEMBER TO COMMENT THIS OUT :DDDDD
         //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
