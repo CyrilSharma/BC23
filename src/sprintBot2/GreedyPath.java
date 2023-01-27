@@ -89,7 +89,9 @@ public class GreedyPath {
             if (!rc.canSenseLocation(next)) break;
             MapInfo mi = rc.senseMapInfo(next);
             // if this is my final move...
-            if (rc.getMovementCooldownTurns() + rc.getType().movementCooldown >= 10)
+            int cld = rc.getType().movementCooldown;
+            if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
+            if (rc.getMovementCooldownTurns() + cld >= 10)
                 next = next.add(mi.getCurrentDirection());
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {
@@ -139,7 +141,7 @@ public class GreedyPath {
             return bug(goal);
         }
         markLoc();
-        // rc.setIndicatorString("FUZZY: " + goal);
+         //rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -148,7 +150,9 @@ public class GreedyPath {
             MapLocation nxt = rc.getLocation().add(dir);
             if (!rc.onTheMap(nxt)) continue;
             MapInfo mi = rc.senseMapInfo(nxt);
-            if (rc.getMovementCooldownTurns() + rc.getType().movementCooldown >= 10)
+            int cld = rc.getType().movementCooldown;
+            if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
+            if (rc.getMovementCooldownTurns() + cld >= 10)
                 nxt = nxt.add(mi.getCurrentDirection());
             if (rc.canMove(dir) && !(shoudAvoidClouds && mi.hasCloud())) {
                 if (goal.distanceSquaredTo(nxt) < mn) {

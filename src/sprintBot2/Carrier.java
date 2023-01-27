@@ -248,8 +248,11 @@ public class Carrier extends Robot {
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum()%3 == 0) findTarget();
         if (rc.getRoundNum() - targetRound > 10) findTarget();
-        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
-        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) greedyPath.move(wellTarget);
+        rc.setIndicatorString("target is " + wellTarget);
+        boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
+        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) greedyPath.move(wellTarget);
+        f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
+        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) greedyPath.move(wellTarget);
         // recompute if crowded.
         if (rc.canSenseLocation(wellTarget)) {
             WellInfo w = rc.senseWell(wellTarget);
@@ -286,7 +289,7 @@ public class Carrier extends Robot {
         // Make space!
         for (Direction d: directions) {
             MapLocation nloc = rc.getLocation().add(d);
-            if (nloc.distanceSquaredTo(wellTarget) < 2) {
+            if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection()).distanceSquaredTo(wellTarget) < 2) {
                 if (rc.canMove(d)) rc.move(d);
                 break;
             }
@@ -306,7 +309,7 @@ public class Carrier extends Robot {
 
     void deliver() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
-        if (m.distanceSquaredTo(rc.getLocation()) > 1) {
+        if (m.distanceSquaredTo(rc.getLocation()) > 2 || rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(m) > 2) {
             greedyPath.move(m);
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
