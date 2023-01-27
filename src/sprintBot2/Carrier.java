@@ -44,8 +44,9 @@ public class Carrier extends Robot {
         initialGreedy = communications.getGreedy();
         resourceNeeded = communications.getResourceNeed();
         born = rc.getRoundNum();
-        if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
-        else resourceNeeded = communications.getResourceNeed();
+        //if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
+        //else
+        resourceNeeded = communications.getResourceNeed();
     }
 
     void run() throws GameActionException {
@@ -196,7 +197,7 @@ public class Carrier extends Robot {
         if (determineReport()) shouldReport = true;
         if (shouldReport) return State.REPORT;
         if (hasAnchor) return State.DELIVER_ANCHOR;
-        if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
+        //if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
         if (shouldDeliver) return State.DELIVERING;
 
         //System.out.println("good resource: " + communications.readResourceNeed());

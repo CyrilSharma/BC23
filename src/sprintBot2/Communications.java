@@ -396,17 +396,11 @@ public class Communications {
     public void reportWells() throws GameActionException {
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length == 0) return;
-        int ind = 0;
-        int[] freeSlots = new int[wells.length];
-        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
-            if (ind < wells.length) freeSlots[ind++] = i;
-        }
         if (!rc.canWriteSharedArray(0, 0)) {
             updateWellCache(wells);
             return;
         }
 
-        int addInd = 0;
         for (WellInfo w : wells) {
             boolean marked = false;
             int msg = w.getMapLocation().x + (1 << 6) * (w.getMapLocation().y) + (1 << 12) * 9;
@@ -420,7 +414,13 @@ public class Communications {
                 }
             }
             if (marked) continue;
-            rc.writeSharedArray(freeSlots[addInd++], msg);
+            for (int i = start_stop[0]; i < start_stop[1]; i++) {
+                int val = rc.readSharedArray(i);
+                if(val == 0){
+                    rc.writeSharedArray(i, msg);
+                    break;
+                }
+            }
         }
     }
 
@@ -925,6 +925,7 @@ public class Communications {
             if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
+        //if(!best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
         updateAvailability(best.loc, Math.max(best.avail - 1, 0));
         return best.loc;
@@ -955,12 +956,12 @@ public class Communications {
 
         boolean isBetterThan(WellTarget wt) throws GameActionException {
             if (wt == null) return true;
-            if (wt.dist + 8 < dist) return false;
-            if (wt.dist > dist + 8) return true;
             if (!wt.crowded() && crowded()) return false;
             if (wt.crowded() && !crowded()) return true;
             if (wt.bestResource() && !bestResource()) return false;
             if (!wt.bestResource() && bestResource()) return true;
+            if (wt.dist + 8 < dist) return false;
+            if (wt.dist > dist + 8) return true;
             return dist <= wt.dist;
         }
     }
