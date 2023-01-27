@@ -22,11 +22,13 @@ public class Carrier extends Robot {
     boolean mineEfficently = false;
     boolean shouldDeliver = false;
     boolean initialGreedy = false;
+    boolean shouldReport = false;
 
 
     MapLocation[][] islandCache = new MapLocation[100][];
     enum State {
         SEARCHING,
+        REPORT,
         SEEKING,
         HARVESTING,
         DELIVERING,
@@ -59,6 +61,7 @@ public class Carrier extends Robot {
         attack();
         switch (state) {
             case SEARCHING: search(); break;
+            case REPORT: report(); break;
             case SEEKING: seek(); break;
             case HARVESTING: harvest(); break;
             case DELIVERING: deliver(); break;
@@ -68,6 +71,13 @@ public class Carrier extends Robot {
             default:
         }
         communications.last();
+    }
+
+    void report() throws GameActionException {
+        MapLocation m = communications.findClosestHQ();
+        if (!rc.canWriteSharedArray(0, 0)) {
+            greedyPath.move(m);
+        }
     }
 
     void updateSaturation() throws GameActionException {
@@ -117,7 +127,8 @@ public class Carrier extends Robot {
             else resourceNeeded = communications.getResourceNeed();
             return State.FLEE;
         }
-
+        shouldReport = determineReport();
+        if (shouldReport) return State.REPORT;
         if (hasAnchor) return State.DELIVER_ANCHOR;
         if (born%10 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
         if (shouldDeliver) return State.DELIVERING;
@@ -147,9 +158,20 @@ public class Carrier extends Robot {
         return State.SEARCHING;
     }
 
+    boolean determineReport() throws GameActionException {
+        if (communications.readWells(ResourceType.MANA).length > 0) return false;
+        boolean onlyManaWells = false;
+        for (WellInfo w: rc.senseNearbyWells()) {
+            if (w.getResourceType() != ResourceType.MANA) {
+                onlyManaWells = false;
+            }
+        }
+        return !onlyManaWells;
+    }
+
     MapLocation prev = null;
     void explore() throws GameActionException {
-        if (born%10 == 0) exploreSafe();
+        if (rc.getID()%10 == 0) exploreSafe();
         else exploreUnsafe();
     }
 
@@ -247,6 +269,10 @@ public class Carrier extends Robot {
     void seek() throws GameActionException {
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum()%3 == 0) findTarget();
+        if (resourceNeeded == ResourceType.MANA && 
+            communications.readWells(ResourceType.MANA).length > 0 && 
+            rc.getRoundNum() < 15) 
+            findTarget();
         if (rc.getRoundNum() - targetRound > 10) findTarget();
         rc.setIndicatorString("target is " + wellTarget);
         boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
@@ -286,30 +312,36 @@ public class Carrier extends Robot {
     }
 
     void harvest() throws GameActionException {
+        // recompute if you wanted MANA and we j found a well.
+        if (resourceNeeded == ResourceType.MANA && 
+            communications.readWells(ResourceType.MANA).length > 0 && 
+            rc.getRoundNum() < 15) 
+            findTarget();
+
         // Make space!
         for (Direction d: directions) {
             MapLocation nloc = rc.getLocation().add(d);
-            if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection()).distanceSquaredTo(wellTarget) < 2) {
+            if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
+                .distanceSquaredTo(wellTarget) < 2) {
                 if (rc.canMove(d)) rc.move(d);
                 break;
             }
         }
-        while (rc.isActionReady()) {
-            if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
-                rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
-                // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
-                available = estimateCarriers25Turns(rc.senseWell(wellTarget));
-                prevWellTarget = wellTarget;
-                wellTarget = null;
-            } else if (rc.canCollectResource(wellTarget, -1)) {
-                rc.collectResource(wellTarget, -1);
-            }
+        if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
+            rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
+            // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
+            available = estimateCarriers25Turns(rc.senseWell(wellTarget));
+            prevWellTarget = wellTarget;
+            wellTarget = null;
+        } else if (rc.canCollectResource(wellTarget, -1)) {
+            rc.collectResource(wellTarget, -1);
         }
     }
 
     void deliver() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
-        if (m.distanceSquaredTo(rc.getLocation()) > 2 || rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(m) > 2) {
+        if (m.distanceSquaredTo(rc.getLocation()) > 2 || rc.getLocation().add(rc.senseMapInfo(rc.getLocation())
+            .getCurrentDirection()).distanceSquaredTo(m) > 2) {
             greedyPath.move(m);
         } else {
             ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
@@ -430,6 +462,7 @@ public class Carrier extends Robot {
         return closestTarget;
     }
 
+    // maybe this is a bad idea?
     void attack() throws GameActionException {
         RobotInfo best = util.getBestAttackTarget();
         if (best == null) return;
