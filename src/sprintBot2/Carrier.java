@@ -46,7 +46,8 @@ public class Carrier extends Robot {
         born = rc.getRoundNum();
         //if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
         //else
-        resourceNeeded = communications.getResourceNeed();
+        // resourceNeeded = communications.getResourceNeed();
+        resourceNeeded = ResourceType.MANA;
     }
 
     void run() throws GameActionException {
@@ -56,7 +57,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
+        // rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
         communications.initial();
         //printWells();
         updateSaturation();
@@ -76,8 +77,8 @@ public class Carrier extends Robot {
         communications.last();
     }
 
-    int sz = 50;
-    RobotInfo[] neighbors = new RobotInfo[sz];
+    int sz = 25;
+    RobotInfo[][] neighbors = new RobotInfo[3][sz];
     StringBuilder neighborStr = new StringBuilder();
     void updateNeighbors() throws GameActionException {
         Team myTeam = rc.getTeam();
@@ -91,10 +92,13 @@ public class Carrier extends Robot {
             nneighbors[r.ID%sz] = r;
         }
         neighborStr = nneighborStr;
-        neighbors = nneighbors;
+        neighbors[0] = neighbors[1];
+        neighbors[1] = neighbors[2];
+        neighbors[2] = nneighbors;
     }
 
     boolean determineReport() throws GameActionException {
+        rc.setIndicatorString("TESTING REPORT");
         if (takenReportTarget != null) return false;
         boolean hasMana = false;
         MapLocation manaWell = null;
@@ -108,6 +112,7 @@ public class Carrier extends Robot {
         if (!hasMana) return false;
 
         // Check if manaWell is already in comms.
+        rc.setIndicatorString("TESTING WELL DOESN'T EXIST");
         MapLocation[] locs = communications.readWells(ResourceType.MANA);
         if (locs != null) {
             for (MapLocation loc: locs) {
@@ -117,13 +122,19 @@ public class Carrier extends Robot {
             }
         }
         // Check if somebody is already reporting.
-        for (RobotInfo r: neighbors) {
-            if (r == null) continue;
-            if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared) {
-                takenReportTarget = manaWell;
-                return false;
+        rc.setIndicatorString("TESTING NEIGHBORS");
+        for (int i = 0; i < 3; i++) {
+            for (RobotInfo r: neighbors[i]) {
+                if (r == null) continue;
+                if (rc.getID() == 10743) System.out.println(r.location);
+                if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared) {
+                    rc.setIndicatorString("I DETECTED SOMEONE");
+                    takenReportTarget = manaWell;
+                    return false;
+                }
             }
         }
+        rc.setIndicatorString("TIEBREAKER");
         // Tie-breaker for who gets to report is ID.
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
             if (r.type != RobotType.CARRIER) continue;
@@ -140,6 +151,7 @@ public class Carrier extends Robot {
     void report() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
         if (!rc.canWriteSharedArray(0, 0)) {
+            greedyPath.move(m);
             greedyPath.move(m);
         } else {
             communications.reportWells();
@@ -329,12 +341,25 @@ public class Carrier extends Robot {
             communications.readWells(ResourceType.MANA) != null && 
             rc.getRoundNum() < 15) 
             findTarget();
-        if (rc.getRoundNum() - targetRound > 10) findTarget();
-        rc.setIndicatorString("Target is " + wellTarget);
-        boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
-        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) greedyPath.move(wellTarget);
-        f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
-        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) greedyPath.move(wellTarget);
+
+        if (rc.getRoundNum() - targetRound > 10) 
+            findTarget();
+
+        if (wellTarget == null) return;
+        // rc.setIndicatorString("Target is " + wellTarget);
+        boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation()
+            .add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection())
+            .distanceSquaredTo(wellTarget) > 2);
+
+        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) 
+            greedyPath.move(wellTarget);
+
+        f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation())
+            .getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
+
+        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) 
+            greedyPath.move(wellTarget);
+            
         // recompute if crowded.
         if (rc.canSenseLocation(wellTarget)) {
             WellInfo w = rc.senseWell(wellTarget);

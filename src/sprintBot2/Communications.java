@@ -925,6 +925,7 @@ public class Communications {
             if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
+        if (best.dist > 15) return null;
         //if(!best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
         updateAvailability(best.loc, Math.max(best.avail - 1, 0));
