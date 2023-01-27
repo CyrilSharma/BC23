@@ -15,6 +15,7 @@ public class Carrier extends Robot {
     MapLocation islandTarget;
     MapLocation depositLoc = null;
     MapLocation prevBadWell;
+    MapLocation takenReportTarget;
     ResourceType chosen;
     ResourceType resourceNeeded;
     boolean hasAnchor = false;
@@ -70,13 +71,69 @@ public class Carrier extends Robot {
             case EXPLORE: explore(); break;
             default:
         }
+        updateNeighbors();
         communications.last();
+    }
+
+    int sz = 50;
+    RobotInfo[] neighbors = new RobotInfo[sz];
+    StringBuilder neighborStr = new StringBuilder();
+    void updateNeighbors() throws GameActionException {
+        Team myTeam = rc.getTeam();
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, myTeam);
+        RobotInfo[] nneighbors = new RobotInfo[sz];
+        StringBuilder nneighborStr = new StringBuilder();
+        for (RobotInfo r: robots) {
+            if (Clock.getBytecodesLeft() < 6750) break;
+            if (r.type != RobotType.CARRIER) continue;
+            nneighborStr.append("|"+r.ID);
+            nneighbors[r.ID%sz] = r;
+        }
+        neighborStr = nneighborStr;
+        neighbors = nneighbors;
+    }
+
+    boolean determineReport() throws GameActionException {
+        if (communications.readWells(ResourceType.MANA) != null) return false;
+        if (takenReportTarget != null) return false;
+        boolean hasMana = false;
+        MapLocation manaWell = null;
+        for (WellInfo w: rc.senseNearbyWells()) {
+            if (w.getResourceType() == ResourceType.MANA) {
+                hasMana = true;
+                manaWell = w.getMapLocation();
+                break;
+            }
+        }
+        if (!hasMana) return false;
+        // Check if somebody is already reporting.
+        for (RobotInfo r: neighbors) {
+            if (r == null) continue;
+            if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared) {
+                takenReportTarget = manaWell;
+                return false;
+            }
+        }
+        // Tie-breaker for who gets to report is ID.
+        for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (r.type != RobotType.CARRIER) continue;
+            if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared &&
+                r.ID < rc.getID()) {
+                takenReportTarget = manaWell;
+                return false;
+            }
+        }
+        communications.reportWells();
+        return hasMana;
     }
 
     void report() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
         if (!rc.canWriteSharedArray(0, 0)) {
             greedyPath.move(m);
+        } else {
+            communications.reportWells();
+            shouldReport = false;
         }
     }
 
@@ -127,10 +184,11 @@ public class Carrier extends Robot {
             else resourceNeeded = communications.getResourceNeed();
             return State.FLEE;
         }
-        shouldReport = determineReport();
+        if (determineReport()) shouldReport = true;
+        System.out.println(shouldReport);
         if (shouldReport) return State.REPORT;
         if (hasAnchor) return State.DELIVER_ANCHOR;
-        if (born%10 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
+        if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
         if (shouldDeliver) return State.DELIVERING;
 
         //System.out.println("good resource: " + communications.readResourceNeed());
@@ -156,17 +214,6 @@ public class Carrier extends Robot {
             return State.DELIVERING;
         }
         return State.SEARCHING;
-    }
-
-    boolean determineReport() throws GameActionException {
-        if (communications.readWells(ResourceType.MANA).length > 0) return false;
-        boolean onlyManaWells = false;
-        for (WellInfo w: rc.senseNearbyWells()) {
-            if (w.getResourceType() != ResourceType.MANA) {
-                onlyManaWells = false;
-            }
-        }
-        return !onlyManaWells;
     }
 
     MapLocation prev = null;
@@ -270,11 +317,11 @@ public class Carrier extends Robot {
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum()%3 == 0) findTarget();
         if (resourceNeeded == ResourceType.MANA && 
-            communications.readWells(ResourceType.MANA).length > 0 && 
+            communications.readWells(ResourceType.MANA) != null && 
             rc.getRoundNum() < 15) 
             findTarget();
         if (rc.getRoundNum() - targetRound > 10) findTarget();
-        rc.setIndicatorString("target is " + wellTarget);
+        rc.setIndicatorString("Target is " + wellTarget);
         boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
         if (rc.getLocation().distanceSquaredTo(wellTarget) > 2 || f) greedyPath.move(wellTarget);
         f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation().add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection()).distanceSquaredTo(wellTarget) > 2);
@@ -314,7 +361,7 @@ public class Carrier extends Robot {
     void harvest() throws GameActionException {
         // recompute if you wanted MANA and we j found a well.
         if (resourceNeeded == ResourceType.MANA && 
-            communications.readWells(ResourceType.MANA).length > 0 && 
+            communications.readWells(ResourceType.MANA) == null && 
             rc.getRoundNum() < 15) 
             findTarget();
 

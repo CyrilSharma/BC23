@@ -116,7 +116,7 @@ public class Communications {
             int availability = (val >> 12) & (0b1111);
             s += String.format("[%d %d]: %d | ", x, y, availability);
         }
-        //rc.setIndicatorString(s);
+        rc.setIndicatorString(s);
         //System.out.println(s);
     }
 
@@ -295,7 +295,8 @@ public class Communications {
     }
 
     // return all wells
-    public MapLocation[] readWells(ResourceType r) throws GameActionException{
+    public MapLocation[] readWells(ResourceType r) throws GameActionException {
+        boolean updated = false;
         int ind = 0;
         int[] start_stop = getStartStop(r);
         MapLocation[] locs = new MapLocation[5];
@@ -303,7 +304,9 @@ public class Communications {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             locs[ind++] = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+            updated = true;
         }
+        if (!updated) return null;
         return locs;
     }
 
