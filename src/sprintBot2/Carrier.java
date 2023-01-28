@@ -14,7 +14,7 @@ public class Carrier extends Robot {
     MapLocation wellTarget;
     MapLocation islandTarget;
     MapLocation depositLoc = null;
-    MapLocation prevBadWell;
+    MapLocation prevFleeSpot;
     MapLocation takenReportTarget;
     ResourceType chosen;
     ResourceType resourceNeeded;
@@ -56,7 +56,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-         rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
+        rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
         communications.initial();
         //printWells();
         updateSaturation();
@@ -125,7 +125,6 @@ public class Carrier extends Robot {
         for (int i = 0; i < 3; i++) {
             for (RobotInfo r: neighbors[i]) {
                 if (r == null) continue;
-                if (rc.getID() == 10743) System.out.println(r.location);
                 if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared) {
                     rc.setIndicatorString("I DETECTED SOMEONE");
                     takenReportTarget = manaWell;
@@ -192,7 +191,7 @@ public class Carrier extends Robot {
         for (RobotInfo r: rc.senseNearbyRobots(-1)) {
             if (r.team == rc.getTeam().opponent() && Util.isAttacker(r.type)) {
                 fleeTurns = 3;
-                prevBadWell = wellTarget;
+                prevFleeSpot = rc.getLocation();
                 prevBadTurn = rc.getRoundNum();
                 return State.FLEE;
             }
@@ -248,41 +247,39 @@ public class Carrier extends Robot {
     }
 
     void exploreSafe() throws GameActionException {
-        MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 8);
+        MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 4);
         double bestD = -1;
         double d = Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 6;
-        MapLocation best = rc.getLocation();
+        MapLocation best = null;
+        MapLocation closeHQ = communications.findClosestHQ();
         for (MapLocation m: locs) {
-            if (m.distanceSquaredTo(rc.getLocation()) <= 2) continue;
+            if (Clock.getBytecodesLeft() < 3000) break;
+            if (m.distanceSquaredTo(rc.getLocation()) < 2) continue;
             if (rc.canSenseLocation(m)) {
                 if (!rc.sensePassability(m)) continue;
             }
-            double distHQ = Util.absDistance(m, communications.findClosestHQ());
+            double distHQ = Util.absDistance(m, closeHQ);
             if (distHQ > d) continue;
             double distPrev = 0;
             if (prev != null) {
                 distPrev = Util.absDistance(m, prev);
             }
-            double carrierDist = 0;
-            for (RobotInfo r : rc.senseNearbyRobots(-1, rc.getTeam())) {
-                if (r.type != RobotType.CARRIER) continue;
-                carrierDist += Util.absDistance(r.location, m);
-            }
-            if (distHQ + carrierDist + 2 * distPrev > bestD) {
-                bestD = distHQ + carrierDist + 2 * distPrev;
+
+            if (distHQ + 2 * distPrev > bestD) {
+                bestD = distHQ + 2 * distPrev;
                 best = m;
             }
         }
         if (best != null) {
             prev = rc.getLocation();
-            greedyPath.move(best);
-            greedyPath.move(best);
+            rc.setIndicatorString(""+best+" "+Clock.getBytecodesLeft());
+            if (Clock.getBytecodesLeft() > 2500) greedyPath.move(best);
+            if (Clock.getBytecodesLeft() > 2500) greedyPath.move(best);
         }
     }
 
     void flee() throws GameActionException {
         doMine();
-        // findTarget();
         MapLocation m = communications.findClosestHQ();
         for (int i = 1; i <= 3; i++) {
             ResourceType r = ResourceType.values()[i];
@@ -292,7 +289,8 @@ public class Carrier extends Robot {
                 resourceNeeded = communications.getResourceNeed();
             }
         }
-        if (fleeTurns < 3) {
+        //findTarget();
+        if (m.distanceSquaredTo(rc.getLocation()) <= 9 && (mana + adamantium + elixir > 20)) {
             greedyPath.move(m);
             greedyPath.move(m);
         } else {
@@ -325,7 +323,7 @@ public class Carrier extends Robot {
     void search() throws GameActionException{
         findTarget();
         if (wellTarget != null) {
-            seek();
+            seek(false);
             return;
         }
         explore();
@@ -334,15 +332,20 @@ public class Carrier extends Robot {
     }
 
     void seek() throws GameActionException {
+        seek(true);
+    }
+
+    void seek(boolean recompute) throws GameActionException {
         // initially, we don't know all the wells. re-evaluate target regularly.
         // if (rc.getRoundNum()%3 == 0) findTarget();
-        if (resourceNeeded == ResourceType.MANA && 
-            communications.readWells(ResourceType.MANA) != null && 
-            rc.getRoundNum() < 15) 
-            findTarget();
-
-        if (rc.getRoundNum() - targetRound > 10) 
-            findTarget();
+        if (recompute) {
+            if (resourceNeeded == ResourceType.MANA && 
+                communications.readWells(ResourceType.MANA) != null && 
+                rc.getRoundNum() < 15) {
+                findTarget();
+            } else if (rc.getRoundNum() - targetRound > 10) 
+                findTarget();
+        }
 
         if (wellTarget == null) return;
         // rc.setIndicatorString("Target is " + wellTarget);
@@ -384,8 +387,6 @@ public class Carrier extends Robot {
                     resourceNeeded = ResourceType.ADAMANTIUM;
                 } else
                     resourceNeeded = ResourceType.MANA; */
-                prevBadWell = wellTarget;
-                prevBadTurn = rc.getRoundNum();
                 findTarget();
             }
         }
@@ -564,7 +565,7 @@ public class Carrier extends Robot {
         if (rc.getRoundNum() <= 50) {
             wellTarget = communications.findBestWell(resourceNeeded, true);
         } else {
-            wellTarget = communications.findBestWell(resourceNeeded, true);
+            wellTarget = communications.findBestWell(resourceNeeded, false);
         }
         targetRound = rc.getRoundNum();
     }

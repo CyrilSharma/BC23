@@ -540,6 +540,29 @@ public class Launcher extends Robot {
         microtargets[7] = new MicroTarget(directions[7]);
         microtargets[8] = new MicroTarget(directions[8]);
 
+        int nclouds = 0;
+        nclouds += microtargets[0].hasCloud ? 1 : 0;
+        nclouds += microtargets[1].hasCloud ? 1 : 0;
+        nclouds += microtargets[2].hasCloud ? 1 : 0;
+        nclouds += microtargets[3].hasCloud ? 1 : 0;
+        nclouds += microtargets[4].hasCloud ? 1 : 0;
+        nclouds += microtargets[5].hasCloud ? 1 : 0;
+        nclouds += microtargets[6].hasCloud ? 1 : 0;
+        nclouds += microtargets[7].hasCloud ? 1 : 0;
+        nclouds += microtargets[8].hasCloud ? 1 : 0;
+
+        if (nclouds <= 4) {
+            if (microtargets[0].hasCloud) microtargets[0].canMove = false;
+            if (microtargets[1].hasCloud) microtargets[1].canMove = false;
+            if (microtargets[2].hasCloud) microtargets[2].canMove = false;
+            if (microtargets[3].hasCloud) microtargets[3].canMove = false;
+            if (microtargets[4].hasCloud) microtargets[4].canMove = false;
+            if (microtargets[5].hasCloud) microtargets[5].canMove = false;
+            if (microtargets[6].hasCloud) microtargets[6].canMove = false;
+            if (microtargets[7].hasCloud) microtargets[7].canMove = false;
+            if (microtargets[8].hasCloud) microtargets[8].canMove = false;
+        }
+
         MapLocation m;
         Team myTeam = rc.getTeam();
         Team opponentTeam = myTeam.opponent();
@@ -598,17 +621,16 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-        
-        for (MicroTarget mt: microtargets) {
-            switch (mt.safe()) {
-                case 1: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
-                case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
-                case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
-                case 4: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
-                default:
-            }
-        }
         rc.setIndicatorString("ITERS: "+iters);
+        for (MicroTarget mt: microtargets) {
+            /* switch (mt.safe()) {
+                case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
+                case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
+                case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
+                default:
+            } */
+            rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
+        }
     }
     
     // Choose best square to chase a defenseless target.
@@ -688,9 +710,8 @@ public class Launcher extends Robot {
        
         int safe() {
             if (net_dps > 0) return 1;
-            if (hasCloud) return 2;
-            if (dps_defending < dps_targetting) return 3;
-            return 4;
+            if (dps_defending < dps_targetting) return 2;
+            return 3;
         }
 
         boolean inRange() {

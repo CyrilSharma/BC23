@@ -948,7 +948,6 @@ public class Communications {
     // Find best well using only comms [i think that's ok].
     public MapLocation findBestWell(ResourceType want, boolean gd) throws GameActionException {
         WellTarget best = null;
-        int count = 0;
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
@@ -958,10 +957,8 @@ public class Communications {
             int available = (val >> 12) & (0b1111);
             // can do a better estimate.
             if (rc.canSenseLocation(m)) continue;
-            if (isEnemyTerritory(m)) continue;
             WellTarget cur = new WellTarget(m, getTypeFromIndex(i), want, available);
             if (cur.isBetterThan(best)) best = cur;
-            count++;
         }
 
         for (WellInfo w: rc.senseNearbyWells()) {
@@ -1017,8 +1014,8 @@ public class Communications {
             if (!wt.bestResource() && bestResource()) return true;
             if (wt.dist + 8 < dist) return false;
             if (wt.dist > dist + 8) return true;
-            if (wt.distEHQ < 8 + distEHQ) return false;
-            if (wt.distEHQ + 8 > distEHQ) return true;
+            if (wt.distEHQ > 8 + distEHQ) return false;
+            if (wt.distEHQ + 8 < distEHQ) return true;
             return dist <= wt.dist;
         }
     }

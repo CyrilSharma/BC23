@@ -6,6 +6,7 @@ public class HQ extends Robot {
     int MAX_MINERS = 20;
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
     int anchorRound = 100;
+    int surroundTurn = -10;
     boolean makingAnchor = false;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
@@ -62,20 +63,25 @@ public class HQ extends Robot {
             return;
         }
 
-        // if we have the resources, build a convoy.
-        if (rc.getResourceAmount(ResourceType.MANA)
-            >= 3 * RobotType.LAUNCHER.buildCostMana) 
-            buildConvoy();
-
         // splurge otherwise.
         RobotType needed = buildToRobotType(b);
-        buildIfCan(needed);
+        buildRobot(needed);
         for (RobotType r: RobotType.values()) {
             // if (r == RobotType.CARRIER) continue;
             // use in late game, but for now just don't make any.
             if (r == RobotType.AMPLIFIER) continue;
-            buildIfCan(r);
+            boolean shouldContinue = true;
+            while (canBuild(r) && shouldContinue) {
+                shouldContinue = buildRobot(r);
+                rc.setIndicatorString(""+shouldContinue);
+            }
         }
+    }
+
+    boolean canBuild(RobotType r) throws GameActionException {
+        return (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= r.buildCostAdamantium &&
+        rc.getResourceAmount(ResourceType.MANA) >= r.buildCostMana &&
+        rc.getResourceAmount(ResourceType.ELIXIR) >= r.buildCostElixir);
     }
 
     boolean isSurrounded() throws GameActionException {
@@ -86,23 +92,18 @@ public class HQ extends Robot {
             if (r.team == rc.getTeam()) allies++;
             else enemies++;
         }
-        return (allies <= 1 && enemies >= 3);
+        rc.setIndicatorString(""+(enemies - allies));
+        return (enemies - allies >= 3);
     }
 
-    void buildIfCan(RobotType r) throws GameActionException{
-        if (rc.getResourceAmount(ResourceType.ADAMANTIUM) >=
-                r.buildCostAdamantium &&
-            rc.getResourceAmount(ResourceType.MANA) >=
-                    r.buildCostMana &&
-            rc.getResourceAmount(ResourceType.ELIXIR) >=
-                    r.buildCostElixir) {
-            MapLocation loc = getBuildLocation(r);
-            if (rc.canBuildRobot(r, loc)) {
-                rc.buildRobot(r, loc);
-                communications.updateBuild(r);
-                //rc.setIndicatorString("Built: " + r);
-            }
+    boolean buildRobot(RobotType r) throws GameActionException{
+        MapLocation loc = getBuildLocation(r);
+        if (rc.canBuildRobot(r, loc)) {
+            rc.buildRobot(r, loc);
+            communications.updateBuild(r);
+            return true;
         }
+        return false;
     }
 
     void buildConvoy() throws GameActionException {
@@ -190,14 +191,10 @@ public class HQ extends Robot {
 
     Build getBuildType() throws GameActionException {
         boolean surrounded = isSurrounded();
-        if (rc.getRoundNum() >= 2)
-            communications.reportSurrounded(surrounded);
-        if (surrounded && rc.getResourceAmount(ResourceType.MANA)
-                < 3 * RobotType.LAUNCHER.buildCostMana) {
-            return Build.NONE;
-        } else if (surrounded) {
-            return Build.LAUNCHER;
-        }
+        if (surrounded) surroundTurn = rc.getRoundNum();
+        if (rc.getRoundNum() >= 2) communications.reportSurrounded(surrounded);
+        rc.setIndicatorString(""+(rc.getRoundNum() - surroundTurn));
+        if (surrounded || (rc.getRoundNum() - surroundTurn) < 10) return Build.NONE;
 
         RobotInfo[] enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         boolean defend = false;

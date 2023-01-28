@@ -71,7 +71,6 @@ public class GreedyPath {
     public static boolean clockwise = false;
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
-    public static boolean skippedTurn = false;
     public Direction bug(MapLocation loc) throws GameActionException {
         //rc.setIndicatorString("BUG: " + loc);
         // Exit condition: got closer to the destination then when I started.
@@ -94,21 +93,6 @@ public class GreedyPath {
             if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
             if (rc.getMovementCooldownTurns() + cld >= 10)
                 next = next.add(mi.getCurrentDirection());
-            if(dir == startDir && !skippedTurn){
-                RobotInfo[] e = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
-                boolean f = true;
-                for(RobotInfo r : e){
-                    if(r.location.equals(next)){
-                        f = false;
-                        break;
-                    }
-                }
-                if(!f){
-                    skippedTurn = true;
-                    break;
-                }
-            }
-            skippedTurn = false;
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
@@ -232,6 +216,7 @@ public class GreedyPath {
         int dist = 0;
         Direction bst = Direction.CENTER;
         RobotInfo[] r = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (r == null) return false;
         for(Direction dir : directions) {
             if (!rc.canMove(dir)) continue;
             MapLocation esc = rc.getLocation().add(dir);
