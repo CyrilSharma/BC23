@@ -627,17 +627,23 @@ public class Communications {
     }
 
     public MapLocation findClosestHQ() throws GameActionException {
-        return findClosestHQto(rc.getLocation());
+        MapLocation m = findClosestHQto(rc.getLocation(), true);
+        if (m == null) return findClosestHQto(rc.getLocation(), false);
+        else return m;
     }
 
-    public MapLocation findClosestHQto(MapLocation g) throws GameActionException {
+    public MapLocation findClosestHQ(boolean safe) throws GameActionException {
+        return findClosestHQto(rc.getLocation(), safe);
+    }
+
+    public MapLocation findClosestHQto(MapLocation g, boolean safe) throws GameActionException {
         MapLocation best = null;
         int bestD = 100000;
         for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             int val = rc.readSharedArray(i);
             if (val == 0) continue;
             // if surrounded don't go here
-            if (((val >> 13) & (0b1)) == 1) {
+            if (((val >> 13) & (0b1)) == 1 && safe) {
                 continue;
             }
             MapLocation hq = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
