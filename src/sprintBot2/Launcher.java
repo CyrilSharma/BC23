@@ -206,6 +206,7 @@ public class Launcher extends Robot {
 
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
+        // bestNeighborDir = computeBestNeighborDir();
         if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
@@ -272,9 +273,9 @@ public class Launcher extends Robot {
                 if (prev.health > r.health) neighborsAttacked = true;
                 if ((prev != null && prev.location != r.location && netD > 0) ||
                     prev.health > r.health) {
+                    totalW += 6;
                     x += r.location.x * 6;
                     y += r.location.y * 6;
-                    totalW += 6;
                     friendsMoved = true;
                 }
             } 
@@ -674,10 +675,10 @@ public class Launcher extends Robot {
             //int start = Clock.getBytecodesLeft();
             if (!canMove) return;
             int d = nloc.distanceSquaredTo(r.location);
-            if (d <= curActionRadius)
-                net_dps += currentDPS;
-            if (d <= curVisionRadius)
+            if (d <= curVisionRadius) {
                 dps_targetting += currentDPS;
+                net_dps += currentDPS;
+            }
             if (d <= minDistToEnemy)
                 minDistToEnemy = d;
         } 

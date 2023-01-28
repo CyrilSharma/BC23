@@ -580,10 +580,10 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-        /* rc.setIndicatorString("ITERS: "+iters);
+        rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
             rc.setIndicatorDot(mt.nloc, 0, mt.safe() * 50, 0);
-        } */
+        }
     }
     
     // Choose best square to chase a defenseless target.
