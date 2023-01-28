@@ -166,8 +166,17 @@ public class Communications {
             rc.writeSharedArray(RESCOUNT, count+1);
 
         double total = 4 * numHQ;
-        int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
-        int nAdamantium = Math.min((int) Math.round((((double) mn / 240.0) * total)), (int)(0.25 * total));
+
+        // heuristic determined by closest pair of HQs.
+        double mn = 1000000;
+        for (int i = 0; i < numHQ; i++) {
+            MapLocation h = HQs[i];
+            MapLocation e = getClosestEnemyHQTo(h, null);
+            double d = Util.absDistance(e, h);
+            if (d < mn) mn = d;
+        }
+        int nAdamantium = Math.min((int) Math.round((((double) mn / 120.0) * total)), (int)(0.50 * total));
+        System.out.println(mn);
         System.out.println(nAdamantium);
         if (count < nAdamantium) return ResourceType.ADAMANTIUM;
         else return ResourceType.MANA;
@@ -230,9 +239,10 @@ public class Communications {
                 return ResourceType.MANA;
             }
         } else if (!isManaWellSaturated()) {
-            return ResourceType.MANA;
-        } else {
             if (val < 0.75) return ResourceType.MANA;
+            else return ResourceType.ADAMANTIUM;
+        } else {
+            if (val < 0.90) return ResourceType.MANA;
             else return ResourceType.ADAMANTIUM;
         }
     }
