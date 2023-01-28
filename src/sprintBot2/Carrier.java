@@ -42,12 +42,11 @@ public class Carrier extends Robot {
         super(rc);
         communications.findOurHQs();
         initialGreedy = communications.getGreedy();
-        resourceNeeded = communications.getResourceNeed();
         born = rc.getRoundNum();
-        //if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
-        //else
+        if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
+        else resourceNeeded = ResourceType.MANA;
         // resourceNeeded = communications.getResourceNeed();
-        resourceNeeded = ResourceType.MANA;
+        // resourceNeeded = ResourceType.MANA;
     }
 
     void run() throws GameActionException {
@@ -212,14 +211,6 @@ public class Carrier extends Robot {
         if (hasAnchor) return State.DELIVER_ANCHOR;
         //if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
         if (shouldDeliver) return State.DELIVERING;
-        if(rc.getRoundNum() <= 50) {
-            MapLocation wel = communications.findBestWell(ResourceType.MANA, true);
-            if (wel != null) {
-                if(rc.getWeight() <= 25 && rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && rc.getLocation().distanceSquaredTo(wel) <= 200){
-                    wellTarget = wel;
-                }
-            }
-        }
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (wellTarget == null && 
             adamantium == 0 &&
@@ -567,7 +558,11 @@ public class Carrier extends Robot {
     }
 
     void findTarget() throws GameActionException {
-        wellTarget = communications.findBestWell(resourceNeeded, false);
+        if (rc.getRoundNum() <= 50) {
+            wellTarget = communications.findBestWell(resourceNeeded, true);
+        } else {
+            wellTarget = communications.findBestWell(resourceNeeded, true);
+        }
         targetRound = rc.getRoundNum();
     }
 

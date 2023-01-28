@@ -75,6 +75,7 @@ public class Communications {
 
     static final int ANCHOR = SEES_HQ + 1;
     static final int GREEDYCOUNT = ANCHOR+1;
+    static final int RESCOUNT = GREEDYCOUNT+1;
 
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
@@ -159,10 +160,15 @@ public class Communications {
     }
 
     public ResourceType getResourceInitial() throws GameActionException {
-        int count = rc.readSharedArray(GREEDYCOUNT);
+        // update
+        int count = rc.readSharedArray(RESCOUNT);
+        if (rc.canWriteSharedArray(0, 0))
+            rc.writeSharedArray(RESCOUNT, count+1);
+
         double total = 4 * numHQ;
         int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
-        int nAdamantium = Math.min((int) Math.round((((double) mn / 60.0) * total)), (int)(0.75 * total));
+        int nAdamantium = Math.min((int) Math.round((((double) mn / 240.0) * total)), (int)(0.25 * total));
+        System.out.println(nAdamantium);
         if (count < nAdamantium) return ResourceType.ADAMANTIUM;
         else return ResourceType.MANA;
     }
@@ -223,10 +229,25 @@ public class Communications {
             } else {
                 return ResourceType.MANA;
             }
+        } else if (!isManaWellSaturated()) {
+            return ResourceType.MANA;
         } else {
             if (val < 0.75) return ResourceType.MANA;
             else return ResourceType.ADAMANTIUM;
         }
+    }
+
+    public boolean isManaWellSaturated() throws GameActionException {
+        int[] start_stop = getStartStop(ResourceType.MANA);
+        double avg = 0.0;
+        int cnt = 0;
+        for (int i = start_stop[0]; i < start_stop[1]; i++) {
+            int val = rc.readSharedArray(i);
+            int available = (val >> 12) & (0b1111);
+            avg += available;
+            cnt++;
+        }
+        return avg/cnt < 3.0;
     }
 
     public void resetResourceCounts() throws GameActionException{
@@ -698,22 +719,23 @@ public class Communications {
     }
 
     public boolean isEnemyTerritory(MapLocation m) throws GameActionException {
-        if (symmetryChecker.getSymmetry() == -1) return false;
-        int minDistEnemy = 100000;
+        MapLocation[] locs = null;
+        if (symmetryChecker.getSymmetry() != -1) locs = getEnemyHQs();
+        else if (EnemyHQEstimates != null) locs = EnemyHQEstimates;
+        else return false;
         int minDistAlly = 100000;
-        for(int i = 0; i < numHQ; i++){
+        for (int i = 0; i < numHQ; i++) {
             MapLocation h = HQs[i];
-            int d1 = h.distanceSquaredTo(m);
-            MapLocation s = null;
-            switch (symmetryChecker.getSymmetry()) {
-                case 0: s = symmetryChecker.getHSym(h); break;
-                case 1: s = symmetryChecker.getVSym(h); break;
-                case 2: s = symmetryChecker.getRSym(h); break;
-                default:
-            }
-            int d2 = s.distanceSquaredTo(m);
-            if (d1 < minDistAlly) minDistAlly = d1;
-            if (d2 < minDistEnemy) minDistEnemy = d2;
+            int d = h.distanceSquaredTo(m);
+            if (d < minDistAlly) 
+                minDistAlly = d;
+        }
+        int minDistEnemy = 100000;
+        for (MapLocation e: locs) {
+            if (e == null) continue;
+            int d = e.distanceSquaredTo(m);
+            if (d < minDistEnemy) 
+                minDistEnemy = d;
         }
         return minDistEnemy < minDistAlly;
     }
@@ -897,17 +919,20 @@ public class Communications {
     // Find best well using only comms [i think that's ok].
     public MapLocation findBestWell(ResourceType want, boolean gd) throws GameActionException {
         WellTarget best = null;
+        int count = 0;
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
             int val = rc.readSharedArray(i);
             int x = val & (0b111111);
             int y = (val >> 6) & (0b111111);
+            MapLocation m = new MapLocation(x, y);
             int available = (val >> 12) & (0b1111);
             // can do a better estimate.
-            if (rc.canSenseLocation(new MapLocation(x, y))) continue;
-            WellTarget cur = new WellTarget(new MapLocation(x, y),
-                getTypeFromIndex(i), want, available);
+            if (rc.canSenseLocation(m)) continue;
+            if (isEnemyTerritory(m)) continue;
+            WellTarget cur = new WellTarget(m, getTypeFromIndex(i), want, available);
             if (cur.isBetterThan(best)) best = cur;
+            count++;
         }
 
         for (WellInfo w: rc.senseNearbyWells()) {
@@ -924,7 +949,7 @@ public class Communications {
         }
         if (best == null) return null;
         if (best.dist > 15) return null;
-        if(gd && !best.bestResource()) return null;
+        if (gd && !best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
         updateAvailability(best.loc, Math.max(best.avail - 1, 0));
         return best.loc;

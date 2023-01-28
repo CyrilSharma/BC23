@@ -74,7 +74,7 @@ public class Exploration {
 
     public MapLocation generateTarget(MapLocation[] hqs, int num) throws GameActionException {
         MapLocation m = rc.getLocation();
-        while (rc.getLocation().distanceSquaredTo(m) <= 80) {
+        while (rc.getLocation().distanceSquaredTo(m) <= 80 || communications.isEnemyTerritory(m)) {
             m = new MapLocation(rng.nextInt(width), rng.nextInt(height));
         }
         return m;
