@@ -602,13 +602,7 @@ public class Launcher extends Robot {
         for (MicroTarget mt: microtargets) {
             rc.setIndicatorDot(mt.nloc, 0, mt.safe() * 50, 0);
         }
-
-        int count = 0;
-        for (LauncherInfo r: neighbors) {
-            if (r == null) continue;
-            count++;
-        }
-        rc.setIndicatorString("ITERS: "+iters+" COUNT: "+count);
+        rc.setIndicatorString("ITERS: "+iters);
     }
     
     // Choose best square to chase a defenseless target.

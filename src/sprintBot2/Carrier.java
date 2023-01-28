@@ -464,8 +464,7 @@ public class Carrier extends Robot {
             if (resourceRemaining / mineRate <= 5) {
                 int d = r.location.distanceSquaredTo(well.getMapLocation());
                 if (d < 2) available++;
-                else available--;
-            } 
+            } else available--;
         }   
         return Math.max(available, 0);
     }
