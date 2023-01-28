@@ -293,31 +293,36 @@ public class Launcher extends Robot {
             marked[r.ID%sz] = true;
         }
         // purge outdated info.
-        avgEnemyX = 0; avgEnemyY = 0;
-        cntEnemy = 0;
+        /* avgEnemyX = 0; avgEnemyY = 0;
+        cntEnemy = 0; */
+        boolean hasCloud = rc.senseCloud(rc.getLocation());
+        int vision = ((hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : rc.getType().visionRadiusSquared);
         for (LauncherInfo n: neighbors) {
             if (n == null) continue;
-            if (marked[n.ID%sz]){
+            if (marked[n.ID%sz]) continue;
+            /* {
                 if(n.team == rc.getTeam().opponent()){
                     avgEnemyX += n.location.x;
                     avgEnemyY += n.location.y;
                     cntEnemy++;
                 }
                 continue;
-            }
+            } */
             if (lastUpdate[n.ID%sz] + 3 < round) {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
-            if(n.team == rc.getTeam().opponent()){
+            /* if(n.team == rc.getTeam().opponent()){
                 avgEnemyX += n.location.x;
                 avgEnemyY += n.location.y;
                 cntEnemy++;
-            }
+            } */
+            // If it couldn't have escaped vision radius, it's gone.
             MapLocation nloc = n.location;
-            for(int i = 0; i < lastUpdate[n.ID%sz] - round; i++) nloc = nloc.add(nloc.directionTo(rc.getLocation()).opposite());
-            boolean hasCloud = rc.senseCloud(rc.getLocation());
-            if(nloc.distanceSquaredTo(rc.getLocation()) < ((hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : rc.getType().visionRadiusSquared)){
+            Direction away = nloc.directionTo(rc.getLocation()).opposite();
+            for (int i = 0; i < lastUpdate[n.ID%sz] - round; i++) 
+                nloc = nloc.add(away);
+            if (nloc.distanceSquaredTo(rc.getLocation()) < vision) {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
@@ -354,10 +359,6 @@ public class Launcher extends Robot {
     }
 
     void hunt_hq() throws GameActionException {
-        /* hqTarget = findClosestLivingHQ();
-        if (hqTarget == null) {
-            hqTarget = communications.getClosestEnemyHQ(true);
-        } */
         hqTarget = communications.getClosestEnemyHQ(killedHQs);
         if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
         // no nullpointers in theory?
@@ -534,11 +535,11 @@ public class Launcher extends Robot {
     MapLocation enemyLauncherLoc = null;
     void maneuver() throws GameActionException {
         rc.setIndicatorString("Maneuvering");
-        if(cntEnemy > 0) enemyLauncherLoc = new MapLocation(avgEnemyX / cntEnemy, avgEnemyY / cntEnemy);
+        /* if(cntEnemy > 0) enemyLauncherLoc = new MapLocation(avgEnemyX / cntEnemy, avgEnemyY / cntEnemy);
         else enemyLauncherLoc = null;
         if(enemyLauncherLoc != null){
-            rc.setIndicatorDot(enemyLauncherLoc, 0, 250, 0);
-        }
+            rc.setIndicatorDot(enemyLauncherLoc, 250, 250, 250);
+        } */
         // Needs 1k Bytecode.
         MicroTarget[] microtargets = new MicroTarget[9];
         microtargets[0] = new MicroTarget(directions[0]);
@@ -684,7 +685,7 @@ public class Launcher extends Robot {
         
         void addAlly(LauncherInfo r) throws GameActionException {
             if (!canMove) return;
-            if (nloc.distanceSquaredTo(r.location) <= curVisionRadius && (enemyLauncherLoc == null || nloc.distanceSquaredTo(enemyLauncherLoc/*.add(enemyLauncherLoc.directionTo(nloc))*/) <= curVisionRadius))
+            if (nloc.distanceSquaredTo(r.location) <= curVisionRadius)
                 dps_defending += currentDPS;
         }
        
