@@ -895,7 +895,7 @@ public class Communications {
     }
 
     // Find best well using only comms [i think that's ok].
-    public MapLocation findBestWell(ResourceType want) throws GameActionException {
+    public MapLocation findBestWell(ResourceType want, boolean gd) throws GameActionException {
         WellTarget best = null;
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
@@ -924,7 +924,7 @@ public class Communications {
         }
         if (best == null) return null;
         if (best.dist > 15) return null;
-        //if(!best.bestResource()) return null;
+        if(gd && !best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
         updateAvailability(best.loc, Math.max(best.avail - 1, 0));
         return best.loc;

@@ -57,7 +57,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        // rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
+         rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
         communications.initial();
         //printWells();
         updateSaturation();
@@ -145,6 +145,7 @@ public class Carrier extends Robot {
             }
         }
         communications.reportWells();
+        rc.setIndicatorString("IT IS " + hasMana);
         return hasMana;
     }
 
@@ -211,7 +212,14 @@ public class Carrier extends Robot {
         if (hasAnchor) return State.DELIVER_ANCHOR;
         //if (rc.getID()%5 == 0 && rc.getRoundNum() - born <= 10) return State.EXPLORE;
         if (shouldDeliver) return State.DELIVERING;
-
+        if(rc.getRoundNum() <= 50) {
+            MapLocation wel = communications.findBestWell(ResourceType.MANA, true);
+            if (wel != null) {
+                if(rc.getWeight() <= 25 && rc.getResourceAmount(ResourceType.ADAMANTIUM) > 0 && rc.getLocation().distanceSquaredTo(wel) <= 200){
+                    wellTarget = wel;
+                }
+            }
+        }
         //System.out.println("good resource: " + communications.readResourceNeed());
         if (wellTarget == null && 
             adamantium == 0 &&
@@ -559,7 +567,7 @@ public class Carrier extends Robot {
     }
 
     void findTarget() throws GameActionException {
-        wellTarget = communications.findBestWell(resourceNeeded);
+        wellTarget = communications.findBestWell(resourceNeeded, false);
         targetRound = rc.getRoundNum();
     }
 
