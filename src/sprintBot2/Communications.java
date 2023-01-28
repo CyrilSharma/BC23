@@ -562,10 +562,8 @@ public class Communications {
 
     public void report() throws GameActionException{
         //maybe dont report something on amplifiers bcz they are close (or at) bytecode limit
-        if(rc.getType() != RobotType.AMPLIFIER) {
-            reportWellCache();
-            reportWells();
-        }
+        reportWellCache();
+        reportWells();
         reportCount();
         reportEnemyHQs();
     }

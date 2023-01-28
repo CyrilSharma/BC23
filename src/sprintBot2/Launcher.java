@@ -230,7 +230,7 @@ public class Launcher extends Robot {
         }
     }
 
-    int sz = 50;
+    int sz = 29;
     int[] lastUpdate = new int[sz];
     LauncherInfo[] neighbors = new LauncherInfo[sz];
     StringBuilder neighborStr = new StringBuilder();
@@ -239,6 +239,7 @@ public class Launcher extends Robot {
         hasLaunchersNear = false;
         hasCarriersNear = false;
         int round = rc.getRoundNum();
+        int limit = (rc.getRoundNum()%2 == 0) ? 2000 : 6000;
         MapLocation myloc = rc.getLocation();
         Team myTeam = rc.getTeam();
         Team opponentTeam = myTeam.opponent();
@@ -251,7 +252,7 @@ public class Launcher extends Robot {
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, myTeam);
         StringBuilder nneighborStr = new StringBuilder();
         for (RobotInfo r: robots) {
-            if (Clock.getBytecodesLeft() < 6750) break;
+            if (Clock.getBytecodesLeft() < limit) break;
             if (r.type == RobotType.CARRIER && r.team == opponentTeam) {
                 hasCarriersNear = true;
             }
@@ -660,7 +661,7 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            if (hasCloud) return 1;
+            //if (hasCloud) return 1;
             if (net_dps > 0) return 2;
             if (dps_defending < dps_targetting) return 3;
             return 4;

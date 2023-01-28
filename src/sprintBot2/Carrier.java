@@ -46,8 +46,8 @@ public class Carrier extends Robot {
         born = rc.getRoundNum();
         //if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
         //else
-        resourceNeeded = communications.getResourceNeed();
-        // resourceNeeded = ResourceType.MANA;
+        // resourceNeeded = communications.getResourceNeed();
+        resourceNeeded = ResourceType.MANA;
     }
 
     void run() throws GameActionException {
@@ -239,7 +239,7 @@ public class Carrier extends Robot {
 
     MapLocation prev = null;
     void explore() throws GameActionException {
-        if (rc.getID()%10 == 0) exploreSafe();
+        if (rc.getID()%2 == 0) exploreSafe();
         else exploreUnsafe();
     }
 
