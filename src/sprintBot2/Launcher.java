@@ -310,7 +310,7 @@ public class Launcher extends Robot {
             Direction away = nloc.directionTo(rc.getLocation()).opposite();
             for (int i = 0; i < round - lastUpdate[n.ID%sz]; i++) 
                 nloc = nloc.add(away);
-            if (nloc.distanceSquaredTo(rc.getLocation()) < vision) {
+            if (nloc.distanceSquaredTo(rc.getLocation()) <= vision) {
                 neighbors[n.ID%sz] = null;
                 continue;
             }

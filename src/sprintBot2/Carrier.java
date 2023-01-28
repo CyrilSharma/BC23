@@ -461,10 +461,13 @@ public class Carrier extends Robot {
             if (r.type != RobotType.CARRIER) continue;
             double mineRate = (10.0 / RobotType.CARRIER.actionCooldown);
             int resourceRemaining = (GameConstants.CARRIER_CAPACITY-1) - r.getResourceAmount(wellType);
-            if (resourceRemaining / mineRate <= 5)
-                available++;
+            if (resourceRemaining / mineRate <= 5) {
+                int d = r.location.distanceSquaredTo(well.getMapLocation());
+                if (d < 2) available++;
+                else available--;
+            } 
         }   
-        return available;
+        return Math.max(available, 0);
     }
 
     void deliver_anchor() throws GameActionException {
