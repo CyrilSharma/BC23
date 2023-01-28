@@ -190,6 +190,8 @@ public class HQ extends Robot {
 
     Build getBuildType() throws GameActionException {
         boolean surrounded = isSurrounded();
+        if (rc.getRoundNum() >= 2)
+            communications.reportSurrounded(surrounded);
         if (surrounded && rc.getResourceAmount(ResourceType.MANA)
                 < 3 * RobotType.LAUNCHER.buildCostMana) {
             return Build.NONE;

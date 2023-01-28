@@ -421,6 +421,7 @@ public class Carrier extends Robot {
 
     void deliver() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
+        rc.setIndicatorString("DELIVER TO: "+m);
         if (m.distanceSquaredTo(rc.getLocation()) > 2 || rc.getLocation().add(rc.senseMapInfo(rc.getLocation())
             .getCurrentDirection()).distanceSquaredTo(m) > 2) {
             greedyPath.move(m);

@@ -319,7 +319,7 @@ public class Communications {
         MapLocation cur = rc.getLocation();
         for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) != 0) continue;
-            int msg = cur.x + (1 << 6) * cur.y;
+            int msg = 1 + (1 << 1) * cur.x + (1 << 7) * cur.y;
             rc.writeSharedArray(i, msg);
             return;
         }
@@ -609,14 +609,21 @@ public class Communications {
         }
     }
 
-    public void findOurHQs() throws GameActionException{
+    public void findOurHQs() throws GameActionException {
         for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
             int val = rc.readSharedArray(i);
             if (val == 0) continue;
-            MapLocation hq = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+            MapLocation hq = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
             if (hq.equals(rc.getLocation())) hqIndex = numHQ;
             HQs[numHQ++] = hq;
         }
+    }
+
+    public void reportSurrounded(boolean surrounded) throws GameActionException {
+        MapLocation cur = rc.getLocation();
+        int v = surrounded ? 1 : 0;
+        int message = 1 + (1 << 1) * cur.x + (1 << 7) * cur.y + (1 << 13) * v;
+        rc.writeSharedArray(HQ_LOCATIONS + hqIndex, message);
     }
 
     public MapLocation findClosestHQ() throws GameActionException {
@@ -626,12 +633,18 @@ public class Communications {
     public MapLocation findClosestHQto(MapLocation g) throws GameActionException {
         MapLocation best = null;
         int bestD = 100000;
-        for (MapLocation m: HQs) {
-            if (m == null) continue;
-            int d = g.distanceSquaredTo(m);
+        for (int i = HQ_LOCATIONS; i < HQ_LOCATIONS + HQ_LOCATIONS_WIDTH; i++) {
+            int val = rc.readSharedArray(i);
+            if (val == 0) continue;
+            // if surrounded don't go here
+            if (((val >> 13) & (0b1)) == 1) {
+                continue;
+            }
+            MapLocation hq = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
+            int d = hq.distanceSquaredTo(g);
             if (d < bestD) {
                 bestD = d;
-                best = m;
+                best = hq;
             }
         }
         return best;
