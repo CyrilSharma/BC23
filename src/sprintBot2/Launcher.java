@@ -301,27 +301,14 @@ public class Launcher extends Robot {
         for (LauncherInfo n: neighbors) {
             if (n == null) continue;
             if (marked[n.ID%sz]) continue;
-            /* {
-                if(n.team == rc.getTeam().opponent()){
-                    avgEnemyX += n.location.x;
-                    avgEnemyY += n.location.y;
-                    cntEnemy++;
-                }
-                continue;
-            } */
             if (lastUpdate[n.ID%sz] + 3 < round) {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
-            /* if(n.team == rc.getTeam().opponent()){
-                avgEnemyX += n.location.x;
-                avgEnemyY += n.location.y;
-                cntEnemy++;
-            } */
             // If it couldn't have escaped vision radius, it's gone.
             MapLocation nloc = n.location;
             Direction away = nloc.directionTo(rc.getLocation()).opposite();
-            for (int i = 0; i < lastUpdate[n.ID%sz] - round; i++) 
+            for (int i = 0; i < round - lastUpdate[n.ID%sz]; i++) 
                 nloc = nloc.add(away);
             if (nloc.distanceSquaredTo(rc.getLocation()) < vision) {
                 neighbors[n.ID%sz] = null;
@@ -611,10 +598,17 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-         rc.setIndicatorString("ITERS: "+iters);
+        
         for (MicroTarget mt: microtargets) {
             rc.setIndicatorDot(mt.nloc, 0, mt.safe() * 50, 0);
         }
+
+        int count = 0;
+        for (LauncherInfo r: neighbors) {
+            if (r == null) continue;
+            count++;
+        }
+        rc.setIndicatorString("ITERS: "+iters+" COUNT: "+count);
     }
     
     // Choose best square to chase a defenseless target.
