@@ -968,6 +968,7 @@ public class Communications {
     class WellTarget {
         MapLocation loc;
         double dist;
+        double distEHQ;
         ResourceType r;
         ResourceType want;
         int avail;
@@ -978,6 +979,7 @@ public class Communications {
             this.avail = avail;
             this.r = res;
             this.want = want;
+            this.distEHQ = Util.absDistance(m , getClosestEnemyHQTo(m, null));
         }
 
         boolean bestResource() throws GameActionException {
@@ -996,6 +998,8 @@ public class Communications {
             if (!wt.bestResource() && bestResource()) return true;
             if (wt.dist + 8 < dist) return false;
             if (wt.dist > dist + 8) return true;
+            if (wt.distEHQ < 8 + distEHQ) return false;
+            if (wt.distEHQ + 8 > distEHQ) return true;
             return dist <= wt.dist;
         }
     }
