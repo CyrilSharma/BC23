@@ -600,7 +600,13 @@ public class Launcher extends Robot {
 
         
         for (MicroTarget mt: microtargets) {
-            rc.setIndicatorDot(mt.nloc, 0, mt.safe() * 50, 0);
+            switch (mt.safe()) {
+                case 1: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
+                case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
+                case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
+                case 4: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
+                default:
+            }
         }
         rc.setIndicatorString("ITERS: "+iters);
     }
@@ -641,6 +647,7 @@ public class Launcher extends Robot {
         double net_dps;
         int minDistToEnemy = 100000;
         int action;
+        int vision;
         boolean canMove;
         boolean hasCloud;
         MapLocation nloc;
@@ -656,6 +663,7 @@ public class Launcher extends Robot {
                 net_dps -= RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
             action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
+            vision = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
             // minDistToEnemy = nloc.distanceSquaredTo(previousEnemy);
         }
         
@@ -663,7 +671,7 @@ public class Launcher extends Robot {
             //int start = Clock.getBytecodesLeft();
             if (!canMove) return;
             int d = nloc.distanceSquaredTo(r.location);
-            if (d <= curVisionRadius) {
+            if (d <= Math.min(curVisionRadius, vision)) {
                 dps_targetting += currentDPS;
                 net_dps += currentDPS;
             }
@@ -679,8 +687,8 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            //if (hasCloud) return 1;
-            if (net_dps > 0) return 2;
+            if (net_dps > 0) return 1;
+            if (hasCloud) return 2;
             if (dps_defending < dps_targetting) return 3;
             return 4;
         }

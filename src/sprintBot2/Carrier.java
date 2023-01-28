@@ -282,7 +282,7 @@ public class Carrier extends Robot {
 
     void flee() throws GameActionException {
         doMine();
-        findTarget();
+        // findTarget();
         MapLocation m = communications.findClosestHQ();
         for (int i = 1; i <= 3; i++) {
             ResourceType r = ResourceType.values()[i];
@@ -292,7 +292,7 @@ public class Carrier extends Robot {
                 resourceNeeded = communications.getResourceNeed();
             }
         }
-        if (m.distanceSquaredTo(rc.getLocation()) <= 9 && (mana + adamantium + elixir > 20)) {
+        if (fleeTurns < 3) {
             greedyPath.move(m);
             greedyPath.move(m);
         } else {
