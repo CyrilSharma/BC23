@@ -672,7 +672,7 @@ public class Launcher extends Robot {
             this.dir = dir;
             MapLocation newloc = rc.getLocation().add(dir);
             d = newloc.distanceSquaredTo(m);
-            canMove = rc.canMove(dir);
+            canMove = (rc.canMove(dir) || dir == Direction.CENTER);
         }
 
         boolean inRange() {
@@ -706,7 +706,7 @@ public class Launcher extends Robot {
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             nloc = rc.getLocation().add(dir);
-            canMove = rc.canMove(dir);
+            canMove = (rc.canMove(dir) || dir == Direction.CENTER);
             if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
