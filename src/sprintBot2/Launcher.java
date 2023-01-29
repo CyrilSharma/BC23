@@ -375,17 +375,31 @@ public class Launcher extends Robot {
             int bestD = 100000;
             MapLocation best = null;
             for (MapLocation a: rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), -1)) {
+                if (Clock.getBytecodesLeft() < 2000) break;
                 if (a.distanceSquaredTo(m) <= rad) continue;
-                if (rc.canSenseLocation(a) && rc.isLocationOccupied(a)) continue;
+                if (a.distanceSquaredTo(m) > rad + 10) continue;
+                if (rc.canSenseLocation(a)) {
+                    MapInfo mi = rc.senseMapInfo(a);
+                    if (mi.getCurrentDirection() != Direction.CENTER) continue;
+                    if (rc.isLocationOccupied(a)) continue;
+                }
                 int curD = a.distanceSquaredTo(rc.getLocation());
                 if (curD < bestD) {
                     bestD = curD;
                     best = a;
                 }
             }
-            if (best != null) greedyPath.move(best, shouldAvoidClouds);
+            if (best != null){
+                greedyPath.move(best, shouldAvoidClouds);
+                return;
+            } 
+            greedyPath.move(communications.findClosestHQ());
             return;
-        } else if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
+        } else if (m.distanceSquaredTo(rc.getLocation()) > rad + 10) {
+            greedyPath.move(m, shouldAvoidClouds);
+        }
+        
+        if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
             int enemyLaunchers = 0;
             int friendLaunchers = 0;
             for (RobotInfo r: rc.senseNearbyRobots()) {
@@ -401,8 +415,6 @@ public class Launcher extends Robot {
                 }
             }
         }
-        if (m.distanceSquaredTo(rc.getLocation()) > rad + 10)
-            greedyPath.move(m, shouldAvoidClouds);
     }
 
     MapLocation findClosestLivingHQ() throws GameActionException {

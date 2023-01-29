@@ -94,7 +94,7 @@ public class GreedyPath {
             if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
             if (rc.getMovementCooldownTurns() + cld >= 10)
                 next = next.add(mi.getCurrentDirection());
-            if(dir == startDir && !skippedTurn){
+            if (dir == startDir && !skippedTurn){
                 RobotInfo[] e = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
                 if(e.length >= 25) {
                     boolean f = true;
