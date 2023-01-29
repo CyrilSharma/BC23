@@ -101,9 +101,9 @@ public class Communications {
         sendMemory();
         report();
         checkEnemyHQs();
-        getEnemyHQs();
         clearTargets();
-        broadcastAttackTargets();
+        if (rc.getType() != RobotType.LAUNCHER)
+            broadcastAttackTargets();
         estimateEnemyHQs();
         updateAvailabilityCounts();
         displayEstimates();
@@ -772,6 +772,11 @@ public class Communications {
     public void broadcastAttackTargets() throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return;
         RobotInfo r = util.getBestAttackTarget();
+        broadcastAttackTargets(r);
+    }
+
+    public void broadcastAttackTargets(RobotInfo r) throws GameActionException {
+        if (!rc.canWriteSharedArray(0, 0)) return;
         if (r != null && r.type != RobotType.HEADQUARTERS) 
             broadcastAttackTarget(r);
     }

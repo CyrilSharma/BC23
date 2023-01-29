@@ -104,10 +104,12 @@ public class Launcher extends Robot {
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
         // if (rc.getRoundNum() - prevHuntRound > 5) huntTarget = null;
+        int c = Clock.getBytecodesLeft();
         communications.initial();
+        rc.setIndicatorString("COST: "+(c-Clock.getBytecodesLeft()));
         updateNeighbors();
         State state = determineState();
-        rc.setIndicatorString(state.toString());
+        // rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -182,6 +184,7 @@ public class Launcher extends Robot {
         }
         if (attackers && !Util.isAttacker(r.type)) return;
         if (rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
+            communications.broadcastAttackTargets(r);
             rc.attack(r.location);
         }
     }
@@ -263,12 +266,14 @@ public class Launcher extends Robot {
         RobotInfo[] robots = rc.senseNearbyRobots(-1);
         RobotInfo[] nbrs = rc.senseNearbyRobots(4, myTeam);
         StringBuilder nneighborStr = new StringBuilder();
+        int count = 0;
         for (RobotInfo r: robots) {
             if (Clock.getBytecodesLeft() < limit) break;
             if (r.type == RobotType.CARRIER && r.team == opponentTeam) {
                 hasCarriersNear = true;
             }
             if (r.type != RobotType.LAUNCHER) continue;
+            count++;
             contains = neighborStr.toString().contains(""+r.ID);
             // keep track of average position of my team, prioritizing those who moved.
             if (contains && r.team == rc.getTeam()) {
@@ -303,6 +308,7 @@ public class Launcher extends Robot {
             lastUpdate[r.ID%sz] = round;
             marked[r.ID%sz] = true;
         }
+        // rc.setIndicatorString("COUNT: "+count+" BYTECODE: "+Clock.getBytecodesLeft());
         // purge outdated info.
         /* avgEnemyX = 0; avgEnemyY = 0;
         cntEnemy = 0; */
@@ -442,7 +448,7 @@ public class Launcher extends Robot {
 
     void hunt() throws GameActionException {
         if (huntTarget != null) {
-            rc.setIndicatorString("HUNT: "+huntTarget);
+            // rc.setIndicatorString("HUNT: "+huntTarget);
             greedyPath.move(huntTarget, shouldAvoidClouds);
         }
     }
@@ -511,7 +517,7 @@ public class Launcher extends Robot {
     }
 
     void harass() throws GameActionException{
-        rc.setIndicatorString("i am harass :) " + harassTarget + " " + harassTimer);
+        // rc.setIndicatorString("i am harass :) " + harassTarget + " " + harassTimer);
         if(harassTimer <= 0 || (harassTarget != null && rc.getLocation().distanceSquaredTo(harassTarget) <= 9)) harassTarget = null;
         if(harassTarget == null){
             harassTimer = 50;
@@ -646,13 +652,13 @@ public class Launcher extends Robot {
 
         //rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
-            /* switch (mt.safe()) {
+            switch (mt.safe()) {
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
                 case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
                 case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
                 default:
-            } */
-            rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
+            }
+            // rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
         }
     }
     
