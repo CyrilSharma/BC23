@@ -40,12 +40,8 @@ public class HQ extends Robot {
     }
 
     void build() throws GameActionException {
-        if (rc.getRoundNum() == 1) {
-            buildConvoy();
-        }
-        if (rc.getRoundNum() == 2) {
-            placeExploratoryCarriers();
-        }
+        if (rc.getRoundNum() == 1) buildConvoy();
+        if (rc.getRoundNum() <= 2) placeExploratoryCarriers();
 
         Build b = getBuildType();
         if (b == Build.NONE) return;
@@ -60,13 +56,15 @@ public class HQ extends Robot {
 
         // splurge otherwise.
         RobotType needed = buildToRobotType(b);
-        if (canBuild(needed)) buildRobot(needed);
+        buildRobot(needed);
         for (RobotType r: RobotType.values()) {
+            // if (r == RobotType.CARRIER) continue;
+            // use in late game, but for now just don't make any.
             if (r == RobotType.AMPLIFIER) continue;
             boolean shouldContinue = true;
-            if(r.equals(RobotType.CARRIER) && communications.isEverythingSaturated()) shouldContinue = false;
             while (canBuild(r) && shouldContinue) {
                 shouldContinue = buildRobot(r);
+                rc.setIndicatorString(""+shouldContinue);
             }
         }
     }
