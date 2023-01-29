@@ -77,6 +77,9 @@ public class Communications {
     static final int GREEDYCOUNT = ANCHOR+1;
     static final int RESCOUNT = GREEDYCOUNT+1;
 
+    static final int ISLAND_LOC = RESCOUNT + 1;
+    static final int ISLAND_LOC_LEN = 7;
+
     static final RobotType[] UNITS = {
             RobotType.CARRIER,
             RobotType.LAUNCHER,
@@ -272,6 +275,20 @@ public class Communications {
             avg += available;
             cnt++;
         }
+        return avg/cnt < 3.0;
+    }
+
+    public boolean isEverythingSaturated() throws GameActionException {
+        double avg = 0.0;
+        int cnt = 0;
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
+            int val = rc.readSharedArray(i);
+            if(val == 0) continue;
+            int available = (val >> 12) & (0b1111);
+            avg += available;
+            cnt++;
+        }
+        if(cnt == 0) return false;
         return avg/cnt < 3.0;
     }
 
@@ -612,6 +629,80 @@ public class Communications {
         reportWells();
         reportCount();
         reportEnemyHQs();
+        reportIslands();
+    }
+
+    MapLocation[] islandLoc = new MapLocation[40];
+    public void reportIslands() throws GameActionException{
+        int isl[] = rc.senseNearbyIslands();
+        for(int i : isl){
+            if(rc.senseAnchor(i) != null){
+                /*
+                for(int j = ISLAND_LOC; j < ISLAND_LOC + ISLAND_LOC_LEN; j++) {
+                    int val = rc.readSharedArray(j);
+                    if (((val >> 12) & (0b1111)) == i) {
+                        //System.out.println("WROTE ABT ISL ON " + islandLoc[i]);
+                        rc.writeSharedArray(j, 0);
+                        break;
+                    }
+                }
+                 */
+                continue;
+            }
+            MapLocation[] ma = rc.senseNearbyIslandLocations(i);
+            islandLoc[i] = ma[0];
+        }
+        if(!rc.canWriteSharedArray(0, 0)) return;
+        //now write everything from cache
+        for(int i = 0; i < 40; i++) if(islandLoc[i] != null){
+            boolean f = false;
+            for(int j = ISLAND_LOC; j < ISLAND_LOC + ISLAND_LOC_LEN; j++){
+                int val = rc.readSharedArray(j);
+                if((val >> 12) == (i & 0b1111)){
+                    f = true;
+                    break;
+                }
+            }
+            if(!f){
+                for(int j = ISLAND_LOC; j < ISLAND_LOC + ISLAND_LOC_LEN; j++) {
+                    int val = rc.readSharedArray(j);
+                    if(val == 0){
+                        //System.out.println("WROTE ABT ISL ON " + islandLoc[i]);
+                        rc.writeSharedArray(j, islandLoc[i].x + (islandLoc[i].y << 6) + ((i & 0b1111) << 12));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public MapLocation findIslandTarget(StringBuilder badIsl) throws GameActionException {
+        MapLocation closestTarget = null;
+        int d = 100000;
+        String bad = badIsl.toString();
+        for(int j = ISLAND_LOC; j < ISLAND_LOC + ISLAND_LOC_LEN; j++) {
+            int val = rc.readSharedArray(j);
+            if(val == 0) continue;
+            MapLocation mloc = new MapLocation(val & (0b111111), (val >> 6) & (0b111111));
+            int di = rc.getLocation().distanceSquaredTo(mloc) + mloc.distanceSquaredTo(findClosestHQto(mloc, true));
+            if(bad.contains("|" + ((val >> 12) & (0b1111)) + "|")) continue;
+            if(di < d){
+                d = di;
+                closestTarget = mloc;
+            }
+        }
+        int[] islands = rc.senseNearbyIslands();
+        for (int idx: islands) {
+            if (Clock.getBytecodesLeft() < 1000) break;
+            if (rc.senseAnchor(idx) != null) continue;
+            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
+            for (MapLocation spot: spots) {
+                if (rc.getLocation().distanceSquaredTo(spot) + spot.distanceSquaredTo(findClosestHQto(spot, true)) < d) {
+                    closestTarget = spot;
+                }
+            }
+        }
+        return closestTarget;
     }
 
     public void reportCount() throws GameActionException{

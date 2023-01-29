@@ -644,7 +644,7 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-        rc.setIndicatorString("ITERS: "+iters);
+        //rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
             /* switch (mt.safe()) {
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;

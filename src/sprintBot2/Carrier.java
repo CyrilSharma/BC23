@@ -474,10 +474,11 @@ public class Carrier extends Robot {
         return Math.max(available, 0);
     }
 
+    StringBuilder badIsl = new StringBuilder();
     void deliver_anchor() throws GameActionException {
         if (islandTarget == null) {
             //System.out.println(Clock.getBytecodesLeft());
-            islandTarget = findIslandTarget();
+            islandTarget = communications.findIslandTarget(badIsl);
             //System.out.println(Clock.getBytecodesLeft());
             if (islandTarget == null) {
                 //moveTowardsSoldiers();
@@ -487,10 +488,13 @@ public class Carrier extends Robot {
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
-                if (rc.canPlaceAnchor()) {
-                    rc.placeAnchor();
+                if (rc.canPlaceAnchor()){
                     islandTarget = null;
-                    hasAnchor = false;
+                    if(rc.senseAnchor(rc.senseIsland(rc.getLocation())) == null) {
+                        rc.placeAnchor();
+                        hasAnchor = false;
+                    }
+                    else badIsl.append("|" + (rc.senseIsland(rc.getLocation()) & (0b1111)) + "|");
                 }
             }
         }
@@ -531,23 +535,6 @@ public class Carrier extends Robot {
             //System.out.println("end: " + Clock.getBytecodesLeft());
         } else if (rc.canMove(best)) 
             rc.move(best);
-    }
-
-    MapLocation findIslandTarget() throws GameActionException {
-        int[] islands = rc.senseNearbyIslands();
-        MapLocation closestTarget = null;
-        int d = 100000;
-        for (int idx: islands) {
-            if (Clock.getBytecodesLeft() < 1000) break;
-            if (rc.senseAnchor(idx) != null) continue;
-            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
-            for (MapLocation spot: spots) {
-                if (rc.getLocation().distanceSquaredTo(spot) < d) {
-                    closestTarget = spot;
-                }
-            }
-        }
-        return closestTarget;
     }
 
     // maybe this is a bad idea?

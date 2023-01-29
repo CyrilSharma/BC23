@@ -31,13 +31,12 @@ public class HQ extends Robot {
             cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
             cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
         }
-        build();
-        communications.last();
         if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0) {
             if (communications.hqIndex == communications.numHQ - 1)
                 communications.resetCounts();
         }
-        rc.setIndicatorString("cntAmp: " + cntAmplifiers);
+        build();
+        communications.last();
     }
 
     void build() throws GameActionException {
@@ -65,6 +64,7 @@ public class HQ extends Robot {
         for (RobotType r: RobotType.values()) {
             if (r == RobotType.AMPLIFIER) continue;
             boolean shouldContinue = true;
+            if(r.equals(RobotType.CARRIER) && communications.isEverythingSaturated()) shouldContinue = false;
             while (canBuild(r) && shouldContinue) {
                 shouldContinue = buildRobot(r);
             }
@@ -234,7 +234,8 @@ public class HQ extends Robot {
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 2;
-        if (mod==0) return Build.CARRIER;
+        rc.setIndicatorString("is it? " + communications.isEverythingSaturated());
+        if (mod==0 && !communications.isEverythingSaturated()) return Build.CARRIER;
         return Build.LAUNCHER;
     }
 
