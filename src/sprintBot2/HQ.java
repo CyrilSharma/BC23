@@ -30,12 +30,13 @@ public class HQ extends Robot {
             cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
             cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
         }
-        if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0) {
-            if (communications.hqIndex == 0) 
-                communications.resetCounts();
-        }
         build();
         communications.last();
+        if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0) {
+            if (communications.hqIndex == communications.numHQ - 1)
+                communications.resetCounts();
+        }
+        rc.setIndicatorString("cntAmp: " + cntAmplifiers);
     }
 
     void build() throws GameActionException {

@@ -107,7 +107,7 @@ public class Communications {
     }
 
     public void displayAvailability() throws GameActionException {
-        if (hqIndex != 0) return;
+        if (hqIndex != numHQ - 1) return;
         String s = "";
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
