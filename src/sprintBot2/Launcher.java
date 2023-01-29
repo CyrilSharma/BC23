@@ -103,13 +103,10 @@ public class Launcher extends Robot {
         hurt = rc.getHealth() < 100;
         // if (hurt) findCloseIsland();
         if (rc.getRoundNum()%5 == prevEnemyRound) previousEnemy = null;
-        // if (rc.getRoundNum() - prevHuntRound > 5) huntTarget = null;
-        int c = Clock.getBytecodesLeft();
         communications.initial();
-        rc.setIndicatorString("COST: "+(c-Clock.getBytecodesLeft()));
         updateNeighbors();
         State state = determineState();
-        // rc.setIndicatorString(state.toString());
+        rc.setIndicatorString(state.toString());
         doAttack(true);
         switch (state) {
             case WAIT: break;
@@ -251,6 +248,7 @@ public class Launcher extends Robot {
     int avgEnemyX = 0, avgEnemyY = 0, cntEnemy = 0;
     // totally not scuffed.
     void updateNeighbors() throws GameActionException {
+        int c = Clock.getBytecodesLeft();
         hasLaunchersNear = false;
         hasCarriersNear = false;
         int round = rc.getRoundNum();
@@ -304,9 +302,30 @@ public class Launcher extends Robot {
             if (r.team == opponentTeam)
                 hasLaunchersNear = true;
             rc.setIndicatorDot(r.location, 100, 0, 0);
-            neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
-            lastUpdate[r.ID%sz] = round;
-            marked[r.ID%sz] = true;
+            int stop = (r.ID+sz-1)%sz;
+            for (int i = r.ID%sz; i != stop; i = (i + 1)%sz) {
+                LauncherInfo n = neighbors[i];
+                if (n != null && n.ID != r.ID) continue;
+                neighbors[i] = new LauncherInfo(r.health, r.ID, r.location, r.team);
+                lastUpdate[i] = round;
+                marked[i] = true;
+                break;
+            }
+        }
+        // never not see enemies.
+        if (count == 0) {
+            for (RobotInfo r: robots) {
+                if (r.type != RobotType.LAUNCHER) continue;
+                int stop = (r.ID+sz-1)%sz;
+                for (int i = r.ID%sz; i != stop; i = (i + 1)%sz) {
+                    LauncherInfo n = neighbors[i];
+                    if (n != null && n.ID != r.ID) continue;
+                    neighbors[i] = new LauncherInfo(r.health, r.ID, r.location, r.team);
+                    lastUpdate[i] = round;
+                    marked[i] = true;
+                    break;
+                }
+            }
         }
         // rc.setIndicatorString("COUNT: "+count+" BYTECODE: "+Clock.getBytecodesLeft());
         // purge outdated info.
@@ -314,20 +333,22 @@ public class Launcher extends Robot {
         cntEnemy = 0; */
         boolean hasCloud = rc.senseCloud(rc.getLocation());
         int vision = ((hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : rc.getType().visionRadiusSquared);
-        for (LauncherInfo n: neighbors) {
+        for (int i = 0; i < sz; i++) {
+            LauncherInfo n = neighbors[i];
             if (n == null) continue;
-            if (marked[n.ID%sz]) continue;
-            if (lastUpdate[n.ID%sz] + 3 < round) {
-                neighbors[n.ID%sz] = null;
+            if (marked[i]) continue;
+            if (lastUpdate[i] + 3 < round) {
+                neighbors[i] = null;
                 continue;
             }
             // If it couldn't have escaped vision radius, it's gone.
             MapLocation nloc = n.location;
             Direction away = nloc.directionTo(rc.getLocation()).opposite();
-            for (int i = 0; i < round - lastUpdate[n.ID%sz]; i++) 
-                nloc = nloc.add(away);
+            for (int j = 0; j < round - lastUpdate[j]; j++) {
+                if (j%2 == 0) nloc = nloc.add(away);
+            }
             if (nloc.distanceSquaredTo(rc.getLocation()) <= vision) {
-                neighbors[n.ID%sz] = null;
+                neighbors[i] = null;
                 continue;
             }
             rc.setIndicatorDot(n.location, 100, 0, 0);
@@ -338,6 +359,7 @@ public class Launcher extends Robot {
         x /= totalW;
         y /= totalW;
         bestNeighborLoc = new MapLocation((int) x, (int) y);
+        System.out.println("COST: "+(c-Clock.getBytecodesLeft()));
     }
 
     void heal() throws GameActionException {
@@ -580,16 +602,17 @@ public class Launcher extends Robot {
         nclouds += microtargets[7].hasCloud ? 1 : 0;
         nclouds += microtargets[8].hasCloud ? 1 : 0;
 
+        int numCanMove = 0;
         if (nclouds <= 4) {
-            if (microtargets[0].hasCloud) microtargets[0].canMove = false;
-            if (microtargets[1].hasCloud) microtargets[1].canMove = false;
-            if (microtargets[2].hasCloud) microtargets[2].canMove = false;
-            if (microtargets[3].hasCloud) microtargets[3].canMove = false;
-            if (microtargets[4].hasCloud) microtargets[4].canMove = false;
-            if (microtargets[5].hasCloud) microtargets[5].canMove = false;
-            if (microtargets[6].hasCloud) microtargets[6].canMove = false;
-            if (microtargets[7].hasCloud) microtargets[7].canMove = false;
-            if (microtargets[8].hasCloud) microtargets[8].canMove = false;
+            if (microtargets[0].hasCloud) {microtargets[0].canMove = false; numCanMove++;};
+            if (microtargets[1].hasCloud) {microtargets[1].canMove = false; numCanMove++;};
+            if (microtargets[2].hasCloud) {microtargets[2].canMove = false; numCanMove++;};
+            if (microtargets[3].hasCloud) {microtargets[3].canMove = false; numCanMove++;};
+            if (microtargets[4].hasCloud) {microtargets[4].canMove = false; numCanMove++;};
+            if (microtargets[5].hasCloud) {microtargets[5].canMove = false; numCanMove++;};
+            if (microtargets[6].hasCloud) {microtargets[6].canMove = false; numCanMove++;};
+            if (microtargets[7].hasCloud) {microtargets[7].canMove = false; numCanMove++;};
+            if (microtargets[8].hasCloud) {microtargets[8].canMove = false; numCanMove++;};
         }
 
         MapLocation m;
@@ -597,10 +620,14 @@ public class Launcher extends Robot {
         Team opponentTeam = myTeam.opponent();
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         curOnCloud = mi.hasCloud();
+        int limit = numCanMove * 200;
         int iters = 0;
+        String s = "";
         for (LauncherInfo r: neighbors) {
             if (r == null) continue;
-            if (Clock.getBytecodesLeft() < 1500) break;
+            if (Clock.getBytecodesLeft() < limit) break;
+            s+=" "+Clock.getBytecodesLeft();
+            rc.setIndicatorDot(r.location, 255, 255, 255);
             m = r.location;
             boolean canSense = rc.canSenseLocation(m);
             if (canSense) mi = rc.senseMapInfo(m);
@@ -637,6 +664,8 @@ public class Launcher extends Robot {
             }
             iters++;
         }
+        rc.setIndicatorString(s);
+        
         // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
         if (microtargets[0].isBetterThan(best)) best = microtargets[0];
@@ -653,6 +682,7 @@ public class Launcher extends Robot {
         //rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
             switch (mt.safe()) {
+                case 0: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
                 case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
                 case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
@@ -738,6 +768,7 @@ public class Launcher extends Robot {
         }
        
         int safe() {
+            if (!canMove) return 0;
             if (net_dps > 0) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
@@ -748,10 +779,6 @@ public class Launcher extends Robot {
         }
 
         boolean isBetterThan(MicroTarget mt) {
-            if (mt.canMove && !canMove) return false;
-            if (!mt.canMove && canMove) return true;
-
-            //System.out.println(mt.safe()+" "+safe()+" "+nloc);
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
