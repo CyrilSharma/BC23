@@ -22,35 +22,29 @@ public class HQ extends Robot {
         NONE
     }
     void run() throws GameActionException {
-        // if (rc.getRobotCount() < 4 && rc.getRoundNum() > 400) rc.resign();
-        // REMEMBER TO COMMENT THIS OUT :DDDDD
-        //if(rc.getRoundNum() == 500) rc.resign();
         communications.initial();
-        //rc.setIndicatorString("Built: Nothing");
         if(rc.getRoundNum() == 1) communications.postHQ();
         if(rc.getRoundNum() == 2) communications.findOurHQs();
         if (rc.getRoundNum() % Constants.REPORT_FREQ == 0) {
-            // we're trying to go Comms-less, so for now just use these.
             cntCarriers = communications.readBuild(RobotType.CARRIER);
             cntLaunchers = communications.readBuild(RobotType.LAUNCHER);
             cntAmplifiers = communications.getUnitCount(RobotType.AMPLIFIER);
         }
-        if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0){
-            if(communications.HQs[communications.numHQ - 1].equals(rc.getLocation())) 
+        if(rc.getRoundNum() > 0 && (rc.getRoundNum() % Constants.REPORT_FREQ) == 0) {
+            if (communications.hqIndex == 0) 
                 communications.resetCounts();
         }
         build();
-        if(rc.getRoundNum() > 3){
-            MapLocation ter = communications.estimateEnemyTerritory();
-            // rc.setIndicatorDot(ter, 0, 255, 0);
-        }
         communications.last();
-        //rc.setIndicatorString("Symmetry is " + communications.symmetryChecker.getSymmetry());
     }
 
     void build() throws GameActionException {
-        if (rc.getRoundNum() == 1) buildConvoy();
-        if (rc.getRoundNum() <= 2) placeExploratoryCarriers();
+        if (rc.getRoundNum() == 1) {
+            buildConvoy();
+        }
+        if (rc.getRoundNum() == 2) {
+            placeExploratoryCarriers();
+        }
 
         Build b = getBuildType();
         if (b == Build.NONE) return;
@@ -65,10 +59,8 @@ public class HQ extends Robot {
 
         // splurge otherwise.
         RobotType needed = buildToRobotType(b);
-        buildRobot(needed);
+        if (canBuild(needed)) buildRobot(needed);
         for (RobotType r: RobotType.values()) {
-            // if (r == RobotType.CARRIER) continue;
-            // use in late game, but for now just don't make any.
             if (r == RobotType.AMPLIFIER) continue;
             boolean shouldContinue = true;
             while (canBuild(r) && shouldContinue) {
@@ -79,7 +71,8 @@ public class HQ extends Robot {
     }
 
     boolean canBuild(RobotType r) throws GameActionException {
-        return (rc.getResourceAmount(ResourceType.ADAMANTIUM) >= r.buildCostAdamantium &&
+        return (rc.getActionCooldownTurns() < 10 &&
+        rc.getResourceAmount(ResourceType.ADAMANTIUM) >= r.buildCostAdamantium &&
         rc.getResourceAmount(ResourceType.MANA) >= r.buildCostMana &&
         rc.getResourceAmount(ResourceType.ELIXIR) >= r.buildCostElixir);
     }
@@ -111,6 +104,7 @@ public class HQ extends Robot {
         MapLocation best = null;
         int bestD = 1000000;
         for (MapLocation loc: locs) {
+            if (Clock.getBytecodesLeft() < 1000) break;
             if (!rc.canBuildRobot(RobotType.LAUNCHER, loc)) continue;
             MapLocation mloc = loc;
             if (rc.canSenseLocation(loc)) {
@@ -145,6 +139,7 @@ public class HQ extends Robot {
             MapLocation best = null;
             int bestD = -1;
             for (MapLocation loc: locs) {
+                if (Clock.getBytecodesLeft() < 2000) break;
                 if (!rc.canBuildRobot(RobotType.CARRIER, loc)) continue;
                 MapLocation mloc = loc;
                 if (rc.canSenseLocation(loc)) {
@@ -158,13 +153,14 @@ public class HQ extends Robot {
                 }
             }
             if (rc.canBuildRobot(RobotType.CARRIER, best))
-                    rc.buildRobot(RobotType.CARRIER, best);
+                rc.buildRobot(RobotType.CARRIER, best);
             prevPlacements[placementInd++] = best;
         }
         
         int minDist;
         MapLocation cur;
         for (int i = 0; rc.getResourceAmount(ResourceType.ADAMANTIUM) >= RobotType.CARRIER.buildCostAdamantium && i < 5; i++) {
+            if (!canBuild(RobotType.CARRIER)) break;
             cur = locs[rng.nextInt(locs.length)];
             minDist = 10000;
             for (MapLocation m: prevPlacements) {

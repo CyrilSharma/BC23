@@ -176,8 +176,6 @@ public class Communications {
             if (d < mn) mn = d;
         }
         int nAdamantium = Math.min((int) Math.round((((double) mn / 120.0) * total)), (int)(0.50 * total));
-        System.out.println(mn);
-        System.out.println(nAdamantium);
         if (count < nAdamantium) return ResourceType.ADAMANTIUM;
         else return ResourceType.MANA;
     }
@@ -614,7 +612,10 @@ public class Communications {
             int val = rc.readSharedArray(i);
             if (val == 0) continue;
             MapLocation hq = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
-            if (hq.equals(rc.getLocation())) hqIndex = numHQ;
+            if (hq.equals(rc.getLocation())) {
+                hqIndex = numHQ;
+                System.out.println("hqIndex: "+hqIndex);
+            }
             HQs[numHQ++] = hq;
         }
     }
@@ -623,7 +624,11 @@ public class Communications {
         MapLocation cur = rc.getLocation();
         int v = surrounded ? 1 : 0;
         int message = 1 + (1 << 1) * cur.x + (1 << 7) * cur.y + (1 << 13) * v;
-        rc.writeSharedArray(HQ_LOCATIONS + hqIndex, message);
+        if (rc.canWriteSharedArray(HQ_LOCATIONS + hqIndex, 0)) {
+            rc.writeSharedArray(HQ_LOCATIONS + hqIndex, message);
+        } else {
+            System.out.println("Index: "+hqIndex);
+        }
     }
 
     public MapLocation findClosestHQ() throws GameActionException {
