@@ -13,14 +13,14 @@ public class GreedyPath {
     int curIter = 0;
     int goalRound = 0;
     static final Direction[] directions = {
-        Direction.NORTH,
-        Direction.NORTHEAST,
-        Direction.EAST,
-        Direction.SOUTHEAST,
-        Direction.SOUTH,
-        Direction.SOUTHWEST,
-        Direction.WEST,
-        Direction.NORTHWEST,
+            Direction.NORTH,
+            Direction.NORTHEAST,
+            Direction.EAST,
+            Direction.SOUTHEAST,
+            Direction.SOUTH,
+            Direction.SOUTHWEST,
+            Direction.WEST,
+            Direction.NORTHWEST,
     };
 
     public GreedyPath(RobotController rc) {
@@ -49,7 +49,7 @@ public class GreedyPath {
     public Direction move(MapLocation loc, boolean avoidClouds) throws GameActionException {
         if (!rc.isMovementReady()) return null;
         if (rc.getType() == RobotType.LAUNCHER &&
-            rc.getRoundNum()%2 == 0) return null;
+                rc.getRoundNum()%2 == 0) return null;
         if (rc.getLocation().equals(loc)) return Direction.CENTER;
         if (previous == null || !loc.equals(previous)){
             shoudAvoidClouds = avoidClouds;
@@ -62,7 +62,7 @@ public class GreedyPath {
         if (!shouldBug) return fuzzy(loc);
         else return bug(loc);
     }
-    
+
     public static MapLocation bugTarget = null;
     public static int bestSoFar = 0;
     // which direction to start your checks in the next bugnav move
@@ -87,19 +87,24 @@ public class GreedyPath {
 
         markLoc();
         int dir = startDir;
+        StringBuilder uwu = new StringBuilder();
+        rc.setIndicatorString("start: " + startDir);
         for (int i = 0; i < 8; i++) {
             if (dir == 8) dir = 0;
-            MapLocation next = rc.adjacentLocation(directions[dir]);
-            if (!rc.canSenseLocation(next)) break;
-            MapInfo mi = rc.senseMapInfo(next);
-            // if this is my final move...
+            MapLocation next = rc.getLocation().add(directions[dir]);
+            uwu.append("|"+next+"|"+directions[dir]+"|");
             int cld = rc.getType().movementCooldown;
-            if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
-            if (rc.getMovementCooldownTurns() + cld >= 10)
-                next = next.add(mi.getCurrentDirection());
-            if(dir == startDir && rc.senseRobotAtLocation(next) != null) unitObstacle++;
-            if(unitObstacle == 2){
-                //rc.setIndicatorString("unit: " + unitObstacle);
+            if (rc.canSenseLocation(next)) {
+                MapInfo mi = rc.senseMapInfo(next);
+                // if this is my final move...
+                if (rc.getType() == RobotType.CARRIER) cld = (int) Math.floor(5.0 + (double) rc.getWeight() / 8.0);
+                if (rc.getMovementCooldownTurns() + cld >= 10)
+                    next = next.add(mi.getCurrentDirection());
+            }
+            if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) != null && rc.senseRobotAtLocation(next).getType() != RobotType.HEADQUARTERS)){
+                unitObstacle++;
+            }
+            if(unitObstacle == 3){
                 startDir = rc.getLocation().directionTo(bugTarget).ordinal();
                 clockwise = !clockwise;
                 startDirMissingInARow = 0;
@@ -107,11 +112,11 @@ public class GreedyPath {
                 dir = startDir;
                 next = rc.adjacentLocation(directions[dir]);
                 if(!rc.canSenseLocation(next)) break;
-                mi = rc.senseMapInfo(next);
+                MapInfo mi = rc.senseMapInfo(next);
                 if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
                 if (rc.getMovementCooldownTurns() + cld >= 10)
                     next = next.add(mi.getCurrentDirection());
-                if(dir == startDir && rc.senseRobotAtLocation(next) != null) unitObstacle++;
+                if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) != null && rc.senseRobotAtLocation(next).getType() != RobotType.HEADQUARTERS)) unitObstacle++;
             }
             if (dir == startDir && !skippedTurn){
                 RobotInfo[] e = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
@@ -134,7 +139,8 @@ public class GreedyPath {
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
                 dir = startDir;
-            } else if (tryMove(directions[dir])) {
+            }
+            if (tryMove(directions[dir])) {
                 // Safeguard 1: dir might equal startDir if this robot was blocked by another robot last turn
                 // that has since moved.
                 if (dir != startDir) {
@@ -149,6 +155,10 @@ public class GreedyPath {
                         startDir = rc.getLocation().directionTo(bugTarget).ordinal();
                         startDirMissingInARow = 0;
                     }
+                    else{
+                        if (clockwise) startDir = (dir + 6) % 8;
+                        else startDir = (dir + 2) % 8;
+                    }
                 }
                 // Rare occasion when startDir gets set to Direction.CENTER
                 if (startDir == 8) {
@@ -158,13 +168,16 @@ public class GreedyPath {
                 if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
                     startDir = rc.getLocation().directionTo(bugTarget).ordinal();
                 }
-                
+                //rc.setIndicatorString("dre: " + directions[dir] + ", start: " + directions[startDir]);
+                uwu.append("|"+directions[startDir]);
+                rc.setIndicatorString(uwu.toString());
                 return directions[dir];
             }
 
             if (clockwise) dir = (dir + 1) % 8;
             else dir = (dir + 7) % 8;
         }
+        //rc.setIndicatorString(uwu.toString());
         return null;
     }
 
@@ -198,9 +211,9 @@ public class GreedyPath {
                 }
             }
         }
-        if(!bst.equals(Direction.CENTER) && rc.canMove(bst) 
-            && rc.getLocation().distanceSquaredTo(goal) >= 
-            rc.getLocation().add(bst).distanceSquaredTo(goal)) {
+        if(!bst.equals(Direction.CENTER) && rc.canMove(bst)
+                && rc.getLocation().distanceSquaredTo(goal) >=
+                rc.getLocation().add(bst).distanceSquaredTo(goal)) {
             rc.move(bst);
             return bst;
         }
@@ -256,9 +269,9 @@ public class GreedyPath {
     }
 
     boolean hasCycle() {
-        return (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 && 
-        (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
-        lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound);
+        return (ready && lastLoc[rc.getLocation().x][rc.getLocation().y] > 0 &&
+                (rc.getRoundNum() - lastLoc[rc.getLocation().x][rc.getLocation().y]) < 10 &&
+                lastLoc[rc.getLocation().x][rc.getLocation().y] >= goalRound);
     }
 
     void markLoc() {
@@ -274,9 +287,10 @@ public class GreedyPath {
     }
 
     public boolean tryMove(Direction dir) throws GameActionException{
+        if(!rc.canSenseLocation(rc.getLocation().add(dir))) return false;
         MapInfo mi = rc.senseMapInfo(rc.getLocation().add(dir));
         if(rc.canMove(dir) && !dir.equals(Direction.CENTER) &&
-            !(shoudAvoidClouds && mi.hasCloud())){
+                !(shoudAvoidClouds && mi.hasCloud())){
             rc.move(dir);
             return true;
         }

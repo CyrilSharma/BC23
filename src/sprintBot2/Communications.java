@@ -756,7 +756,7 @@ public class Communications {
             int val = rc.readSharedArray(i);
             if (val == 0) continue;
             // if surrounded don't go here
-            if (((val >> 13) & (0b1)) == 1 && safe) {
+            if (((val) & (0b1)) == 1 && safe) {
                 continue;
             }
             MapLocation hq = new MapLocation((val >> 1) & (0b111111), (val >> 7) & (0b111111));
