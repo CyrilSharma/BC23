@@ -7,6 +7,7 @@ public class HQ extends Robot {
     int cntCarriers = 0, cntLaunchers = 0, cntAmplifiers = 0;
     int anchorRound = 100;
     int surroundTurn = -10;
+    int enemiesSurrounding;
     boolean makingAnchor = false;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
@@ -66,7 +67,6 @@ public class HQ extends Robot {
             boolean shouldContinue = true;
             while (canBuild(r) && shouldContinue) {
                 shouldContinue = buildRobot(r);
-                rc.setIndicatorString(""+shouldContinue);
             }
         }
     }
@@ -86,7 +86,7 @@ public class HQ extends Robot {
             if (r.team == rc.getTeam()) allies++;
             else enemies++;
         }
-        rc.setIndicatorString(""+(enemies - allies));
+        enemiesSurrounding = enemies;
         return (enemies - allies >= 3);
     }
 
@@ -188,10 +188,15 @@ public class HQ extends Robot {
 
     Build getBuildType() throws GameActionException {
         boolean surrounded = isSurrounded();
+        boolean canOutnumber = (rc.getResourceAmount(ResourceType.MANA) / RobotType.LAUNCHER.buildCostMana)
+            > enemiesSurrounding;
         if (surrounded) surroundTurn = rc.getRoundNum();
-        if (rc.getRoundNum() >= 2) communications.reportSurrounded(surrounded);
-        rc.setIndicatorString(""+(rc.getRoundNum() - surroundTurn));
-        if (surrounded || (rc.getRoundNum() - surroundTurn) < 10) return Build.NONE;
+        if ((surrounded || (rc.getRoundNum() - surroundTurn) < 10) &&
+            !canOutnumber) {
+            communications.reportSurrounded(true);
+            return Build.NONE;
+        }
+        communications.reportSurrounded(false);
 
         RobotInfo[] enemies = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam().opponent());
         boolean defend = false;

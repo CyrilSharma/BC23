@@ -237,16 +237,19 @@ public class Carrier extends Robot {
 
     MapLocation prev = null;
     void explore() throws GameActionException {
-        if (rc.getID()%2 == 0) exploreSafe();
+        rc.setIndicatorString("EXPLORING");
+        if (rc.getID()%2 == 0 && rc.getRoundNum() <= 25) exploreSafe();
         else exploreUnsafe();
     }
 
     void exploreUnsafe() throws GameActionException {
+        rc.setIndicatorString("EXPLORING 2");
         exploration.move(communications.HQs, communications.numHQ);
         exploration.move(communications.HQs, communications.numHQ);
     }
 
     void exploreSafe() throws GameActionException {
+        rc.setIndicatorString("EXPLORING 1");
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 4);
         double bestD = -1;
         double d = Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 6;
@@ -321,7 +324,7 @@ public class Carrier extends Robot {
     }
 
     void search() throws GameActionException{
-        findTarget();
+        if (rc.getRoundNum()%3 == 0) findTarget();
         if (wellTarget != null) {
             seek(false);
             return;
@@ -363,7 +366,7 @@ public class Carrier extends Robot {
             greedyPath.move(wellTarget);
             
         // recompute if crowded.
-        if (rc.canSenseLocation(wellTarget)) {
+        if (rc.canSenseLocation(wellTarget) && recompute) {
             WellInfo w = rc.senseWell(wellTarget);
             int count = 0;
             RobotInfo[] bots = rc.senseNearbyRobots(w.getMapLocation(), 2, rc.getTeam());

@@ -102,6 +102,7 @@ public class Communications {
         clearTargets();
         broadcastAttackTargets();
         estimateEnemyHQs();
+        updateAvailabilityCounts();
         displayEstimates();
         displayAvailability();
     }
@@ -119,6 +120,22 @@ public class Communications {
         }
         rc.setIndicatorString(s);
         //System.out.println(s);
+    }
+
+    public void updateAvailabilityCounts() throws GameActionException {
+        if (hqIndex != 0) return;
+        if (rc.getRoundNum()%20 != 0) return;
+        for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
+            if (rc.readSharedArray(i) == 0) continue;
+            int val = rc.readSharedArray(i);
+            int x = (val) & (0b111111);
+            int y = (val >> 6) & (0b111111);
+            int availability = ((val >> 13) & (0b1)) + 1;
+            availability = Math.min(availability, 9);
+            int message = x + (y << 6) + (availability << 12);
+            rc.writeSharedArray(i, message);
+            break;
+        }
     }
 
     public void updateAvailability(MapLocation loc, int availability) throws GameActionException {
