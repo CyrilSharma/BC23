@@ -130,7 +130,7 @@ public class Communications {
             int val = rc.readSharedArray(i);
             int x = (val) & (0b111111);
             int y = (val >> 6) & (0b111111);
-            int availability = ((val >> 13) & (0b1)) + 1;
+            int availability = ((val >> 12) & (0b1111)) + 1;
             availability = Math.min(availability, 9);
             int message = x + (y << 6) + (availability << 12);
             rc.writeSharedArray(i, message);

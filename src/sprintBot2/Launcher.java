@@ -64,6 +64,7 @@ public class Launcher extends Robot {
     MapLocation bestNeighborLoc;
     int killedHQInd = 0;
     MapLocation[] killedHQs = new MapLocation[5];
+    int[] killRound = new int[5];
     int harassTimer = 0;
     int harassDir = -1;
     int advanceTurns = 0;
@@ -123,6 +124,15 @@ public class Launcher extends Robot {
         updateEnemy();
         communications.last();
         previousPos = rc.getLocation();
+    }
+
+    void updateKillRound() throws GameActionException {
+        for (int i = 0; i < 5; i++) {
+            if (rc.getRoundNum() - killRound[i] > 250) {
+                killedHQs[i] = null;
+                killRound[i] = 0;
+            }
+        }
     }
 
     void updateEnemy() throws GameActionException {
@@ -387,6 +397,7 @@ public class Launcher extends Robot {
                 for (int i = 0; i < communications.numHQ; i++) {
                     if (killedHQs[i] != null) continue;
                     killedHQs[i] = m;
+                    killRound[i] = rc.getRoundNum();
                 }
             }
         }
