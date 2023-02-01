@@ -303,7 +303,7 @@ public class Launcher extends Robot {
         for (LauncherInfo n: neighbors) {
             if (n == null) continue;
             if (marked[n.ID%sz]) continue;
-            if (lastUpdate[n.ID%sz] + 3 < round) {
+            if (lastUpdate[n.ID%sz] + 5 < round) {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
@@ -555,6 +555,7 @@ public class Launcher extends Robot {
         nclouds += microtargets[8].hasCloud ? 1 : 0;
 
         if (nclouds <= 4) {
+            rc.setIndicatorString("BLOCKED CLOUDS");
             if (microtargets[0].hasCloud) microtargets[0].canMove = false;
             if (microtargets[1].hasCloud) microtargets[1].canMove = false;
             if (microtargets[2].hasCloud) microtargets[2].canMove = false;
@@ -625,7 +626,7 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-        rc.setIndicatorString("ITERS: "+iters);
+        //,rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
             /* switch (mt.safe()) {
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
