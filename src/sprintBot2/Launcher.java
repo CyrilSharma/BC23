@@ -162,6 +162,8 @@ public class Launcher extends Robot {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null && attackers) return;
         else if (r == null && attackers==false) {
+            MapInfo mi = rc.senseMapInfo(rc.getLocation());
+            if (mi.hasCloud()) return;
             MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
             if (clouds.length == 0) return;
             MapLocation loc = null;
@@ -518,6 +520,7 @@ public class Launcher extends Robot {
     double currentDPS, cooldown;
     boolean curOnCloud;
     boolean robotOnCloud;
+    boolean canAttackSoon;
     int curActionRadius;
     int curVisionRadius;
     MapLocation enemyLauncherLoc = null;
@@ -568,6 +571,7 @@ public class Launcher extends Robot {
         Team opponentTeam = myTeam.opponent();
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         curOnCloud = mi.hasCloud();
+        canAttackSoon = rc.getActionCooldownTurns() < 20;
         int iters = 0;
         for (LauncherInfo r: neighbors) {
             if (r == null) continue;
@@ -682,7 +686,9 @@ public class Launcher extends Robot {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
                 nloc = nloc.add(mi.getCurrentDirection());
-                net_dps -= RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
+                if (canAttackSoon) {
+                    net_dps -= RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
+                }
             }
             action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
             vision = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
