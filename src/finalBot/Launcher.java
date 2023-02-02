@@ -163,7 +163,7 @@ public class Launcher extends Robot {
         if (r == null && attackers) return;
         else if (r == null && attackers==false) {
             MapInfo mi = rc.senseMapInfo(rc.getLocation());
-            if (mi.hasCloud()) return;
+            // if (mi.hasCloud()) return;
             MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
             if (clouds.length == 0) return;
             MapLocation loc = null;
@@ -699,7 +699,7 @@ public class Launcher extends Robot {
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             nloc = rc.getLocation().add(dir);
-            canMove = rc.canMove(dir) || Direction.CENTER == dir;
+            canMove = rc.canMove(dir); // || Direction.CENTER == dir;
             if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
