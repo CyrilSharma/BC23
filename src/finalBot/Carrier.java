@@ -238,8 +238,9 @@ public class Carrier extends Robot {
     MapLocation prev = null;
     void explore() throws GameActionException {
         rc.setIndicatorString("EXPLORING");
-        if (rc.getID()%2 == 0 && rc.getRoundNum() <= 25) exploreSafe();
-        else exploreUnsafe();
+        if (rc.getID()%3 != 0 || rc.getRoundNum() <= 25) exploreSafe();
+        else if (rc.getID()%3 == 0) exploreUnsafe();
+        else exploreSafe();
     }
 
     void exploreUnsafe() throws GameActionException {

@@ -64,7 +64,6 @@ public class HQ extends Robot {
             boolean shouldContinue = true;
             while (canBuild(r) && shouldContinue) {
                 shouldContinue = buildRobot(r);
-                rc.setIndicatorString(""+shouldContinue);
             }
         }
     }
@@ -232,7 +231,7 @@ public class HQ extends Robot {
 
         // alternate between which things you add, unless ratios go out of wack.
         int mod = rc.getRoundNum() % 2;
-        rc.setIndicatorString("is it? " + communications.isEverythingSaturated());
+        // rc.setIndicatorString("is it? " + communications.isEverythingSaturated());
         if (mod==0 && !communications.isEverythingSaturated()) return Build.CARRIER;
         return Build.LAUNCHER;
     }

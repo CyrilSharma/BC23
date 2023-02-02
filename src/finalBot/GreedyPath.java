@@ -182,8 +182,6 @@ public class GreedyPath {
     }
 
     public static MapLocation greedyTarget = null;
-    public static int fuzzyBestDist = 10000000;
-    public static int fuzzyBadTurns = 0;
     public Direction fuzzy(MapLocation goal) throws GameActionException {
         // Exit condition: encountered a cycle.
         if (hasCycle()) {
@@ -192,20 +190,8 @@ public class GreedyPath {
             resetBug(goal);
             return bug(goal);
         }
-        if(!goal.equals(greedyTarget)) resetGreedy(goal);
-        int d = rc.getLocation().distanceSquaredTo(goal);
-        if(d >= fuzzyBestDist) fuzzyBadTurns++;
-        else{
-            fuzzyBestDist = rc.getLocation().distanceSquaredTo(goal);
-            fuzzyBadTurns = 0;
-        }
-        if(fuzzyBadTurns >= 3){
-            shouldBug = true;
-            resetBug(goal);
-            return bug(goal);
-        }
         markLoc();
-        // rc.setIndicatorString("FUZZY: " + goal + ", badTurn: " + fuzzyBadTurns + ", bestDistL " + fuzzyBestDist + ", curDist: " + rc.getLocation().distanceSquaredTo(goal));
+        // rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -236,8 +222,6 @@ public class GreedyPath {
 
     void resetGreedy(MapLocation loc) {
         greedyTarget = loc;
-        fuzzyBestDist = rc.getLocation().distanceSquaredTo(loc);
-        fuzzyBadTurns = 0;
         goalRound = rc.getRoundNum();
     }
 
