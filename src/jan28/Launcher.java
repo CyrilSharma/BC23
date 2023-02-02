@@ -288,7 +288,6 @@ public class Launcher extends Robot {
             nneighborStr.append("|"+r.ID);
             if (r.team == opponentTeam)
                 hasLaunchersNear = true;
-            rc.setIndicatorDot(r.location, 100, 0, 0);
             neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
             lastUpdate[r.ID%sz] = round;
             marked[r.ID%sz] = true;
@@ -314,7 +313,6 @@ public class Launcher extends Robot {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
-            rc.setIndicatorDot(n.location, 100, 0, 0);
             nneighborStr.append("|"+n.ID);
             if (n.team == opponentTeam)
                 hasLaunchersNear = true;
@@ -629,7 +627,8 @@ public class Launcher extends Robot {
                 case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
                 default:
             } */
-            rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
+            // rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
+            ;
         }
     }
     

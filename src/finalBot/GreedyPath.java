@@ -88,7 +88,6 @@ public class GreedyPath {
         markLoc();
         int dir = startDir;
         StringBuilder uwu = new StringBuilder();
-        rc.setIndicatorString("start: " + startDir);
         for (int i = 0; i < 8; i++) {
             if (dir == 8) dir = 0;
             MapLocation next = rc.getLocation().add(directions[dir]);

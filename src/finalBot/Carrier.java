@@ -40,7 +40,6 @@ public class Carrier extends Robot {
     public Carrier(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
-        initialGreedy = communications.getGreedy();
         born = rc.getRoundNum();
         if (rc.getRoundNum() <= 4) resourceNeeded = communications.getResourceInitial();
         else resourceNeeded = ResourceType.MANA;
@@ -284,7 +283,8 @@ public class Carrier extends Robot {
         MapLocation m = communications.findClosestHQ();
         for (int i = 1; i <= 3; i++) {
             ResourceType r = ResourceType.values()[i];
-            if (rc.canTransferResource(m, r, rc.getResourceAmount(r))) {
+            if (rc.canTransferResource(m, r, rc.getResourceAmount(r)) &&
+                rc.getResourceAmount(r) != 0) {
                 rc.transferResource(m, r, rc.getResourceAmount(r));
                 shouldDeliver = false;
                 resourceNeeded = communications.getResourceNeed();
@@ -322,7 +322,7 @@ public class Carrier extends Robot {
     }
 
     void search() throws GameActionException{
-        if (rc.getRoundNum()%3 == 0) findTarget();
+        findTarget();
         if (wellTarget != null) {
             seek(false);
             return;
@@ -349,6 +349,22 @@ public class Carrier extends Robot {
         }
 
         if (wellTarget == null) return;
+        if (rc.getLocation().distanceSquaredTo(wellTarget) >= 2) {
+            MapLocation bestLoc = null;
+            int bestD = 100000;
+            for (Direction dir: directions) {
+                MapLocation cur = wellTarget.add(dir);
+                if (rc.canSenseLocation(cur) && 
+                    (rc.isLocationOccupied(cur) && !rc.sensePassability(cur))) {
+                    continue;
+                }
+                if (cur.distanceSquaredTo(rc.getLocation()) <= bestD) {
+                    bestD = cur.distanceSquaredTo(rc.getLocation());
+                    bestLoc = cur;
+                }
+            }
+            if (bestLoc != null) greedyPath.move(bestLoc);
+        }
         // rc.setIndicatorString("Target is " + wellTarget);
         boolean f = (rc.getLocation().distanceSquaredTo(wellTarget) <= 2 && rc.getLocation()
             .add(rc.senseMapInfo(rc.getLocation()).getCurrentDirection())
@@ -401,22 +417,33 @@ public class Carrier extends Robot {
             findTarget();
 
         // Make space!
-        for (Direction d: directions) {
-            if (!rc.canMove(d)) continue;
-            MapLocation nloc = rc.getLocation().add(d);
-            if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
-                .distanceSquaredTo(wellTarget) < 2) {
-                if (rc.canMove(d)) rc.move(d);
-                break;
+        if ((adamantium + mana + elixir) < 37) {
+            for (Direction d: directions) {
+                if (!rc.canMove(d)) continue;
+                MapLocation nloc = rc.getLocation().add(d);
+                if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
+                    .distanceSquaredTo(wellTarget) < 2) {
+                    if (rc.canMove(d)) rc.move(d);
+                    break;
+                }
             }
         }
         if (rc.canCollectResource(wellTarget, 39-(adamantium + mana + elixir))) {
+            if (rc.senseWell(wellTarget).getResourceType() == ResourceType.ADAMANTIUM)
+                rc.setIndicatorDot(rc.getLocation(), 255, 0, 255);
+            else 
+                rc.setIndicatorDot(rc.getLocation(), 0, 255, 255);
             rc.collectResource(wellTarget, 39-(adamantium + mana + elixir));
             // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
             available = estimateCarriers25Turns(rc.senseWell(wellTarget));
             prevWellTarget = wellTarget;
             wellTarget = null;
+            deliver();
         } else if (rc.canCollectResource(wellTarget, -1)) {
+            if (rc.senseWell(wellTarget).getResourceType() == ResourceType.ADAMANTIUM)
+                rc.setIndicatorDot(rc.getLocation(), 255, 0, 255);
+            else 
+                rc.setIndicatorDot(rc.getLocation(), 0, 255, 255);
             rc.collectResource(wellTarget, -1);
         }
     }
@@ -437,6 +464,7 @@ public class Carrier extends Robot {
                     resourceNeeded = communications.getResourceNeed();
                 }
             }
+            findTarget();
         }
     }
 

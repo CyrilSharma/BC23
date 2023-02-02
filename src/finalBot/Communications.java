@@ -164,30 +164,12 @@ public class Communications {
         }
     }
 
-    public boolean getGreedy() throws GameActionException {
-        // scales between 0 and 1/2
-        double total = 4 * numHQ;
-        int mn = Math.min(rc.getMapHeight(), rc.getMapWidth());
-        int numExplore = Math.min((int) Math.round((((double) mn) / 160.0) * total), 4);
-        int count = rc.readSharedArray(GREEDYCOUNT);
-        if (rc.canWriteSharedArray(0, 0))
-            rc.writeSharedArray(GREEDYCOUNT, count+1);
-        // the way this is set up, primarily adamantium dudes will be greedy.
-        if (count < numExplore) {
-            return false;
-        }
-        return true;
-    }
-
     public ResourceType getResourceInitial() throws GameActionException {
         // update
         int count = rc.readSharedArray(RESCOUNT);
         if (rc.canWriteSharedArray(0, 0))
             rc.writeSharedArray(RESCOUNT, count+1);
 
-        double total = 4 * numHQ;
-
-        // heuristic determined by closest pair of HQs.
         double mn = 1000000;
         for (int i = 0; i < numHQ; i++) {
             MapLocation h = HQs[i];
@@ -195,11 +177,56 @@ public class Communications {
             double d = Util.absDistance(e, h);
             if (d < mn) mn = d;
         }
-        int nAdamantium = Math.min((int) Math.round((((double) mn / 120.0) * total)), (int)(0.50 * total));
-        if (count < nAdamantium) return ResourceType.ADAMANTIUM;
-        else return ResourceType.MANA;
+
+        double total = 4 * numHQ;
+        double r = getRatioFromDist(mn);
+        if (count < r * total) {
+            return ResourceType.ADAMANTIUM;
+        } else {
+            return ResourceType.MANA;
+        }
     }
 
+    public ResourceType getResourceNeed() throws GameActionException {
+        MapLocation en = getClosestEnemyHQ();
+        int xLoc = 0, yLoc = 0;
+        for(int i = 0; i < numHQ; i++){
+            xLoc += HQs[i].x;
+            yLoc += HQs[i].y;
+        }
+        xLoc /= numHQ;
+        yLoc /= numHQ;
+        int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
+        double val = rng.nextDouble();
+
+        // The larger c is, the more likely we are to mine mana.
+        if (rc.getRoundNum() <= 50) {
+            double r = getRatioFromDist(d);
+            if (val < r) {
+                return ResourceType.ADAMANTIUM;
+            } else {
+                return ResourceType.MANA;
+            }
+        } else if (!isManaWellSaturated()) {
+            if (val < 0.75) return ResourceType.MANA;
+            else return ResourceType.ADAMANTIUM;
+        } else {
+            if (val < 0.90) return ResourceType.MANA;
+            else return ResourceType.ADAMANTIUM;
+        }
+    }
+
+    public double getRatioFromDist(double d) {
+        if (d <= 12) {
+            return 0;
+        } else if (d <= 20) {
+            return 0.25;
+        } else if (d <= 30) {
+            return 0.30;
+        } else {
+            return 0.40;
+        }
+    }
     public void updateAnchor(int a) throws GameActionException {
         rc.writeSharedArray(ANCHOR, a);
     }
@@ -233,35 +260,6 @@ public class Communications {
             broadcastTargetMemory[rc.getRoundNum()%3] = null;
             if ((rc.getRoundNum()%Constants.ATTACK_REFRESH) >= ATTACK_TARGETS_WIDTH) return;
             rc.writeSharedArray(ATTACK_TARGETS + (rc.getRoundNum()%Constants.ATTACK_REFRESH), 0);
-        }
-    }
-
-    public ResourceType getResourceNeed() throws GameActionException {
-        MapLocation en = getClosestEnemyHQ();
-        int xLoc = 0, yLoc = 0;
-        for(int i = 0; i < numHQ; i++){
-            xLoc += HQs[i].x;
-            yLoc += HQs[i].y;
-        }
-        xLoc /= numHQ;
-        yLoc /= numHQ;
-        int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
-        double dangerDistRatio = ((double)d / (double)(rc.getMapHeight() + rc.getMapHeight()));
-        double val = rng.nextDouble();
-
-        // The larger c is, the more likely we are to mine mana.
-        if (rc.getRoundNum() <= 25) {
-            if (val < dangerDistRatio) {
-                return ResourceType.ADAMANTIUM;
-            } else {
-                return ResourceType.MANA;
-            }
-        } else if (!isManaWellSaturated()) {
-            if (val < 0.75) return ResourceType.MANA;
-            else return ResourceType.ADAMANTIUM;
-        } else {
-            if (val < 0.90) return ResourceType.MANA;
-            else return ResourceType.ADAMANTIUM;
         }
     }
 
@@ -1113,7 +1111,7 @@ public class Communications {
             this.avail = avail;
             this.r = res;
             this.want = want;
-            this.distEHQ = Util.absDistance(m , getClosestEnemyHQTo(m, null));
+            // this.distEHQ = Util.absDistance(m , getClosestEnemyHQTo(m, null));
         }
 
         boolean bestResource() throws GameActionException {
@@ -1121,7 +1119,7 @@ public class Communications {
         }
 
         boolean crowded() throws GameActionException {
-            return avail <= 2;
+            return avail == 0;
         }
 
         boolean isBetterThan(WellTarget wt) throws GameActionException {
@@ -1132,8 +1130,8 @@ public class Communications {
             if (!wt.bestResource() && bestResource()) return true;
             if (wt.dist + 8 < dist) return false;
             if (wt.dist > dist + 8) return true;
-            if (wt.distEHQ > 8 + distEHQ) return false;
-            if (wt.distEHQ + 8 < distEHQ) return true;
+            /* if (wt.distEHQ > 8 + distEHQ) return false;
+            if (wt.distEHQ + 8 < distEHQ) return true; */
             return dist <= wt.dist;
         }
     }

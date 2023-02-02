@@ -643,7 +643,7 @@ public class Launcher extends Robot {
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
         //,rc.setIndicatorString("ITERS: "+iters);
-        for (MicroTarget mt: microtargets) {
+        /* for (MicroTarget mt: microtargets) {
             switch (mt.safe()) {
                 case 0: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
@@ -652,7 +652,7 @@ public class Launcher extends Robot {
                 default:
             }
             //rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
-        }
+        } */
     }
     
     // Choose best square to chase a defenseless target.
@@ -751,8 +751,10 @@ public class Launcher extends Robot {
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
+            // Move out of danger, CONDITIONALLY.
             if (mt.safe() == 1 && safe() == 1) {
-                return dps_targetting <= mt.dps_targetting;
+                if (mt.dps_targetting < dps_targetting) return false;
+                if (mt.dps_targetting > dps_targetting) return true;
             }
 
             if (mt.inRange() && !inRange()) return false;
