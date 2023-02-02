@@ -1,6 +1,1 @@
-| X 
-X -> I am here
-X
-We go around the next wall instead of into the free spot. Need to fix.
-
-Carriers only flee when attacked? (they're not usually the priority)
+Better Flee Code -> Remember enemy loc, maybe disregard wells near enemies?

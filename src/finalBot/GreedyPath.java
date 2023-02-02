@@ -170,7 +170,6 @@ public class GreedyPath {
                 }
                 //rc.setIndicatorString("dre: " + directions[dir] + ", start: " + directions[startDir]);
                 uwu.append("|"+directions[startDir]);
-                rc.setIndicatorString(uwu.toString());
                 return directions[dir];
             }
 

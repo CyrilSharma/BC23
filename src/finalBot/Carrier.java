@@ -1,6 +1,5 @@
 package finalBot;
 import battlecode.common.*;
-import battlecode.world.Well;
 
 public class Carrier extends Robot {
     int adamantium, mana, elixir;
@@ -238,9 +237,8 @@ public class Carrier extends Robot {
     MapLocation prev = null;
     void explore() throws GameActionException {
         rc.setIndicatorString("EXPLORING");
-        if (rc.getID()%3 != 0 || rc.getRoundNum() <= 25) exploreSafe();
-        else if (rc.getID()%3 == 0) exploreUnsafe();
-        else exploreSafe();
+        if (rc.getID()%3 == 0 || rc.getRoundNum() <= 25) exploreSafe();
+        else exploreUnsafe();
     }
 
     void exploreUnsafe() throws GameActionException {
@@ -276,7 +274,6 @@ public class Carrier extends Robot {
         }
         if (best != null) {
             prev = rc.getLocation();
-            rc.setIndicatorString(""+best+" "+Clock.getBytecodesLeft());
             if (Clock.getBytecodesLeft() > 2500) greedyPath.move(best);
             if (Clock.getBytecodesLeft() > 2500) greedyPath.move(best);
         }
