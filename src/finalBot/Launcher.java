@@ -1,7 +1,4 @@
 package finalBot;
-import java.util.HashMap;
-import java.util.HashSet;
-
 import battlecode.common.*;
 
 // xSquare Control flow.
@@ -162,8 +159,6 @@ public class Launcher extends Robot {
         RobotInfo r = util.getBestAttackTarget();
         if (r == null && attackers) return;
         else if (r == null && attackers==false) {
-            MapInfo mi = rc.senseMapInfo(rc.getLocation());
-            // if (mi.hasCloud()) return;
             MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
             if (clouds.length == 0) return;
             MapLocation loc = null;
@@ -185,7 +180,7 @@ public class Launcher extends Robot {
         // Conditions!!
         // if you see an enemy, or you just saw an enemy and you're on a cloud...
         if (hasLaunchersNear || hasCarriersNear) {
-            advanceTurns = 5;
+            advanceTurns = 10;
             return State.ATTACK;
         }
 
@@ -209,8 +204,7 @@ public class Launcher extends Robot {
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
         // bestNeighborDir = computeBestNeighborDir();
-        if ((advanceTurns > 0 || neighborsAttacked) &&
-            !mi.hasCloud()) {
+        if (advanceTurns > 0 || neighborsAttacked) {
             return State.ADVANCE;
         }
         if (previousEnemy == null && !neighborsAttacked)
@@ -291,7 +285,6 @@ public class Launcher extends Robot {
             nneighborStr.append("|"+r.ID);
             if (r.team == opponentTeam)
                 hasLaunchersNear = true;
-            rc.setIndicatorDot(r.location, 100, 0, 0);
             neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
             lastUpdate[r.ID%sz] = round;
             marked[r.ID%sz] = true;
@@ -308,11 +301,6 @@ public class Launcher extends Robot {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
-            /* int dist = myloc.distanceSquaredTo(n.location);
-            if (dist < 20 && dist > 16) {
-                // push it out of range.
-                n.location = n.location.add(myloc.directionTo(n.location));
-            } */
             // If it couldn't have escaped vision radius, it's gone.
             MapLocation nloc = n.location;
             Direction away = nloc.directionTo(rc.getLocation()).opposite();
@@ -322,7 +310,6 @@ public class Launcher extends Robot {
                 neighbors[n.ID%sz] = null;
                 continue;
             }
-            rc.setIndicatorDot(n.location, 100, 0, 0);
             nneighborStr.append("|"+n.ID);
             if (n.team == opponentTeam)
                 hasLaunchersNear = true;
@@ -356,7 +343,6 @@ public class Launcher extends Robot {
 
     void hunt_hq() throws GameActionException {
         hqTarget = communications.getClosestEnemyHQ(killedHQs);
-        rc.setIndicatorString(""+hqTarget);
         if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
         // no nullpointers in theory?
         hunt_hq(hqTarget);
@@ -536,7 +522,6 @@ public class Launcher extends Robot {
     double currentDPS, cooldown;
     boolean curOnCloud;
     boolean robotOnCloud;
-    boolean canAttackSoon;
     int curActionRadius;
     int curVisionRadius;
     MapLocation enemyLauncherLoc = null;
@@ -571,7 +556,6 @@ public class Launcher extends Robot {
         nclouds += microtargets[8].hasCloud ? 1 : 0;
 
         if (nclouds <= 4) {
-            rc.setIndicatorString("BLOCKED CLOUDS");
             if (microtargets[0].hasCloud) microtargets[0].canMove = false;
             if (microtargets[1].hasCloud) microtargets[1].canMove = false;
             if (microtargets[2].hasCloud) microtargets[2].canMove = false;
@@ -588,7 +572,6 @@ public class Launcher extends Robot {
         Team opponentTeam = myTeam.opponent();
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         curOnCloud = mi.hasCloud();
-        canAttackSoon = rc.getActionCooldownTurns() < 20;
         int iters = 0;
         for (LauncherInfo r: neighbors) {
             if (r == null) continue;
@@ -642,17 +625,17 @@ public class Launcher extends Robot {
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
-        //,rc.setIndicatorString("ITERS: "+iters);
-        /* for (MicroTarget mt: microtargets) {
-            switch (mt.safe()) {
-                case 0: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
+        rc.setIndicatorString("ITERS: "+iters);
+        for (MicroTarget mt: microtargets) {
+            /* switch (mt.safe()) {
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
                 case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
                 case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
                 default:
-            }
-            //rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
-        } */
+            } */
+            // rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
+            ;
+        }
     }
     
     // Choose best square to chase a defenseless target.
@@ -699,14 +682,12 @@ public class Launcher extends Robot {
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             nloc = rc.getLocation().add(dir);
-            canMove = rc.canMove(dir); // || Direction.CENTER == dir;
+            canMove = rc.canMove(dir);
             if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
                 nloc = nloc.add(mi.getCurrentDirection());
-                if (canAttackSoon) {
-                    net_dps -= RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
-                }
+                net_dps -= RobotType.LAUNCHER.damage * (1.0 / mi.getCooldownMultiplier(rc.getTeam()));
             }
             action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
             vision = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
@@ -733,7 +714,6 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            if (!canMove) return 0;
             if (net_dps > 0) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
@@ -744,19 +724,11 @@ public class Launcher extends Robot {
         }
 
         boolean isBetterThan(MicroTarget mt) {
-            if (mt.canMove && !canMove) return false;
-            if (!mt.canMove && canMove) return true;
-
-            //System.out.println(mt.safe()+" "+safe()+" "+nloc);
+            if (!canMove) return false;
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
-            // Move out of danger, CONDITIONALLY.
-            if (mt.safe() == 1 && safe() == 1) {
-                if (mt.dps_targetting < dps_targetting) return false;
-                if (mt.dps_targetting > dps_targetting) return true;
-            }
-
+            // the idea here is attack first, then move out of range.
             if (mt.inRange() && !inRange()) return false;
             if (!mt.inRange() && inRange()) return true;
 
