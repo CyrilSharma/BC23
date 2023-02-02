@@ -8,6 +8,7 @@ public class HQ extends Robot {
     int anchorRound = 100;
     int surroundTurn = -10;
     int enemiesSurrounding;
+    int alliesSurrounding;
     boolean makingAnchor = false;
     ResourceType[] resources = {ResourceType.ADAMANTIUM, ResourceType.ELIXIR, ResourceType.MANA};
     public HQ(RobotController rc) {
@@ -57,7 +58,8 @@ public class HQ extends Robot {
         // splurge otherwise.
         RobotType needed = buildToRobotType(b);
         buildRobot(needed);
-        for (RobotType r: RobotType.values()) {
+        RobotType[] builds = {RobotType.LAUNCHER, RobotType.CARRIER, RobotType.AMPLIFIER};
+        for (RobotType r: builds) {
             // if (r == RobotType.CARRIER) continue;
             // use in late game, but for now just don't make any.
             if (r == RobotType.AMPLIFIER) continue;
@@ -84,6 +86,7 @@ public class HQ extends Robot {
             else enemies++;
         }
         enemiesSurrounding = enemies;
+        alliesSurrounding = allies;
         return (enemies - allies >= 3);
     }
 
@@ -185,8 +188,8 @@ public class HQ extends Robot {
 
     Build getBuildType() throws GameActionException {
         boolean surrounded = isSurrounded();
-        boolean canOutnumber = (rc.getResourceAmount(ResourceType.MANA) / RobotType.LAUNCHER.buildCostMana)
-            > enemiesSurrounding;
+        int maxBuild = (rc.getResourceAmount(ResourceType.MANA) / RobotType.LAUNCHER.buildCostMana);
+        boolean canOutnumber = maxBuild + alliesSurrounding > enemiesSurrounding;
         if (surrounded) surroundTurn = rc.getRoundNum();
         if ((surrounded || (rc.getRoundNum() - surroundTurn) < 10) &&
             !canOutnumber) {

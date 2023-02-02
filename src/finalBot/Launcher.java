@@ -185,7 +185,7 @@ public class Launcher extends Robot {
         // Conditions!!
         // if you see an enemy, or you just saw an enemy and you're on a cloud...
         if (hasLaunchersNear || hasCarriersNear) {
-            advanceTurns = 10;
+            advanceTurns = 5;
             return State.ATTACK;
         }
 
@@ -201,7 +201,7 @@ public class Launcher extends Robot {
         }
 
         if (hasTargetClose) {
-            advanceTurns = 10;
+            advanceTurns = 5;
             huntTarget = target;
             return State.HUNT;
         }
@@ -209,7 +209,8 @@ public class Launcher extends Robot {
         // advance if you recently encountered a threat.
         // or neighbor was attacked!.
         // bestNeighborDir = computeBestNeighborDir();
-        if (advanceTurns > 0 || neighborsAttacked) {
+        if ((advanceTurns > 0 || neighborsAttacked) &&
+            !mi.hasCloud()) {
             return State.ADVANCE;
         }
         if (previousEnemy == null && !neighborsAttacked)
@@ -355,6 +356,7 @@ public class Launcher extends Robot {
 
     void hunt_hq() throws GameActionException {
         hqTarget = communications.getClosestEnemyHQ(killedHQs);
+        rc.setIndicatorString(""+hqTarget);
         if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
         // no nullpointers in theory?
         hunt_hq(hqTarget);
@@ -391,9 +393,18 @@ public class Launcher extends Robot {
                 else enemyLaunchers++;
             }
             if (friendLaunchers > 2 && enemyLaunchers == 0) {
+                boolean exists = false;
+                int empty = -1;
                 for (int i = 0; i < communications.numHQ; i++) {
-                    if (killedHQs[i] != null) continue;
-                    killedHQs[i] = m;
+                    if (killedHQs[i] == null) {
+                        empty = i;
+                    } else if (killedHQs[i].equals(m)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists && empty != -1) {
+                    killedHQs[empty] = m;
                 }
             }
         }
@@ -634,6 +645,7 @@ public class Launcher extends Robot {
         //,rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
             switch (mt.safe()) {
+                case 0: rc.setIndicatorDot(mt.nloc, 0, 0, 0); break;
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
                 case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
                 case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
@@ -687,7 +699,7 @@ public class Launcher extends Robot {
         MicroTarget(Direction dir) throws GameActionException {
             this.dir = dir;
             nloc = rc.getLocation().add(dir);
-            canMove = rc.canMove(dir);// || Direction.CENTER == dir;
+            canMove = rc.canMove(dir) || Direction.CENTER == dir;
             if (rc.canSenseLocation(nloc)) {
                 MapInfo mi = rc.senseMapInfo(nloc);
                 hasCloud = mi.hasCloud();
@@ -721,6 +733,7 @@ public class Launcher extends Robot {
         }
        
         int safe() {
+            if (!canMove) return 0;
             if (net_dps > 0) return 1;
             if (dps_defending < dps_targetting) return 2;
             return 3;
@@ -738,9 +751,9 @@ public class Launcher extends Robot {
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
 
-            /* if (mt.safe() == 1 && safe() == 1) {
+            if (mt.safe() == 1 && safe() == 1) {
                 return dps_targetting <= mt.dps_targetting;
-            } */
+            }
 
             if (mt.inRange() && !inRange()) return false;
             if (!mt.inRange() && inRange()) return true;
