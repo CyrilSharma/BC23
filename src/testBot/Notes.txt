@@ -1,1 +1,0 @@
-Better Flee Code -> Remember enemy loc, maybe disregard wells near enemies?
