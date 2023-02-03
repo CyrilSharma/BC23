@@ -187,15 +187,18 @@ public class Launcher extends Robot {
         Team myTeam = rc.getTeam();
         LauncherInfo best = null;
         boolean bestClose = false;
+        boolean bestMoved = false;
         for (LauncherInfo l: neighbors) {
             if (l == null) continue;
             if (l.team == myTeam) continue;
             boolean close = l.location.distanceSquaredTo(myloc) <= 4;
             if (best == null || 
                 (!bestClose && close) ||
-                (best.health > l.health)) {
+                (best.health > l.health) || 
+                (!bestMoved && l.moved)) {
                 best = l;
                 bestClose = close;
+                bestMoved = l.moved;
             }
         }
         return best;
@@ -248,6 +251,7 @@ public class Launcher extends Robot {
         int ID;
         MapLocation location;
         Team team;
+        boolean moved = false;
         LauncherInfo(int health, int ID, MapLocation loc, Team t) {
             this.health = health;
             this.ID = ID;
@@ -313,7 +317,13 @@ public class Launcher extends Robot {
             nneighborStr.append("|"+r.ID);
             if (r.team == opponentTeam)
                 hasLaunchersNear = true;
-            neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
+            if (!contains) {
+                neighbors[r.ID%sz] = new LauncherInfo(r.health, r.ID, r.location, r.team);
+            } else {
+                neighbors[r.ID%sz].health = r.health;
+                neighbors[r.ID%sz].moved = !neighbors[r.ID%sz].location.equals(r.location);
+                neighbors[r.ID%sz].location = r.location;
+            }
             lastUpdate[r.ID%sz] = round;
             marked[r.ID%sz] = true;
         }

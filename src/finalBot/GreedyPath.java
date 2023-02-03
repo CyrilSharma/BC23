@@ -76,7 +76,7 @@ public class GreedyPath {
         // Exit condition: got closer to the destination then when I started.
         int dist = hybridDistance(rc.getLocation(), bugTarget);
         //rc.setIndicatorString("D: "+dist+" BEST: "+bestSoFar+", unit: " + unitObstacle);
-        rc.setIndicatorString("BUG: " + loc + ", ori: " + clockwise + ", goalR: " + goalRound);
+        // rc.setIndicatorString("BUG: " + loc + ", ori: " + clockwise + ", goalR: " + goalRound);
         if(rc.getRoundNum() == goalRound + 5) bestSoFar = dist;
         if ((dist < bestSoFar || hasCycle()) && rc.getRoundNum() - goalRound >= 5) {
             shouldBug = false;
@@ -205,7 +205,7 @@ public class GreedyPath {
             return bug(goal);
         }
         markLoc();
-        rc.setIndicatorString("FUZZY: " + goal);
+        // rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -264,72 +264,6 @@ public class GreedyPath {
         unitObstacle = 0;
         startDirMissingInARow = 0;
         goalRound = rc.getRoundNum();
-        /*
-        clockwise = false;
-        MapLocation curLoc = rc.getLocation();
-        int st = startDir;
-        for(int j = 0; j < 5; j++){
-            int dd = st;
-            int f = 1;
-            for (int i = 0; i < 8; i++) {
-                MapLocation next = curLoc.add(directions[dd]);
-                if(!rc.canSenseLocation(next)){
-                    f = 0;
-                    break;
-                }
-                if(dd == st && rc.sensePassability(next)) return;
-                if (!rc.onTheMap(next)) {
-                    f = 0;
-                    break;
-                }
-                if(rc.sensePassability(next)){
-                    //str.append("|" + next + "|");
-                    curLoc = next.add(directions[dd]);
-                    if(dd != st) st = (dd + 2) % 8;
-                    if (!rc.onTheMap(next.add(directions[st]))) {
-                        f = 0;
-                        break;
-                    }
-                    break;
-                }
-                dd = (dd + 7) % 8;
-            }
-            if(f == 0) break;
-        }
-        //rc.setIndicatorString(str.toString());
-        clockwise = true;
-        curLoc = rc.getLocation();
-        st = startDir;
-        for(int j = 0; j < 5; j++){
-            int dd = st;
-            int f = 1;
-            for (int i = 0; i < 8; i++) {
-                MapLocation next = curLoc.add(directions[dd]);
-                if(!rc.canSenseLocation(next)){
-                    f = 0;
-                    break;
-                }
-                if(dd == st && rc.sensePassability(next)) return;
-                if (!rc.onTheMap(next)) {
-                    f = 0;
-                    break;
-                }
-                if(rc.sensePassability(next)){
-                    //str.append("|" + next + "|");
-                    curLoc = next.add(directions[dd]);
-                    if(dd != st) st = (dd + 6) % 8;
-                    if (!rc.onTheMap(next.add(directions[st]))) {
-                        f = 0;
-                        break;
-                    }
-                    break;
-                }
-                dd = (dd + 1) % 8;
-            }
-            if(f == 0) break;
-        }
-
-         */
         clockwise = Math.random() < 0.5;
     }
 

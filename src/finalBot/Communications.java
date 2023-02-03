@@ -1065,6 +1065,7 @@ public class Communications {
 
     // Find best well using only comms [i think that's ok].
     public MapLocation findBestWell(ResourceType want, boolean gd) throws GameActionException {
+        boolean nextToHQ = findClosestHQ().distanceSquaredTo(rc.getLocation()) <= 9;
         WellTarget best = null;
         for (int i = ADAMANTIUM_LOCATIONS; i < ELIXIR_LOCATIONS + ELIXIR_LOCATIONS_WIDTH; i++) {
             if (rc.readSharedArray(i) == 0) continue;
@@ -1074,27 +1075,30 @@ public class Communications {
             MapLocation m = new MapLocation(x, y);
             int available = (val >> 12) & (0b1111);
             // can do a better estimate.
-            if (rc.canSenseLocation(m)) continue;
+            if (rc.canSenseLocation(m) && !nextToHQ) continue;
             WellTarget cur = new WellTarget(m, getTypeFromIndex(i), want, available);
             if (cur.isBetterThan(best)) best = cur;
         }
-
-        for (WellInfo w: rc.senseNearbyWells()) {
-            int available = 0;
-            for (Direction dir: directions) {
-                MapLocation m = w.getMapLocation().add(dir);
-                if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
-                    !rc.isLocationOccupied(m)) {
-                    available++;
+        // better heuristic exists.
+        if (!nextToHQ) {
+            for (WellInfo w: rc.senseNearbyWells()) {
+                int available = 0;
+                for (Direction dir: directions) {
+                    MapLocation m = w.getMapLocation().add(dir);
+                    if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
+                        !rc.isLocationOccupied(m)) {
+                        available++;
+                    }
                 }
+                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, available);
+                if (cur.isBetterThan(best)) best = cur;
             }
-            WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, available);
-            if (cur.isBetterThan(best)) best = cur;
         }
         if (best == null) return null;
         if (best.dist > 15) return null;
         if (gd && !best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
+        rc.setIndicatorString("UPDATE: "+best.loc+" "+(best.avail-1));
         updateAvailability(best.loc, Math.max(best.avail - 1, 0));
         return best.loc;
     }

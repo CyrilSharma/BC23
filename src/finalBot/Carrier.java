@@ -54,7 +54,7 @@ public class Carrier extends Robot {
         // mineEfficently = rc.getRoundNum() >= 75;
         initialize();
         State state = determineState();
-        rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
+        // rc.setIndicatorString("WT: "+wellTarget+" S: "+state.toString());
         communications.initial();
         //printWells();
         updateSaturation();
@@ -95,7 +95,7 @@ public class Carrier extends Robot {
     }
 
     boolean determineReport() throws GameActionException {
-        rc.setIndicatorString("TESTING REPORT");
+        // rc.setIndicatorString("TESTING REPORT");
         if (takenReportTarget != null) return false;
         boolean hasMana = false;
         MapLocation manaWell = null;
@@ -109,7 +109,7 @@ public class Carrier extends Robot {
         if (!hasMana) return false;
 
         // Check if manaWell is already in comms.
-        rc.setIndicatorString("TESTING WELL DOESN'T EXIST");
+        // rc.setIndicatorString("TESTING WELL DOESN'T EXIST");
         MapLocation[] locs = communications.readWells(ResourceType.MANA);
         if (locs != null) {
             for (MapLocation loc: locs) {
@@ -119,18 +119,18 @@ public class Carrier extends Robot {
             }
         }
         // Check if somebody is already reporting.
-        rc.setIndicatorString("TESTING NEIGHBORS");
+        // rc.setIndicatorString("TESTING NEIGHBORS");
         for (int i = 0; i < 3; i++) {
             for (RobotInfo r: neighbors[i]) {
                 if (r == null) continue;
                 if (r.location.distanceSquaredTo(manaWell) <= RobotType.CARRIER.visionRadiusSquared) {
-                    rc.setIndicatorString("I DETECTED SOMEONE");
+                    // rc.setIndicatorString("I DETECTED SOMEONE");
                     takenReportTarget = manaWell;
                     return false;
                 }
             }
         }
-        rc.setIndicatorString("TIEBREAKER");
+        // rc.setIndicatorString("TIEBREAKER");
         // Tie-breaker for who gets to report is ID.
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam())) {
             if (r.type != RobotType.CARRIER) continue;
@@ -141,7 +141,7 @@ public class Carrier extends Robot {
             }
         }
         communications.reportWells();
-        rc.setIndicatorString("IT IS " + hasMana);
+        // rc.setIndicatorString("IT IS " + hasMana); 
         return hasMana;
     }
 
@@ -176,7 +176,7 @@ public class Carrier extends Robot {
             }
             s+="\n";
         }
-        rc.setIndicatorString(s);
+        // rc.setIndicatorString(s);
     }
 
     void initialize() {
@@ -235,19 +235,19 @@ public class Carrier extends Robot {
 
     MapLocation prev = null;
     void explore() throws GameActionException {
-        rc.setIndicatorString("EXPLORING");
-        if (rc.getID()%3 == 0 || rc.getRoundNum() <= 25) exploreSafe();
+        // rc.setIndicatorString("EXPLORING");
+        if (rc.getID()%3 == 0 && rc.getRoundNum() <= 25) exploreSafe();
         else exploreUnsafe();
     }
 
     void exploreUnsafe() throws GameActionException {
-        rc.setIndicatorString("EXPLORING 2");
+        // rc.setIndicatorString("EXPLORING 2");
         exploration.move(communications.HQs, communications.numHQ);
         exploration.move(communications.HQs, communications.numHQ);
     }
 
     void exploreSafe() throws GameActionException {
-        rc.setIndicatorString("EXPLORING 1");
+        // rc.setIndicatorString("EXPLORING 1");
         MapLocation[] locs = rc.getAllLocationsWithinRadiusSquared(rc.getLocation(), 4);
         double bestD = -1;
         double d = Math.sqrt(RobotType.HEADQUARTERS.visionRadiusSquared) + 6;
@@ -450,7 +450,7 @@ public class Carrier extends Robot {
 
     void deliver() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
-        rc.setIndicatorString("DELIVER TO: "+m);
+        // rc.setIndicatorString("DELIVER TO: "+m);
         if (m.distanceSquaredTo(rc.getLocation()) > 2 || rc.getLocation().add(rc.senseMapInfo(rc.getLocation())
             .getCurrentDirection()).distanceSquaredTo(m) > 2) {
             greedyPath.move(m);
@@ -520,6 +520,7 @@ public class Carrier extends Robot {
             if(targ != null && rc.getLocation().distanceSquaredTo(targ) < rc.getLocation().distanceSquaredTo(islandTarget)){
                 islandTarget = targ;
             }
+            if (islandTarget == null) return;
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
