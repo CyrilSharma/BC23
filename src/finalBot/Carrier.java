@@ -349,7 +349,7 @@ public class Carrier extends Robot {
         }
 
         if (wellTarget == null) return;
-        if (rc.getLocation().distanceSquaredTo(wellTarget) >= 2) {
+        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) {
             MapLocation bestLoc = null;
             int bestD = 100000;
             for (Direction dir: directions) {
@@ -421,8 +421,8 @@ public class Carrier extends Robot {
             for (Direction d: directions) {
                 if (!rc.canMove(d)) continue;
                 MapLocation nloc = rc.getLocation().add(d);
-                if (nloc.distanceSquaredTo(wellTarget) < 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
-                    .distanceSquaredTo(wellTarget) < 2) {
+                if (nloc.distanceSquaredTo(wellTarget) <= 2 && nloc.add(rc.senseMapInfo(nloc).getCurrentDirection())
+                    .distanceSquaredTo(wellTarget) <= 2) {
                     if (rc.canMove(d)) rc.move(d);
                     break;
                 }

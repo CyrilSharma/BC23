@@ -174,7 +174,9 @@ public class Communications {
         for (int i = 0; i < numHQ; i++) {
             MapLocation h = HQs[i];
             MapLocation e = getClosestEnemyHQTo(h, null);
-            double d = Util.absDistance(e, h);
+            int dx = Math.abs(e.x - h.x);
+            int dy = Math.abs(e.y - h.y);
+            double d = dx + dy - Math.min(dx, dy);
             if (d < mn) mn = d;
         }
 
@@ -188,20 +190,18 @@ public class Communications {
     }
 
     public ResourceType getResourceNeed() throws GameActionException {
-        MapLocation en = getClosestEnemyHQ();
-        int xLoc = 0, yLoc = 0;
-        for(int i = 0; i < numHQ; i++){
-            xLoc += HQs[i].x;
-            yLoc += HQs[i].y;
+        double mn = 1000000;
+        for (int i = 0; i < numHQ; i++) {
+            MapLocation h = HQs[i];
+            MapLocation e = getClosestEnemyHQTo(h, null);
+            double d = Math.min(Math.abs(e.x - h.x), Math.abs(e.y - h.y));
+            if (d < mn) mn = d;
         }
-        xLoc /= numHQ;
-        yLoc /= numHQ;
-        int d = Math.abs(xLoc - en.x) + Math.abs(yLoc - en.y);
         double val = rng.nextDouble();
 
         // The larger c is, the more likely we are to mine mana.
         if (rc.getRoundNum() <= 50) {
-            double r = getRatioFromDist(d);
+            double r = getRatioFromDist(mn);
             if (val < r) {
                 return ResourceType.ADAMANTIUM;
             } else {
@@ -220,11 +220,11 @@ public class Communications {
         if (d <= 12) {
             return 0;
         } else if (d <= 20) {
-            return 0.25;
+            return 0.10;
         } else if (d <= 30) {
-            return 0.30;
+            return 0.20;
         } else {
-            return 0.40;
+            return 0.30;
         }
     }
     public void updateAnchor(int a) throws GameActionException {

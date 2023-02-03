@@ -345,6 +345,7 @@ public class Launcher extends Robot {
         hqTarget = communications.getClosestEnemyHQ(killedHQs);
         if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
         // no nullpointers in theory?
+        rc.setIndicatorString("HUNT HQ: "+hqTarget);
         hunt_hq(hqTarget);
         for (RobotInfo r: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (r.type == RobotType.HEADQUARTERS) {
@@ -373,9 +374,13 @@ public class Launcher extends Robot {
         } else if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
             int enemyLaunchers = 0;
             int friendLaunchers = 0;
+            int cntSmaller = 0;
             for (RobotInfo r: rc.senseNearbyRobots()) {
                 if (r.type != RobotType.LAUNCHER) continue;
-                if (rc.getTeam() == r.team) friendLaunchers++;
+                if (rc.getTeam() == r.team) {
+                    friendLaunchers++;
+                    if (r.ID < rc.getID()) cntSmaller++;
+                }
                 else enemyLaunchers++;
             }
             if (friendLaunchers > 2 && enemyLaunchers == 0) {
@@ -727,6 +732,11 @@ public class Launcher extends Robot {
             if (!canMove) return false;
             if (mt.safe() > safe()) return false;
             if (mt.safe() < safe()) return true;
+
+            if (mt.safe() == 1 && safe() == 1) {
+                if (mt.dps_targetting < dps_targetting) return false;
+                if (mt.dps_targetting > dps_targetting) return true;
+            }
 
             // the idea here is attack first, then move out of range.
             if (mt.inRange() && !inRange()) return false;
