@@ -51,7 +51,7 @@ public class GreedyPath {
         if (rc.getType() == RobotType.LAUNCHER &&
                 rc.getRoundNum()%2 == 0) return null;
         if (rc.getLocation().equals(loc)) return Direction.CENTER;
-        if (previous == null || loc.distanceSquaredTo(previous) > 100){
+        if (previous == null || loc.distanceSquaredTo(previous) > 20){
             shoudAvoidClouds = avoidClouds;
             previous = loc;
             resetGreedy(loc);
@@ -72,13 +72,13 @@ public class GreedyPath {
     // number of turns in which startDir has been missing in a row
     public static int startDirMissingInARow = 0;
     public static int unitObstacle = 0;
-    public static boolean skippedTurn = false;
     public Direction bug(MapLocation loc) throws GameActionException {
-        //rc.setIndicatorString("BUG: " + loc);
         // Exit condition: got closer to the destination then when I started.
         int dist = hybridDistance(rc.getLocation(), bugTarget);
         //rc.setIndicatorString("D: "+dist+" BEST: "+bestSoFar+", unit: " + unitObstacle);
-        if (dist < bestSoFar || hasCycle()) {
+        rc.setIndicatorString("BUG: " + loc + ", ori: " + clockwise + ", goalR: " + goalRound);
+        if(rc.getRoundNum() == goalRound + 5) bestSoFar = dist;
+        if ((dist < bestSoFar || hasCycle()) && rc.getRoundNum() - goalRound >= 5) {
             shouldBug = false;
             resetGreedy(loc);
             return fuzzy(loc);
@@ -97,43 +97,59 @@ public class GreedyPath {
                 MapInfo mi = rc.senseMapInfo(next);
                 // if this is my final move...
                 if (rc.getType() == RobotType.CARRIER) cld = (int) Math.floor(5.0 + (double) rc.getWeight() / 8.0);
-                if (rc.getMovementCooldownTurns() + cld >= 10)
+                if (rc.getMovementCooldownTurns() + cld >= 10) {
                     next = next.add(mi.getCurrentDirection());
+                    Direction d = mi.getCurrentDirection();
+                    if(d != Direction.CENTER){
+                        int a = d.ordinal();
+                        int b = directions[dir].ordinal();
+                        int dis = Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+                        //rc.setIndicatorString("uh dist is: " + dis + "dir: " + directions[dir] + ", cur " + d + ", tar: " + loc);
+                        if(dis > 1){
+                            if (clockwise) dir = (dir + 1) % 8;
+                            else dir = (dir + 7) % 8;
+                            continue;
+                        }
+                    }
+                }
             }
             if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) != null && rc.senseRobotAtLocation(next).getType() != RobotType.HEADQUARTERS)){
                 unitObstacle++;
             }
-            if(unitObstacle == 3){
+            if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) == null)){
+                unitObstacle = 0;
+            }
+            if(unitObstacle == 2){
+                //resetBug(loc);
+                bugTarget = loc;
+                goalRound = rc.getRoundNum();
                 startDir = rc.getLocation().directionTo(bugTarget).ordinal();
-                clockwise = !clockwise;
+                bestSoFar = hybridDistance(rc.getLocation(), bugTarget);
                 startDirMissingInARow = 0;
                 unitObstacle = 0;
+                i = 0;
                 dir = startDir;
                 next = rc.adjacentLocation(directions[dir]);
                 if(!rc.canSenseLocation(next)) break;
                 MapInfo mi = rc.senseMapInfo(next);
                 if(rc.getType() == RobotType.CARRIER) cld = (int)Math.floor(5.0 + (double)rc.getWeight()/8.0);
-                if (rc.getMovementCooldownTurns() + cld >= 10)
+                if (rc.getMovementCooldownTurns() + cld >= 10) {
                     next = next.add(mi.getCurrentDirection());
-                if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) != null && rc.senseRobotAtLocation(next).getType() != RobotType.HEADQUARTERS)) unitObstacle++;
-            }
-            if (dir == startDir && !skippedTurn){
-                RobotInfo[] e = rc.senseNearbyRobots(rc.getType().visionRadiusSquared);
-                if(e.length >= 25) {
-                    boolean f = true;
-                    for (RobotInfo r : e) {
-                        if (r.location.equals(next)) {
-                            f = false;
-                            break;
+                    Direction d = mi.getCurrentDirection();
+                    if(d != Direction.CENTER){
+                        int a = d.ordinal();
+                        int b = directions[dir].ordinal();
+                        int dis = Math.min(Math.abs(a - b), 8 - Math.abs(a - b));
+                        //rc.setIndicatorString("uh dist is: " + dis + "dir: " + directions[dir] + ", cur " + d + ", tar: " + loc);
+                        if(dis > 1){
+                            if (clockwise) dir = (dir + 1) % 8;
+                            else dir = (dir + 7) % 8;
+                            continue;
                         }
                     }
-                    if (!f) {
-                        skippedTurn = true;
-                        break;
-                    }
                 }
+                if(dir == startDir && (rc.canSenseLocation(next) && rc.senseRobotAtLocation(next) != null && rc.senseRobotAtLocation(next).getType() != RobotType.HEADQUARTERS)) unitObstacle++;
             }
-            skippedTurn = false;
             // If you hit the edge of the map, reverse direction
             if (!rc.onTheMap(next)) {
                 clockwise = !clockwise;
@@ -160,12 +176,12 @@ public class GreedyPath {
                     }
                 }
                 // Rare occasion when startDir gets set to Direction.CENTER
-                if (startDir == 8) {
-                    startDir = 0;
-                }
                 // Safeguard 3: If startDir points off the map, reset startDir towards bugTarget
                 if (!rc.onTheMap(rc.adjacentLocation(directions[startDir]))) {
                     startDir = rc.getLocation().directionTo(bugTarget).ordinal();
+                }
+                if (startDir == 8) {
+                    startDir = 0;
                 }
                 //rc.setIndicatorString("dre: " + directions[dir] + ", start: " + directions[startDir]);
                 uwu.append("|"+directions[startDir]);
@@ -189,7 +205,7 @@ public class GreedyPath {
             return bug(goal);
         }
         markLoc();
-        // rc.setIndicatorString("FUZZY: " + goal);
+        rc.setIndicatorString("FUZZY: " + goal);
         int mn = 10000000;
         Direction bst = Direction.CENTER;
         int curDirStart = (int) (Math.random() * directions.length);
@@ -214,8 +230,25 @@ public class GreedyPath {
                 rc.getLocation().add(bst).distanceSquaredTo(goal)) {
             rc.move(bst);
             return bst;
+        } else if(blocked(rc.getLocation().directionTo(goal))){
+            shouldBug = true;
+            resetBug(goal);
+            return bug(goal);
         }
         return null;
+    }
+
+    boolean blocked(Direction dir) throws GameActionException{
+        if(dir == Direction.CENTER) return false;
+        Direction dir1 = directions[(dir.ordinal() + 1) % 8];
+        Direction dir2 = directions[(dir.ordinal() + 7) % 8];
+        MapLocation mloc1 = rc.getLocation().add(dir);
+        MapLocation mloc2 = rc.getLocation().add(dir1);
+        MapLocation mloc3 = rc.getLocation().add(dir2);
+        if((rc.canSenseLocation(mloc1) && !rc.sensePassability(mloc1) && rc.senseRobotAtLocation(mloc1) == null) &&
+                (rc.canSenseLocation(mloc2) && !rc.sensePassability(mloc2) && rc.senseRobotAtLocation(mloc2) == null) &&
+                (rc.canSenseLocation(mloc3) && !rc.sensePassability(mloc3) && rc.senseRobotAtLocation(mloc3) == null)) return true;
+        return false;
     }
 
     void resetGreedy(MapLocation loc) {
@@ -228,25 +261,25 @@ public class GreedyPath {
         bugTarget = loc;
         bestSoFar = hybridDistance(rc.getLocation(), bugTarget);
         startDir = rc.getLocation().directionTo(loc).ordinal();
-        clockwise = false;
-        startDirMissingInARow = 0;
         unitObstacle = 0;
+        startDirMissingInARow = 0;
         goalRound = rc.getRoundNum();
+        /*
+        clockwise = false;
         MapLocation curLoc = rc.getLocation();
         int st = startDir;
-        //StringBuilder str = new StringBuilder();
-        //str.append("RESET BUG|");
         for(int j = 0; j < 5; j++){
             int dd = st;
+            int f = 1;
             for (int i = 0; i < 8; i++) {
                 MapLocation next = curLoc.add(directions[dd]);
                 if(!rc.canSenseLocation(next)){
-                    clockwise = true;
-                    return;
+                    f = 0;
+                    break;
                 }
                 if(dd == st && rc.sensePassability(next)) return;
                 if (!rc.onTheMap(next)) {
-                    clockwise = true;
+                    f = 0;
                     break;
                 }
                 if(rc.sensePassability(next)){
@@ -254,16 +287,50 @@ public class GreedyPath {
                     curLoc = next.add(directions[dd]);
                     if(dd != st) st = (dd + 2) % 8;
                     if (!rc.onTheMap(next.add(directions[st]))) {
-                        clockwise = true;
-                        return;
+                        f = 0;
+                        break;
                     }
                     break;
                 }
                 dd = (dd + 7) % 8;
             }
+            if(f == 0) break;
         }
         //rc.setIndicatorString(str.toString());
         clockwise = true;
+        curLoc = rc.getLocation();
+        st = startDir;
+        for(int j = 0; j < 5; j++){
+            int dd = st;
+            int f = 1;
+            for (int i = 0; i < 8; i++) {
+                MapLocation next = curLoc.add(directions[dd]);
+                if(!rc.canSenseLocation(next)){
+                    f = 0;
+                    break;
+                }
+                if(dd == st && rc.sensePassability(next)) return;
+                if (!rc.onTheMap(next)) {
+                    f = 0;
+                    break;
+                }
+                if(rc.sensePassability(next)){
+                    //str.append("|" + next + "|");
+                    curLoc = next.add(directions[dd]);
+                    if(dd != st) st = (dd + 6) % 8;
+                    if (!rc.onTheMap(next.add(directions[st]))) {
+                        f = 0;
+                        break;
+                    }
+                    break;
+                }
+                dd = (dd + 1) % 8;
+            }
+            if(f == 0) break;
+        }
+
+         */
+        clockwise = Math.random() < 0.5;
     }
 
     boolean hasCycle() {

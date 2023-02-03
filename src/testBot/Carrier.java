@@ -1,4 +1,4 @@
-package finalBot;
+package testBot;
 import battlecode.common.*;
 
 public class Carrier extends Robot {
@@ -349,7 +349,7 @@ public class Carrier extends Robot {
         }
 
         if (wellTarget == null) return;
-        if (rc.getLocation().distanceSquaredTo(wellTarget) > 2) {
+        if (rc.getLocation().distanceSquaredTo(wellTarget) >= 2) {
             MapLocation bestLoc = null;
             int bestD = 100000;
             for (Direction dir: directions) {
@@ -471,14 +471,9 @@ public class Carrier extends Robot {
     void grab_anchor() throws GameActionException {
         MapLocation m = communications.findClosestHQ();
         if (m == null) return;
-        if(rc.getLocation().distanceSquaredTo(m) > 2) return;
-        RobotInfo[] rob = rc.senseNearbyRobots(rc.getType().visionRadiusSquared, rc.getTeam());
-        for(RobotInfo r : rob) if(r.getType().equals(RobotType.HEADQUARTERS)) {
-            if (rc.canTakeAnchor(r.location, Anchor.STANDARD)) {
-                rc.takeAnchor(r.location, Anchor.STANDARD);
-                hasAnchor = true;
-                break;
-            }
+        if (rc.canTakeAnchor(m, Anchor.STANDARD)) {
+            rc.takeAnchor(m, Anchor.STANDARD);
+            hasAnchor = true;
         }
     }
 
@@ -516,10 +511,6 @@ public class Carrier extends Robot {
                 exploration.move(communications.HQs, communications.numHQ);
             }
         } else {
-            MapLocation targ = communications.findIslandTarget(badIsl);
-            if(targ != null && rc.getLocation().distanceSquaredTo(targ) < rc.getLocation().distanceSquaredTo(islandTarget)){
-                islandTarget = targ;
-            }
             if (rc.getLocation().distanceSquaredTo(islandTarget) > 0) {
                 greedyPath.move(islandTarget);
             } else {
