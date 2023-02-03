@@ -8,6 +8,7 @@ public class Carrier extends Robot {
     int prevBadTurn = 0;
     int available = -1;
     int targetRound = -1;
+    int lastAv = -1;
     int born;
     MapLocation prevWellTarget;
     MapLocation wellTarget;
@@ -158,7 +159,7 @@ public class Carrier extends Robot {
 
     void updateSaturation() throws GameActionException {
         if (!rc.canWriteSharedArray(0, 0)) return;
-        if (available != -1) {
+        if (available != -1 && rc.getRoundNum() - lastAv <= 15){
             communications.updateAvailability(prevWellTarget, available);
             available = -1;
         }
@@ -437,6 +438,7 @@ public class Carrier extends Robot {
             // NOTE THIS ESTIMATE NEEDS TO ACCOUNT FOR SPACE AVAILABLE.
             available = estimateCarriers25Turns(rc.senseWell(wellTarget));
             prevWellTarget = wellTarget;
+            lastAv = rc.getRoundNum();
             wellTarget = null;
             deliver();
         } else if (rc.canCollectResource(wellTarget, -1)) {
@@ -497,10 +499,10 @@ public class Carrier extends Robot {
             if (r.type != RobotType.CARRIER) continue;
             double mineRate = (10.0 / RobotType.CARRIER.actionCooldown);
             int resourceRemaining = (GameConstants.CARRIER_CAPACITY-1) - r.getResourceAmount(wellType);
-            if (resourceRemaining / mineRate <= 5) {
-                int d = r.location.distanceSquaredTo(well.getMapLocation());
-                if (d < 2) available++;
-            } else available--;
+            int d = r.location.distanceSquaredTo(well.getMapLocation());
+            if (resourceRemaining / mineRate <= 20) {
+                if (d <= 2) available++;
+            } else if(d <= 5) available--;
         }   
         return Math.max(available, 0);
     }
