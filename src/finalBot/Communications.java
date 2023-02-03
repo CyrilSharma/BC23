@@ -176,7 +176,7 @@ public class Communications {
             MapLocation e = getClosestEnemyHQTo(h, null);
             int dx = Math.abs(e.x - h.x);
             int dy = Math.abs(e.y - h.y);
-            double d = dx + dy - Math.min(dx, dy);
+            double d = Math.max(dx, dy);
             if (d < mn) mn = d;
         }
 
@@ -194,7 +194,9 @@ public class Communications {
         for (int i = 0; i < numHQ; i++) {
             MapLocation h = HQs[i];
             MapLocation e = getClosestEnemyHQTo(h, null);
-            double d = Math.min(Math.abs(e.x - h.x), Math.abs(e.y - h.y));
+            int dx = Math.abs(e.x - h.x);
+            int dy = Math.abs(e.y - h.y);
+            double d = Math.max(dx, dy);
             if (d < mn) mn = d;
         }
         double val = rng.nextDouble();
