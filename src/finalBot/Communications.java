@@ -221,9 +221,9 @@ public class Communications {
     public double getRatioFromDist(double d) {
         if (d <= 12) {
             return 0;
-        } else if (d <= 20) {
-            return 0.10;
         } else if (d <= 30) {
+            return 0.10;
+        } else if (d <= 40) {
             return 0.20;
         } else {
             return 0.30;
@@ -1064,6 +1064,7 @@ public class Communications {
     }
 
     // Find best well using only comms [i think that's ok].
+    MapLocation prevTarget = null;
     public MapLocation findBestWell(ResourceType want, boolean gd) throws GameActionException {
         boolean nextToHQ = findClosestHQ().distanceSquaredTo(rc.getLocation()) <= 9;
         WellTarget best = null;
@@ -1075,31 +1076,34 @@ public class Communications {
             MapLocation m = new MapLocation(x, y);
             int available = (val >> 12) & (0b1111);
             // can do a better estimate.
-            if (rc.canSenseLocation(m) && !nextToHQ) continue;
+            if (rc.canSenseLocation(m)) continue;
             WellTarget cur = new WellTarget(m, getTypeFromIndex(i), want, available);
             if (cur.isBetterThan(best)) best = cur;
         }
         // better heuristic exists.
-        if (!nextToHQ) {
-            for (WellInfo w: rc.senseNearbyWells()) {
-                int available = 0;
-                for (Direction dir: directions) {
-                    MapLocation m = w.getMapLocation().add(dir);
-                    if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
-                        !rc.isLocationOccupied(m)) {
-                        available++;
-                    }
+        for (WellInfo w: rc.senseNearbyWells()) {
+            int available = 0;
+            for (Direction dir: directions) {
+                MapLocation m = w.getMapLocation().add(dir);
+                if (rc.canSenseLocation(m) && rc.sensePassability(m) && 
+                    !rc.isLocationOccupied(m)) {
+                    available++;
                 }
-                WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, available);
-                if (cur.isBetterThan(best)) best = cur;
+            }
+            WellTarget cur = new WellTarget(w.getMapLocation(), w.getResourceType(), want, available);
+            if (cur.isBetterThan(best)) {
+                best = cur;
             }
         }
         if (best == null) return null;
         if (best.dist > 15) return null;
         if (gd && !best.bestResource()) return null;
         // decrement it. now we dynamically specify availability!!
-        rc.setIndicatorString("UPDATE: "+best.loc+" "+(best.avail-1));
-        updateAvailability(best.loc, Math.max(best.avail - 1, 0));
+        // rc.setIndicatorString("UPDATE: "+best.loc+" "+(best.avail-1));
+        if (nextToHQ && !best.loc.equals(prevTarget)) {
+            updateAvailability(best.loc, Math.max(best.avail - 1, 0));
+            prevTarget = best.loc;
+        }
         return best.loc;
     }
 

@@ -211,7 +211,7 @@ public class Launcher extends Robot {
         // Conditions!!
         // if you see an enemy, or you just saw an enemy and you're on a cloud...
         if (hasLaunchersNear || hasCarriersNear) {
-            advanceTurns = 10;
+            advanceTurns = 5;
             return State.ATTACK;
         }
 
@@ -670,14 +670,13 @@ public class Launcher extends Robot {
 
         rc.setIndicatorString("ITERS: "+iters);
         for (MicroTarget mt: microtargets) {
-            /* switch (mt.safe()) {
+            switch (mt.safe()) {
                 case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
-                case 2: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
-                case 3: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
+                case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 255); break;
+                case 3: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
+                case 4: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
                 default:
-            } */
-            // rc.setIndicatorDot(mt.nloc, 0, 0, (int) mt.net_dps * 5);
-            ;
+            }
         }
     }
     
