@@ -156,6 +156,15 @@ public class Launcher extends Robot {
  
     void doAttack(boolean attackers) throws GameActionException {
         if (rc.getActionCooldownTurns() >= 10) return;
+        MapInfo mi = rc.senseMapInfo(rc.getLocation());
+        if (mi.hasCloud() && !attackers) {
+            LauncherInfo l = findAttackTarget();
+            if (l == null) return;
+            if (rc.canAttack(l.location)) {
+                rc.attack(l.location);
+            }
+            return;
+        }
         RobotInfo r = util.getBestAttackTarget();
         if (r == null && attackers) return;
         else if (r == null && attackers==false) {
@@ -173,6 +182,25 @@ public class Launcher extends Robot {
         }
     }
 
+    LauncherInfo findAttackTarget() throws GameActionException {
+        MapLocation myloc = rc.getLocation();
+        Team myTeam = rc.getTeam();
+        LauncherInfo best = null;
+        boolean bestClose = false;
+        for (LauncherInfo l: neighbors) {
+            if (l == null) continue;
+            if (l.team == myTeam) continue;
+            boolean close = l.location.distanceSquaredTo(myloc) <= 4;
+            if (best == null || 
+                (!bestClose && close) ||
+                (best.health > l.health)) {
+                best = l;
+                bestClose = close;
+            }
+        }
+        return best;
+    }
+ 
     State determineState() throws GameActionException {
         //if (shouldHarass) return State.HARASS;
         advanceTurns--;
@@ -549,7 +577,7 @@ public class Launcher extends Robot {
         microtargets[7] = new MicroTarget(directions[7]);
         microtargets[8] = new MicroTarget(directions[8]);
 
-        int nclouds = 0;
+        /* int nclouds = 0;
         nclouds += microtargets[0].hasCloud ? 1 : 0;
         nclouds += microtargets[1].hasCloud ? 1 : 0;
         nclouds += microtargets[2].hasCloud ? 1 : 0;
@@ -570,7 +598,7 @@ public class Launcher extends Robot {
             if (microtargets[6].hasCloud) microtargets[6].canMove = false;
             if (microtargets[7].hasCloud) microtargets[7].canMove = false;
             if (microtargets[8].hasCloud) microtargets[8].canMove = false;
-        }
+        } */
 
         MapLocation m;
         Team myTeam = rc.getTeam();
@@ -719,9 +747,10 @@ public class Launcher extends Robot {
         }
        
         int safe() {
-            if (net_dps > 0) return 1;
-            if (dps_defending < dps_targetting) return 2;
-            return 3;
+            if (curOnCloud && hasCloud) return 1;
+            if (net_dps > 0) return 2;
+            if (dps_defending < dps_targetting) return 3;
+            return 4;
         }
 
         boolean inRange() {
