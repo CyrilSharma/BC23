@@ -134,7 +134,7 @@ public class Communications {
             int x = (val) & (0b111111);
             int y = (val >> 6) & (0b111111);
             int availability = ((val >> 12) & (0b1111)) + 1;
-            availability = Math.min(availability + 1, 9);
+            availability = Math.min(availability, 9);
             int message = x + (y << 6) + (availability << 12);
             rc.writeSharedArray(i, message);
             break;
