@@ -85,7 +85,7 @@ public class Launcher extends Robot {
         huntTarget = null;
         neighborsAttacked = false;
         shouldAvoidClouds = false;
-        hurt = rc.getHealth() < 100;
+        hurt = rc.getHealth() < (RobotType.LAUNCHER.health / 3);
         if (rc.getRoundNum() % 5 == prevEnemyRound) 
             previousEnemy = null;
         communications.initial();
@@ -106,7 +106,7 @@ public class Launcher extends Robot {
         }
         doAttack(false);
         updateEnemy();
-        nt.displayMap();
+        // nt.displayMap();
         communications.last();
         previousPos = rc.getLocation();
     }
@@ -188,6 +188,8 @@ public class Launcher extends Robot {
             huntTarget = target;
             return State.HUNT;
         }
+        
+        // if (hurt) return State.WAIT;
 
         // advance if you recently encountered a threat, or neighbor was attacked!.
         if (advanceTurns > 0 || neighborsAttacked) {
@@ -312,7 +314,9 @@ public class Launcher extends Robot {
     }
 
     void advance() throws GameActionException {
-        return;
+        Direction dir = nt.advance();
+        rc.setIndicatorString("Advancing: " + dir);
+        if (dir != null) rc.move(dir);
     }
 
     void chase() throws GameActionException {
