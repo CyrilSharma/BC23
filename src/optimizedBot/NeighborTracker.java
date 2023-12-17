@@ -5,6 +5,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 import battlecode.common.Team;
 
 public class NeighborTracker {
@@ -109,7 +110,7 @@ public class NeighborTracker {
             int idx = r.ID % HEALTH_LEN;
             long phealth = friend_healths[idx];
             new_healths[idx] = r.health;
-            switch ((r.location.y - bly) << 4 + (r.location.x - blx)) {
+            switch (((r.location.y - bly) << 4) + (r.location.x - blx)) {
                 case (0):
                     tfriend_mask0 |= 1L;
                     if (r.health + 10 < phealth) {
@@ -443,331 +444,331 @@ public class NeighborTracker {
                 case (80):
                     tfriend_mask1 |= 1L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1L;
+                        att_friend_mask1 |= 1L;
                     }
                     break;
                 case (81):
                     tfriend_mask1 |= 2L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2L;
+                        att_friend_mask1 |= 2L;
                     }
                     break;
                 case (82):
                     tfriend_mask1 |= 4L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4L;
+                        att_friend_mask1 |= 4L;
                     }
                     break;
                 case (83):
                     tfriend_mask1 |= 8L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8L;
+                        att_friend_mask1 |= 8L;
                     }
                     break;
                 case (84):
                     tfriend_mask1 |= 16L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16L;
+                        att_friend_mask1 |= 16L;
                     }
                     break;
                 case (85):
                     tfriend_mask1 |= 32L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 32L;
+                        att_friend_mask1 |= 32L;
                     }
                     break;
                 case (86):
                     tfriend_mask1 |= 64L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 64L;
+                        att_friend_mask1 |= 64L;
                     }
                     break;
                 case (87):
                     tfriend_mask1 |= 128L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 128L;
+                        att_friend_mask1 |= 128L;
                     }
                     break;
                 case (88):
                     tfriend_mask1 |= 256L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 256L;
+                        att_friend_mask1 |= 256L;
                     }
                     break;
                 case (89):
                     tfriend_mask1 |= 512L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 512L;
+                        att_friend_mask1 |= 512L;
                     }
                     break;
                 case (90):
                     tfriend_mask1 |= 1024L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1024L;
+                        att_friend_mask1 |= 1024L;
                     }
                     break;
                 case (96):
                     tfriend_mask1 |= 2048L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2048L;
+                        att_friend_mask1 |= 2048L;
                     }
                     break;
                 case (97):
                     tfriend_mask1 |= 4096L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4096L;
+                        att_friend_mask1 |= 4096L;
                     }
                     break;
                 case (98):
                     tfriend_mask1 |= 8192L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8192L;
+                        att_friend_mask1 |= 8192L;
                     }
                     break;
                 case (99):
                     tfriend_mask1 |= 16384L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16384L;
+                        att_friend_mask1 |= 16384L;
                     }
                     break;
                 case (100):
                     tfriend_mask1 |= 32768L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 32768L;
+                        att_friend_mask1 |= 32768L;
                     }
                     break;
                 case (101):
                     tfriend_mask1 |= 65536L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 65536L;
+                        att_friend_mask1 |= 65536L;
                     }
                     break;
                 case (102):
                     tfriend_mask1 |= 131072L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 131072L;
+                        att_friend_mask1 |= 131072L;
                     }
                     break;
                 case (103):
                     tfriend_mask1 |= 262144L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 262144L;
+                        att_friend_mask1 |= 262144L;
                     }
                     break;
                 case (104):
                     tfriend_mask1 |= 524288L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 524288L;
+                        att_friend_mask1 |= 524288L;
                     }
                     break;
                 case (105):
                     tfriend_mask1 |= 1048576L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1048576L;
+                        att_friend_mask1 |= 1048576L;
                     }
                     break;
                 case (106):
                     tfriend_mask1 |= 2097152L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2097152L;
+                        att_friend_mask1 |= 2097152L;
                     }
                     break;
                 case (112):
                     tfriend_mask1 |= 4194304L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4194304L;
+                        att_friend_mask1 |= 4194304L;
                     }
                     break;
                 case (113):
                     tfriend_mask1 |= 8388608L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8388608L;
+                        att_friend_mask1 |= 8388608L;
                     }
                     break;
                 case (114):
                     tfriend_mask1 |= 16777216L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16777216L;
+                        att_friend_mask1 |= 16777216L;
                     }
                     break;
                 case (115):
                     tfriend_mask1 |= 33554432L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 33554432L;
+                        att_friend_mask1 |= 33554432L;
                     }
                     break;
                 case (116):
                     tfriend_mask1 |= 67108864L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 67108864L;
+                        att_friend_mask1 |= 67108864L;
                     }
                     break;
                 case (117):
                     tfriend_mask1 |= 134217728L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 134217728L;
+                        att_friend_mask1 |= 134217728L;
                     }
                     break;
                 case (118):
                     tfriend_mask1 |= 268435456L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 268435456L;
+                        att_friend_mask1 |= 268435456L;
                     }
                     break;
                 case (119):
                     tfriend_mask1 |= 536870912L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 536870912L;
+                        att_friend_mask1 |= 536870912L;
                     }
                     break;
                 case (120):
                     tfriend_mask1 |= 1073741824L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1073741824L;
+                        att_friend_mask1 |= 1073741824L;
                     }
                     break;
                 case (121):
                     tfriend_mask1 |= 2147483648L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2147483648L;
+                        att_friend_mask1 |= 2147483648L;
                     }
                     break;
                 case (122):
                     tfriend_mask1 |= 4294967296L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4294967296L;
+                        att_friend_mask1 |= 4294967296L;
                     }
                     break;
                 case (128):
                     tfriend_mask1 |= 8589934592L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8589934592L;
+                        att_friend_mask1 |= 8589934592L;
                     }
                     break;
                 case (129):
                     tfriend_mask1 |= 17179869184L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 17179869184L;
+                        att_friend_mask1 |= 17179869184L;
                     }
                     break;
                 case (130):
                     tfriend_mask1 |= 34359738368L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 34359738368L;
+                        att_friend_mask1 |= 34359738368L;
                     }
                     break;
                 case (131):
                     tfriend_mask1 |= 68719476736L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 68719476736L;
+                        att_friend_mask1 |= 68719476736L;
                     }
                     break;
                 case (132):
                     tfriend_mask1 |= 137438953472L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 137438953472L;
+                        att_friend_mask1 |= 137438953472L;
                     }
                     break;
                 case (133):
                     tfriend_mask1 |= 274877906944L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 274877906944L;
+                        att_friend_mask1 |= 274877906944L;
                     }
                     break;
                 case (134):
                     tfriend_mask1 |= 549755813888L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 549755813888L;
+                        att_friend_mask1 |= 549755813888L;
                     }
                     break;
                 case (135):
                     tfriend_mask1 |= 1099511627776L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1099511627776L;
+                        att_friend_mask1 |= 1099511627776L;
                     }
                     break;
                 case (136):
                     tfriend_mask1 |= 2199023255552L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2199023255552L;
+                        att_friend_mask1 |= 2199023255552L;
                     }
                     break;
                 case (137):
                     tfriend_mask1 |= 4398046511104L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4398046511104L;
+                        att_friend_mask1 |= 4398046511104L;
                     }
                     break;
                 case (138):
                     tfriend_mask1 |= 8796093022208L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8796093022208L;
+                        att_friend_mask1 |= 8796093022208L;
                     }
                     break;
                 case (144):
                     tfriend_mask1 |= 17592186044416L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 17592186044416L;
+                        att_friend_mask1 |= 17592186044416L;
                     }
                     break;
                 case (145):
                     tfriend_mask1 |= 35184372088832L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 35184372088832L;
+                        att_friend_mask1 |= 35184372088832L;
                     }
                     break;
                 case (146):
                     tfriend_mask1 |= 70368744177664L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 70368744177664L;
+                        att_friend_mask1 |= 70368744177664L;
                     }
                     break;
                 case (147):
                     tfriend_mask1 |= 140737488355328L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 140737488355328L;
+                        att_friend_mask1 |= 140737488355328L;
                     }
                     break;
                 case (148):
                     tfriend_mask1 |= 281474976710656L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 281474976710656L;
+                        att_friend_mask1 |= 281474976710656L;
                     }
                     break;
                 case (149):
                     tfriend_mask1 |= 562949953421312L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 562949953421312L;
+                        att_friend_mask1 |= 562949953421312L;
                     }
                     break;
                 case (150):
                     tfriend_mask1 |= 1125899906842624L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1125899906842624L;
+                        att_friend_mask1 |= 1125899906842624L;
                     }
                     break;
                 case (151):
                     tfriend_mask1 |= 2251799813685248L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2251799813685248L;
+                        att_friend_mask1 |= 2251799813685248L;
                     }
                     break;
                 case (152):
                     tfriend_mask1 |= 4503599627370496L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4503599627370496L;
+                        att_friend_mask1 |= 4503599627370496L;
                     }
                     break;
                 case (153):
                     tfriend_mask1 |= 9007199254740992L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 9007199254740992L;
+                        att_friend_mask1 |= 9007199254740992L;
                     }
                     break;
                 case (154):
                     tfriend_mask1 |= 18014398509481984L;
                     if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 18014398509481984L;
+                        att_friend_mask1 |= 18014398509481984L;
                     }
                     break;
                 default: 
@@ -783,7 +784,7 @@ public class NeighborTracker {
                 case CARRIER: hasCarriersNear = true;
                 default: continue;
             }
-            switch ((r.location.y - bly) << 4 + (r.location.x - blx)) {
+            switch (((r.location.y - bly) << 4) + (r.location.x - blx)) {
                 case (0): tenemy_mask0 |= 1L; break;
                 case (1): tenemy_mask0 |= 2L; break;
                 case (2): tenemy_mask0 |= 4L; break;
@@ -898,7 +899,7 @@ public class NeighborTracker {
             }
         }
 
-        if (tenemy_mask0 > 0 || tenemy_mask1 > 0) {
+        if ((tenemy_mask0 | tenemy_mask1) > 0) {
             hasLaunchersNear = true;
         }
 

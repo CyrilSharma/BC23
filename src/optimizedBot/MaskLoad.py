@@ -14,21 +14,8 @@ def binary_str(num, bit_width):
     return f'0b{binary_representation}'
 
 indent = ' ' * 4
-print("switch () {")
-for i in range(1 << 8):
-    y = i >> 4; x = i & 0b1111;
-    if (x >= FE_MASK_WIDTH): continue;
-    if (y >= FE_MASK_HEIGHT * 2): continue;
-    if (y < FE_MASK_HEIGHT):
-        bit = (1 << (y * FE_MASK_WIDTH + x));
-        print(f"{indent}case ({i}): tenemy_mask0 |= {bit}L; break;")
-    else:
-        bit = (1 << ((y - FE_MASK_HEIGHT) * (FE_MASK_WIDTH) + x));
-        print(f"{indent}case ({i}): tenemy_mask1 |= {bit}L; break;")
-print(f"{indent}default: ")
-print("}")
 
-print("switch () {")
+print("switch ((r.location.y - bly) << 4 + (r.location.x - blx)) {{")
 for i in range(1 << 8):
     y = i >> 4; x = i & 0b1111;
     if (x >= FE_MASK_WIDTH): continue;
@@ -44,8 +31,22 @@ for i in range(1 << 8):
         bit = (1 << ((y - FE_MASK_HEIGHT) * (FE_MASK_WIDTH) + x));
         print(f"{indent * 2}tfriend_mask1 |= {bit}L;")
         print(f"{indent * 2}if (r.health + 10 < phealth) {{");
-        print(f"{indent * 3}att_friend_mask0 |= {bit}L;");
+        print(f"{indent * 3}att_friend_mask1 |= {bit}L;");
         print(f"{indent * 2}}}");
     print(f"{indent * 2}break;")
+print(f"{indent}default: ")
+print("}")
+
+print("switch ((r.location.y - bly) << 4 + (r.location.x - blx)) {{")
+for i in range(1 << 8):
+    y = i >> 4; x = i & 0b1111;
+    if (x >= FE_MASK_WIDTH): continue;
+    if (y >= FE_MASK_HEIGHT * 2): continue;
+    if (y < FE_MASK_HEIGHT):
+        bit = (1 << (y * FE_MASK_WIDTH + x));
+        print(f"{indent}case ({i}): tenemy_mask0 |= {bit}L; break;")
+    else:
+        bit = (1 << ((y - FE_MASK_HEIGHT) * (FE_MASK_WIDTH) + x));
+        print(f"{indent}case ({i}): tenemy_mask1 |= {bit}L; break;")
 print(f"{indent}default: ")
 print("}")
