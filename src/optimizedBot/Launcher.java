@@ -43,25 +43,24 @@ public class Launcher extends Robot {
     boolean hurt = false;
     int prevEnemyRound = -10;
     int prevHuntRound = -10;
+    MapLocation prevLocation = null;
     MapLocation previousEnemy = null;
     MapLocation previousPos = null;
     MapLocation enemyHQ = null;
-    Direction bestNeighborDir;
     boolean okToStray;
     boolean shouldRendevous = true;
     boolean neighborsAttacked = false;
     boolean shouldAvoidClouds = false;
-    boolean hasCarriersNear = false;
-    boolean hasLaunchersNear = false;
     MapLocation rendevous;
     MapLocation huntTarget;
     MapLocation islandTarget;
     MapLocation harassTarget = null;
     MapLocation hqTarget;
-    MapLocation bestNeighborLoc;
     MapLocation[] killedHQs = new MapLocation[5];
     int killedHQInd = 0;
     int advanceTurns = 0;
+    NeighborTracker nt;
+
     enum State {
         WAIT,
         ADVANCE,
@@ -78,6 +77,7 @@ public class Launcher extends Robot {
         communications.findOurHQs();
         born = rc.getRoundNum();
         rendevous = communications.getBestRendevous();
+        nt = new NeighborTracker(rc);
     }
 
     void run() throws GameActionException {
@@ -85,13 +85,12 @@ public class Launcher extends Robot {
         huntTarget = null;
         neighborsAttacked = false;
         shouldAvoidClouds = false;
-        hasLaunchersNear = false;
-        hasCarriersNear = false;
         hurt = rc.getHealth() < 100;
         if (rc.getRoundNum() % 5 == prevEnemyRound) 
             previousEnemy = null;
         communications.initial();
-        updateNeighbors();
+        nt.updateNeighbors();
+        prevLocation = rc.getLocation();
         State state = determineState();
         rc.setIndicatorString(state.toString());
         doAttack(true);
@@ -107,6 +106,7 @@ public class Launcher extends Robot {
         }
         doAttack(false);
         updateEnemy();
+        nt.displayMap();
         communications.last();
         previousPos = rc.getLocation();
     }
@@ -170,7 +170,7 @@ public class Launcher extends Robot {
     State determineState() throws GameActionException {
         advanceTurns--;
         if (rc.getRoundNum() % 2 == 0) return State.WAIT;
-        if (hasLaunchersNear || hasCarriersNear) {
+        if (nt.hasLaunchersNear || nt.hasCarriersNear) {
             advanceTurns = 5;
             return State.ATTACK;
         }
@@ -197,108 +197,6 @@ public class Launcher extends Robot {
             return State.HUNT_HQ;
         }
         return State.WAIT;
-    }
-
-    static final int FE_MASK_WIDTH = 11;
-    static final int FE_MASK_HEIGHT = 5;
-    static final int FE_MASK_CROSSOVER = 5;
-    static final int HEALTH_LEN = 31;
-    long friend_mask[] = { 0, 0 };
-    long enemy_mask[] = { 0, 0 };
-    long fupdates[][] = { {0, 0}, {0, 0}, {0, 0} };
-    long eupdates[][] = { {0, 0}, {0, 0}, {0, 0} };
-    long friend_healths[] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0
-    };
-
-    void updateNeighbors() throws GameActionException {
-        Team myTeam = rc.getTeam();
-        int new_healths[] = new int[HEALTH_LEN];
-        for (int i = HEALTH_LEN; i-- > 0;)
-            new_healths[i] = 0;
-
-        // Location of the bottom left corner.
-        MapLocation myloc = rc.getLocation();
-        int blx = myloc.x - (FE_MASK_WIDTH / 2);
-        int bly = myloc.y - (FE_MASK_HEIGHT);
-
-        double x = 0;
-        double y = 0;
-        double totalW = 0;
-        long tfriend_mask[] = { 0, 0 };
-        long tenemy_mask[] = { 0, 0 };
-        RobotInfo[] robots = rc.senseNearbyRobots(-1);
-        for (int j = robots.length; j-- > 0; ) {
-            RobotInfo r = robots[j];
-            switch (r.type) {
-                case LAUNCHER: break;
-                case CARRIER:  
-                    if (r.team != myTeam) {
-                        hasCarriersNear = true;
-                    }
-                default: continue;
-            }
-
-            int dx = r.location.x - blx;
-            int dy = r.location.y - bly;
-            if (r.team == myTeam) {
-                if (dy < FE_MASK_CROSSOVER) {
-                    int shift = (dy * FE_MASK_WIDTH + dx);
-                    tfriend_mask[0] |= (1 << shift);
-                } else {
-                    int shift = (dy * (FE_MASK_WIDTH - FE_MASK_CROSSOVER) + dx);
-                    tfriend_mask[1] |= (1 << shift);
-                }
-
-                // Track average position of team, with priority to those attacked.
-                new_healths[(r.ID % HEALTH_LEN)] = r.health;
-                long phealth = friend_healths[r.ID % HEALTH_LEN];
-                if (phealth == 0) continue;
-                if ((phealth > r.health)) {
-                    totalW += 6;
-                    x += r.location.x * 6;
-                    y += r.location.y * 6;
-                    neighborsAttacked = true;
-                } else {
-                    x += r.location.x;
-                    y += r.location.y;
-                    totalW++;
-                }
-            } else {
-                if (dy < FE_MASK_CROSSOVER) {
-                    int shift = (dy * FE_MASK_WIDTH + dx);
-                    tenemy_mask[0] |= (1 << shift);
-                } else {
-                    int shift = (dy * (FE_MASK_WIDTH - FE_MASK_CROSSOVER) + dx);
-                    tenemy_mask[1] |= (1 << shift);
-                }
-                hasLaunchersNear = true;
-            }
-        }
-
-        x /= totalW;
-        y /= totalW;
-        bestNeighborLoc = new MapLocation((int) x, (int) y);
-
-        for (int i = HEALTH_LEN; i-- > 0;)
-            friend_healths[i] = new_healths[i];
-
-        int mod = rc.getRoundNum() % 3;
-        friend_mask[0] &= ~fupdates[mod][0];
-        enemy_mask[1]  &= ~fupdates[mod][1];
-        friend_mask[0] &= ~eupdates[mod][0];
-        enemy_mask[1]  &= ~eupdates[mod][1];
-        friend_mask[0] |= tfriend_mask[0];
-        enemy_mask[1]  |= tfriend_mask[1];
-        friend_mask[0] |= tenemy_mask[0];
-        enemy_mask[1]  |= tenemy_mask[1];
-        fupdates[mod][0] = tfriend_mask[0];
-        fupdates[mod][1] = tfriend_mask[1];
-        eupdates[mod][0] = tenemy_mask[0];
-        eupdates[mod][1] = tenemy_mask[1];
     }
 
     void heal() throws GameActionException {
@@ -356,12 +254,10 @@ public class Launcher extends Robot {
         } else if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
             int enemyLaunchers = 0;
             int friendLaunchers = 0;
-            int cntSmaller = 0;
             for (RobotInfo r: rc.senseNearbyRobots()) {
                 if (r.type != RobotType.LAUNCHER) continue;
                 if (rc.getTeam() == r.team) {
                     friendLaunchers++;
-                    if (r.ID < rc.getID()) cntSmaller++;
                 }
                 else enemyLaunchers++;
             }
@@ -416,37 +312,7 @@ public class Launcher extends Robot {
     }
 
     void advance() throws GameActionException {
-        for (RobotInfo r: rc.senseNearbyRobots(RobotType.HEADQUARTERS.actionRadiusSquared, rc.getTeam().opponent())) {
-            if (r.type == RobotType.HEADQUARTERS) {
-                hunt_hq(r.location);
-                return;
-            }
-        }
-        Direction bestNeighborDir = computeBestNeighborDir();
-        if (bestNeighborDir == null) return;
-        if (rc.canMove(bestNeighborDir)) 
-            rc.move(bestNeighborDir);
-    }
-
-    Direction computeBestNeighborDir() throws GameActionException {
-        Direction bestDir = Direction.CENTER;
-        MapLocation cur = rc.getLocation();
-        boolean bestCloud = true;
-        int bestD = cur.distanceSquaredTo(bestNeighborLoc);
-        for (Direction d: directions) {
-            if (!rc.canMove(d)) continue;
-            MapLocation nloc = cur.add(d);
-            MapInfo mi = rc.senseMapInfo(nloc);
-            if (shouldAvoidClouds && (mi.hasCloud() && !bestCloud)) continue;
-            nloc = nloc.add(mi.getCurrentDirection());
-            int dist = nloc.distanceSquaredTo(bestNeighborLoc);
-            if (dist + 0.25 < bestD) {
-                bestD = dist;
-                bestDir = d; 
-                bestCloud = mi.hasCloud();
-            }
-        }
-        return bestDir;
+        return;
     }
 
     void chase() throws GameActionException {
@@ -459,7 +325,7 @@ public class Launcher extends Robot {
     }   
 
     void attack() throws GameActionException {
-        if (hasCarriersNear && !hasLaunchersNear) {
+        if (nt.hasCarriersNear && !nt.hasLaunchersNear) {
             RobotInfo r = util.getBestAttackTarget();
             if (r == null) return;
             follow(r.location);
@@ -581,15 +447,15 @@ public class Launcher extends Robot {
         if (rc.canMove(best.dir)) rc.move(best.dir);
 
         rc.setIndicatorString("ITERS: "+iters);
-        for (MicroTarget mt: microtargets) {
-            switch (mt.safe()) {
-                case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
-                case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 255); break;
-                case 3: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
-                case 4: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
-                default:
-            }
-        }
+        // for (MicroTarget mt: microtargets) {
+        //     switch (mt.safe()) {
+        //         case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
+        //         case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 255); break;
+        //         case 3: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
+        //         case 4: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
+        //         default:
+        //     }
+        // }
     }
     
     // Choose best square to chase a defenseless target.
