@@ -169,7 +169,7 @@ public class Launcher extends Robot {
  
     State determineState() throws GameActionException {
         advanceTurns--;
-        if (rc.getRoundNum()%2 == 0) return State.WAIT;
+        if (rc.getRoundNum() % 2 == 0) return State.WAIT;
         if (hasLaunchersNear || hasCarriersNear) {
             advanceTurns = 5;
             return State.ATTACK;
@@ -217,7 +217,7 @@ public class Launcher extends Robot {
     void updateNeighbors() throws GameActionException {
         Team myTeam = rc.getTeam();
         int new_healths[] = new int[HEALTH_LEN];
-        for (int i = HEALTH_LEN - 1; i-- >= 0;)
+        for (int i = HEALTH_LEN; i-- > 0;)
             new_healths[i] = 0;
 
         // Location of the bottom left corner.
@@ -231,12 +231,12 @@ public class Launcher extends Robot {
         long tfriend_mask[] = { 0, 0 };
         long tenemy_mask[] = { 0, 0 };
         RobotInfo[] robots = rc.senseNearbyRobots(-1);
-        for (int j = robots.length; j-- >= 0; ) {
+        for (int j = robots.length; j-- > 0; ) {
             RobotInfo r = robots[j];
             switch (r.type) {
                 case LAUNCHER: break;
                 case CARRIER:  
-                    if (r.team == myTeam) {
+                    if (r.team != myTeam) {
                         hasCarriersNear = true;
                     }
                 default: continue;
@@ -283,22 +283,22 @@ public class Launcher extends Robot {
         y /= totalW;
         bestNeighborLoc = new MapLocation((int) x, (int) y);
 
-        for (int i = HEALTH_LEN - 1; i-- >= 0;)
+        for (int i = HEALTH_LEN; i-- > 0;)
             friend_healths[i] = new_healths[i];
 
         int mod = rc.getRoundNum() % 3;
-        friend_mask[0] &= ~fupdates[0][mod];
-        enemy_mask[1]  &= ~fupdates[1][mod];
-        friend_mask[0] &= ~eupdates[0][mod];
-        enemy_mask[1]  &= ~eupdates[1][mod];
+        friend_mask[0] &= ~fupdates[mod][0];
+        enemy_mask[1]  &= ~fupdates[mod][1];
+        friend_mask[0] &= ~eupdates[mod][0];
+        enemy_mask[1]  &= ~eupdates[mod][1];
         friend_mask[0] |= tfriend_mask[0];
         enemy_mask[1]  |= tfriend_mask[1];
         friend_mask[0] |= tenemy_mask[0];
         enemy_mask[1]  |= tenemy_mask[1];
-        fupdates[0][mod] = tfriend_mask[0];
-        fupdates[1][mod] = tfriend_mask[1];
-        eupdates[0][mod] = tenemy_mask[0];
-        eupdates[1][mod] = tenemy_mask[1];
+        fupdates[mod][0] = tfriend_mask[0];
+        fupdates[mod][1] = tfriend_mask[1];
+        eupdates[mod][0] = tenemy_mask[0];
+        eupdates[mod][1] = tenemy_mask[1];
     }
 
     void heal() throws GameActionException {
@@ -500,15 +500,17 @@ public class Launcher extends Robot {
         microtargets[7] = new MicroTarget(directions[7]);
         microtargets[8] = new MicroTarget(directions[8]);
 
-        MapLocation m;
+        int iters = 0;
+        MapLocation m = null;
         Team myTeam = rc.getTeam();
         Team opponentTeam = myTeam.opponent();
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         curOnCloud = mi.hasCloud();
-        int iters = 0;
-        for (LauncherInfo r: neighbors) {
-            if (r == null) continue;
+
+        RobotInfo[] robots = rc.senseNearbyRobots(-1);
+        for (int i = robots.length; i-- > 0;) {
             if (Clock.getBytecodesLeft() < 1500) break;
+            RobotInfo r = robots[i];
             m = r.location;
             boolean canSense = rc.canSenseLocation(m);
             if (canSense) mi = rc.senseMapInfo(m);
@@ -645,7 +647,7 @@ public class Launcher extends Robot {
             // minDistToEnemy = nloc.distanceSquaredTo(previousEnemy);
         }
         
-        void addEnemy(LauncherInfo r) throws GameActionException {
+        void addEnemy(RobotInfo r) throws GameActionException {
             //int start = Clock.getBytecodesLeft();
             if (!canMove) return;
             int d = nloc.distanceSquaredTo(r.location);
@@ -658,7 +660,7 @@ public class Launcher extends Robot {
         } 
 
         
-        void addAlly(LauncherInfo r) throws GameActionException {
+        void addAlly(RobotInfo r) throws GameActionException {
             if (!canMove) return;
             if (nloc.distanceSquaredTo(r.location) <= curVisionRadius)
                 dps_defending += currentDPS;
