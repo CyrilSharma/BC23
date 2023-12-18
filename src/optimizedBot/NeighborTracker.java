@@ -103,709 +103,155 @@ public class NeighborTracker {
                 case LAUNCHER: break;
                 default: continue;
             }
-
-            int idx = r.ID % HEALTH_LEN;
-            long phealth = friend_healths[idx];
-            new_healths[idx] = r.health;
             outer: switch (r.location.y - bly) {
                 case (0):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask0 |= 1L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask0 |= 2L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask0 |= 4L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask0 |= 8L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 8L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask0 |= 16L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 16L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask0 |= 32L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 32L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask0 |= 64L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 64L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask0 |= 128L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 128L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask0 |= 256L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 256L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask0 |= 512L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 512L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask0 |= 1024L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1024L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask0 |= 1L; break outer;
+                        case (1): tfriend_mask0 |= 2L; break outer;
+                        case (2): tfriend_mask0 |= 4L; break outer;
+                        case (3): tfriend_mask0 |= 8L; break outer;
+                        case (4): tfriend_mask0 |= 16L; break outer;
+                        case (5): tfriend_mask0 |= 32L; break outer;
+                        case (6): tfriend_mask0 |= 64L; break outer;
+                        case (7): tfriend_mask0 |= 128L; break outer;
+                        case (8): tfriend_mask0 |= 256L; break outer;
+                        case (9): tfriend_mask0 |= 512L; break outer;
+                        case (10): tfriend_mask0 |= 1024L; break outer;
                         default: break outer;
                     }
                 case (1):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask0 |= 2048L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2048L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask0 |= 4096L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4096L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask0 |= 8192L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 8192L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask0 |= 16384L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 16384L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask0 |= 32768L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 32768L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask0 |= 65536L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 65536L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask0 |= 131072L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 131072L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask0 |= 262144L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 262144L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask0 |= 524288L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 524288L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask0 |= 1048576L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1048576L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask0 |= 2097152L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2097152L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask0 |= 2048L; break outer;
+                        case (1): tfriend_mask0 |= 4096L; break outer;
+                        case (2): tfriend_mask0 |= 8192L; break outer;
+                        case (3): tfriend_mask0 |= 16384L; break outer;
+                        case (4): tfriend_mask0 |= 32768L; break outer;
+                        case (5): tfriend_mask0 |= 65536L; break outer;
+                        case (6): tfriend_mask0 |= 131072L; break outer;
+                        case (7): tfriend_mask0 |= 262144L; break outer;
+                        case (8): tfriend_mask0 |= 524288L; break outer;
+                        case (9): tfriend_mask0 |= 1048576L; break outer;
+                        case (10): tfriend_mask0 |= 2097152L; break outer;
                         default: break outer;
                     }
                 case (2):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask0 |= 4194304L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4194304L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask0 |= 8388608L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 8388608L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask0 |= 16777216L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 16777216L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask0 |= 33554432L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 33554432L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask0 |= 67108864L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 67108864L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask0 |= 134217728L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 134217728L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask0 |= 268435456L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 268435456L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask0 |= 536870912L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 536870912L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask0 |= 1073741824L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1073741824L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask0 |= 2147483648L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2147483648L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask0 |= 4294967296L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4294967296L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask0 |= 4194304L; break outer;
+                        case (1): tfriend_mask0 |= 8388608L; break outer;
+                        case (2): tfriend_mask0 |= 16777216L; break outer;
+                        case (3): tfriend_mask0 |= 33554432L; break outer;
+                        case (4): tfriend_mask0 |= 67108864L; break outer;
+                        case (5): tfriend_mask0 |= 134217728L; break outer;
+                        case (6): tfriend_mask0 |= 268435456L; break outer;
+                        case (7): tfriend_mask0 |= 536870912L; break outer;
+                        case (8): tfriend_mask0 |= 1073741824L; break outer;
+                        case (9): tfriend_mask0 |= 2147483648L; break outer;
+                        case (10): tfriend_mask0 |= 4294967296L; break outer;
                         default: break outer;
                     }
                 case (3):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask0 |= 8589934592L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 8589934592L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask0 |= 17179869184L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 17179869184L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask0 |= 34359738368L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 34359738368L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask0 |= 68719476736L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 68719476736L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask0 |= 137438953472L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 137438953472L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask0 |= 274877906944L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 274877906944L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask0 |= 549755813888L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 549755813888L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask0 |= 1099511627776L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1099511627776L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask0 |= 2199023255552L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2199023255552L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask0 |= 4398046511104L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4398046511104L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask0 |= 8796093022208L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 8796093022208L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask0 |= 8589934592L; break outer;
+                        case (1): tfriend_mask0 |= 17179869184L; break outer;
+                        case (2): tfriend_mask0 |= 34359738368L; break outer;
+                        case (3): tfriend_mask0 |= 68719476736L; break outer;
+                        case (4): tfriend_mask0 |= 137438953472L; break outer;
+                        case (5): tfriend_mask0 |= 274877906944L; break outer;
+                        case (6): tfriend_mask0 |= 549755813888L; break outer;
+                        case (7): tfriend_mask0 |= 1099511627776L; break outer;
+                        case (8): tfriend_mask0 |= 2199023255552L; break outer;
+                        case (9): tfriend_mask0 |= 4398046511104L; break outer;
+                        case (10): tfriend_mask0 |= 8796093022208L; break outer;
                         default: break outer;
                     }
                 case (4):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask0 |= 17592186044416L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 17592186044416L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask0 |= 35184372088832L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 35184372088832L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask0 |= 70368744177664L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 70368744177664L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask0 |= 140737488355328L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 140737488355328L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask0 |= 281474976710656L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 281474976710656L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask0 |= 562949953421312L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 562949953421312L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask0 |= 1125899906842624L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 1125899906842624L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask0 |= 2251799813685248L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 2251799813685248L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask0 |= 4503599627370496L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 4503599627370496L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask0 |= 9007199254740992L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 9007199254740992L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask0 |= 18014398509481984L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask0 |= 18014398509481984L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask0 |= 17592186044416L; break outer;
+                        case (1): tfriend_mask0 |= 35184372088832L; break outer;
+                        case (2): tfriend_mask0 |= 70368744177664L; break outer;
+                        case (3): tfriend_mask0 |= 140737488355328L; break outer;
+                        case (4): tfriend_mask0 |= 281474976710656L; break outer;
+                        case (5): tfriend_mask0 |= 562949953421312L; break outer;
+                        case (6): tfriend_mask0 |= 1125899906842624L; break outer;
+                        case (7): tfriend_mask0 |= 2251799813685248L; break outer;
+                        case (8): tfriend_mask0 |= 4503599627370496L; break outer;
+                        case (9): tfriend_mask0 |= 9007199254740992L; break outer;
+                        case (10): tfriend_mask0 |= 18014398509481984L; break outer;
                         default: break outer;
                     }
                 case (5):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask1 |= 1L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask1 |= 2L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask1 |= 4L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask1 |= 8L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 8L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask1 |= 16L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 16L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask1 |= 32L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 32L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask1 |= 64L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 64L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask1 |= 128L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 128L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask1 |= 256L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 256L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask1 |= 512L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 512L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask1 |= 1024L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1024L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask1 |= 1L; break outer;
+                        case (1): tfriend_mask1 |= 2L; break outer;
+                        case (2): tfriend_mask1 |= 4L; break outer;
+                        case (3): tfriend_mask1 |= 8L; break outer;
+                        case (4): tfriend_mask1 |= 16L; break outer;
+                        case (5): tfriend_mask1 |= 32L; break outer;
+                        case (6): tfriend_mask1 |= 64L; break outer;
+                        case (7): tfriend_mask1 |= 128L; break outer;
+                        case (8): tfriend_mask1 |= 256L; break outer;
+                        case (9): tfriend_mask1 |= 512L; break outer;
+                        case (10): tfriend_mask1 |= 1024L; break outer;
                         default: break outer;
                     }
                 case (6):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask1 |= 2048L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2048L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask1 |= 4096L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4096L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask1 |= 8192L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 8192L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask1 |= 16384L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 16384L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask1 |= 32768L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 32768L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask1 |= 65536L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 65536L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask1 |= 131072L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 131072L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask1 |= 262144L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 262144L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask1 |= 524288L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 524288L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask1 |= 1048576L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1048576L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask1 |= 2097152L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2097152L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask1 |= 2048L; break outer;
+                        case (1): tfriend_mask1 |= 4096L; break outer;
+                        case (2): tfriend_mask1 |= 8192L; break outer;
+                        case (3): tfriend_mask1 |= 16384L; break outer;
+                        case (4): tfriend_mask1 |= 32768L; break outer;
+                        case (5): tfriend_mask1 |= 65536L; break outer;
+                        case (6): tfriend_mask1 |= 131072L; break outer;
+                        case (7): tfriend_mask1 |= 262144L; break outer;
+                        case (8): tfriend_mask1 |= 524288L; break outer;
+                        case (9): tfriend_mask1 |= 1048576L; break outer;
+                        case (10): tfriend_mask1 |= 2097152L; break outer;
                         default: break outer;
                     }
                 case (7):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask1 |= 4194304L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4194304L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask1 |= 8388608L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 8388608L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask1 |= 16777216L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 16777216L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask1 |= 33554432L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 33554432L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask1 |= 67108864L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 67108864L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask1 |= 134217728L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 134217728L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask1 |= 268435456L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 268435456L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask1 |= 536870912L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 536870912L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask1 |= 1073741824L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1073741824L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask1 |= 2147483648L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2147483648L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask1 |= 4294967296L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4294967296L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask1 |= 4194304L; break outer;
+                        case (1): tfriend_mask1 |= 8388608L; break outer;
+                        case (2): tfriend_mask1 |= 16777216L; break outer;
+                        case (3): tfriend_mask1 |= 33554432L; break outer;
+                        case (4): tfriend_mask1 |= 67108864L; break outer;
+                        case (5): tfriend_mask1 |= 134217728L; break outer;
+                        case (6): tfriend_mask1 |= 268435456L; break outer;
+                        case (7): tfriend_mask1 |= 536870912L; break outer;
+                        case (8): tfriend_mask1 |= 1073741824L; break outer;
+                        case (9): tfriend_mask1 |= 2147483648L; break outer;
+                        case (10): tfriend_mask1 |= 4294967296L; break outer;
                         default: break outer;
                     }
                 case (8):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask1 |= 8589934592L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 8589934592L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask1 |= 17179869184L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 17179869184L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask1 |= 34359738368L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 34359738368L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask1 |= 68719476736L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 68719476736L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask1 |= 137438953472L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 137438953472L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask1 |= 274877906944L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 274877906944L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask1 |= 549755813888L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 549755813888L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask1 |= 1099511627776L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1099511627776L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask1 |= 2199023255552L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2199023255552L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask1 |= 4398046511104L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4398046511104L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask1 |= 8796093022208L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 8796093022208L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask1 |= 8589934592L; break outer;
+                        case (1): tfriend_mask1 |= 17179869184L; break outer;
+                        case (2): tfriend_mask1 |= 34359738368L; break outer;
+                        case (3): tfriend_mask1 |= 68719476736L; break outer;
+                        case (4): tfriend_mask1 |= 137438953472L; break outer;
+                        case (5): tfriend_mask1 |= 274877906944L; break outer;
+                        case (6): tfriend_mask1 |= 549755813888L; break outer;
+                        case (7): tfriend_mask1 |= 1099511627776L; break outer;
+                        case (8): tfriend_mask1 |= 2199023255552L; break outer;
+                        case (9): tfriend_mask1 |= 4398046511104L; break outer;
+                        case (10): tfriend_mask1 |= 8796093022208L; break outer;
                         default: break outer;
                     }
                 case (9):
                     switch (r.location.x - blx) {
-                        case (0):
-                            tfriend_mask1 |= 17592186044416L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 17592186044416L;
-                            }
-                            break outer;
-                        case (1):
-                            tfriend_mask1 |= 35184372088832L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 35184372088832L;
-                            }
-                            break outer;
-                        case (2):
-                            tfriend_mask1 |= 70368744177664L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 70368744177664L;
-                            }
-                            break outer;
-                        case (3):
-                            tfriend_mask1 |= 140737488355328L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 140737488355328L;
-                            }
-                            break outer;
-                        case (4):
-                            tfriend_mask1 |= 281474976710656L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 281474976710656L;
-                            }
-                            break outer;
-                        case (5):
-                            tfriend_mask1 |= 562949953421312L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 562949953421312L;
-                            }
-                            break outer;
-                        case (6):
-                            tfriend_mask1 |= 1125899906842624L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 1125899906842624L;
-                            }
-                            break outer;
-                        case (7):
-                            tfriend_mask1 |= 2251799813685248L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 2251799813685248L;
-                            }
-                            break outer;
-                        case (8):
-                            tfriend_mask1 |= 4503599627370496L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 4503599627370496L;
-                            }
-                            break outer;
-                        case (9):
-                            tfriend_mask1 |= 9007199254740992L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 9007199254740992L;
-                            }
-                            break outer;
-                        case (10):
-                            tfriend_mask1 |= 18014398509481984L;
-                            if (r.health + 10 < phealth) {
-                                att_friend_mask1 |= 18014398509481984L;
-                            }
-                            break outer;
+                        case (0): tfriend_mask1 |= 17592186044416L; break outer;
+                        case (1): tfriend_mask1 |= 35184372088832L; break outer;
+                        case (2): tfriend_mask1 |= 70368744177664L; break outer;
+                        case (3): tfriend_mask1 |= 140737488355328L; break outer;
+                        case (4): tfriend_mask1 |= 281474976710656L; break outer;
+                        case (5): tfriend_mask1 |= 562949953421312L; break outer;
+                        case (6): tfriend_mask1 |= 1125899906842624L; break outer;
+                        case (7): tfriend_mask1 |= 2251799813685248L; break outer;
+                        case (8): tfriend_mask1 |= 4503599627370496L; break outer;
+                        case (9): tfriend_mask1 |= 9007199254740992L; break outer;
+                        case (10): tfriend_mask1 |= 18014398509481984L; break outer;
                         default: break outer;
                     }
                 default: 
