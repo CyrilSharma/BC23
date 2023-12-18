@@ -281,6 +281,8 @@ task run(type: JavaExec) {
     '-Dbc.game.team-b.package=' + (project.findProperty('packageNameB') ?: project.property('teamB')),
     '-Dbc.game.maps=' + project.property('maps'),
     '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
+    // Enable this when runnning tester.py
+    '-Dbc.server.websocket=false',
   ]
 }
 

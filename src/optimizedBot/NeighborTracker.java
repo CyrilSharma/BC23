@@ -1032,8 +1032,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
                     break;
                 case (0b0000000000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     break;
                 case (0b0000000000000001000000): 
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
@@ -1047,8 +1047,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     break;
                 case (0b0000000000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     break;
                 case (0b0000001000000000000000): 
@@ -1063,8 +1063,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     break;
                 case (0b0000001000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     break;
                 case (0b0000001000000001000000): 
@@ -1082,8 +1082,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     break;
                 case (0b0000001000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     break;
@@ -1099,8 +1099,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
                 case (0b0000010000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
                 case (0b0000010000000001000000): 
@@ -1118,8 +1118,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
                 case (0b0000010000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
@@ -1138,8 +1138,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
                 case (0b0000011000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
@@ -1161,8 +1161,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     break;
                 case (0b0000011000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
@@ -1179,8 +1179,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000100000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000100000000001000000): 
@@ -1198,8 +1198,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000100000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
@@ -1218,8 +1218,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000101000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
@@ -1241,8 +1241,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000101000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
@@ -1262,8 +1262,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000110000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
@@ -1285,8 +1285,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000110000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
@@ -1309,8 +1309,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000111000000000110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
@@ -1336,8 +1336,8 @@ public class NeighborTracker {
                     if (rc.canMove(Direction.NORTHEAST)) return Direction.NORTHEAST;
                     break;
                 case (0b0000111000000001110000): 
-                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.CENTER)) return Direction.CENTER;
+                    if (rc.canMove(Direction.WEST)) return Direction.WEST;
                     if (rc.canMove(Direction.EAST)) return Direction.EAST;
                     if (rc.canMove(Direction.NORTHWEST)) return Direction.NORTHWEST;
                     if (rc.canMove(Direction.NORTH)) return Direction.NORTH;

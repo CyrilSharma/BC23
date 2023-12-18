@@ -15,6 +15,9 @@ public strictfp class RobotPlayer {
         }
         while (true) {
             try {
+                if (rc.getRoundNum() > 200 && rc.getRobotCount() <= 5) {
+                    rc.resign();
+                }
                 robot.run();
             } catch (GameActionException e) {
                 System.out.println(rc.getType() + " Exception");

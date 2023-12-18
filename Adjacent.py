@@ -22,8 +22,9 @@ def map6(num):
 
 def dir6(num):
     dirs = []
-    if (num & 0b1):        dirs.append("Direction.WEST")
+    # Center is the preferred direction. Do not drift if you don't have to.
     if ((num >> 1) & 0b1): dirs.append("Direction.CENTER")
+    if (num & 0b1):        dirs.append("Direction.WEST")
     if ((num >> 2) & 0b1): dirs.append("Direction.EAST")
     if ((num >> 3) & 0b1): dirs.append("Direction.NORTHWEST")
     if ((num >> 4) & 0b1): dirs.append("Direction.NORTH")

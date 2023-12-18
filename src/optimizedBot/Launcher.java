@@ -60,6 +60,7 @@ public class Launcher extends Robot {
     int killedHQInd = 0;
     int advanceTurns = 0;
     NeighborTracker nt;
+    RobotInfo[] enemiesSeenBeforeClouds;
 
     enum State {
         WAIT,
@@ -86,8 +87,14 @@ public class Launcher extends Robot {
         neighborsAttacked = false;
         shouldAvoidClouds = false;
         hurt = rc.getHealth() < (RobotType.LAUNCHER.health / 3);
-        if (rc.getRoundNum() % 5 == prevEnemyRound) 
+        if (rc.getRoundNum() % 5 == prevEnemyRound) {
             previousEnemy = null;
+        }
+        if (!rc.senseCloud(rc.getLocation())) {
+            enemiesSeenBeforeClouds = rc.senseNearbyRobots(
+                -1, rc.getTeam().opponent()
+            );
+        }
         communications.initial();
         nt.updateNeighbors();
         prevLocation = rc.getLocation();
@@ -147,9 +154,10 @@ public class Launcher extends Robot {
         if (rc.getActionCooldownTurns() >= 10) return;
         MapInfo mi = rc.senseMapInfo(rc.getLocation());
         if (mi.hasCloud() && !attackers) {
-            // I might want to bring back the "attack players assuming they stayed still" strat.
-            // Yet, this has a moderate chance of not finding an enemy,
-            // And it doesn't account for cooldown, so not sure it was helping.
+            RobotInfo r = findAttackTarget();
+            if ((r != null) && (rc.canAttack(r.location))) {
+                rc.attack(r.location);
+            }
             return;
         }
         RobotInfo r = util.getBestAttackTarget();
@@ -166,11 +174,37 @@ public class Launcher extends Robot {
             rc.attack(r.location);
         }
     }
+
+    RobotInfo findAttackTarget() throws GameActionException {
+        RobotInfo best = null;
+        RobotInfo[] visible = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (best == null && visible.length > 0) best = visible[0];
+        for (int i = visible.length; i-- > 0;) {
+            RobotInfo r = visible[i];
+            if ((best.health > r.health)) {
+                best = r;
+            }
+        }
+        if (best != null) return best;
+        if (enemiesSeenBeforeClouds != null) {
+            if (enemiesSeenBeforeClouds.length != 0) {
+                best = enemiesSeenBeforeClouds[0];
+                for (int i = enemiesSeenBeforeClouds.length; i-- > 0;) {
+                    RobotInfo r = enemiesSeenBeforeClouds[i];
+                    if ((best.health > r.health)) {
+                        best = r;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
  
     State determineState() throws GameActionException {
         advanceTurns--;
         if (rc.getRoundNum() % 2 == 0) return State.WAIT;
-        if (nt.hasLaunchersNear || nt.hasCarriersNear) {
+        if ((nt.hasLaunchersNear || nt.hasCarriersNear)) {
             advanceTurns = 5;
             return State.ATTACK;
         }
@@ -188,8 +222,6 @@ public class Launcher extends Robot {
             huntTarget = target;
             return State.HUNT;
         }
-        
-        // if (hurt) return State.WAIT;
 
         // advance if you recently encountered a threat, or neighbor was attacked!.
         if (advanceTurns > 0 || neighborsAttacked) {
