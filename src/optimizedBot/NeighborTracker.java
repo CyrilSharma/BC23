@@ -5,7 +5,6 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 import battlecode.common.Team;
 
 public class NeighborTracker {
@@ -33,7 +32,6 @@ public class NeighborTracker {
         this.prevLocation = null;
     }
 
-
     void updateNeighbors() throws GameActionException {
         int initial = Clock.getBytecodesLeft();
         int fe_mask_width = FE_MASK_WIDTH;
@@ -44,7 +42,6 @@ public class NeighborTracker {
         hasCarriersNear = false;
         Team myTeam = rc.getTeam();
         int new_healths[] = new int[health_len];
-        MapLocation new_locs[] = new MapLocation[health_len];
 
         // Location of the bottom left corner.
         MapLocation myloc = rc.getLocation();
@@ -110,667 +107,707 @@ public class NeighborTracker {
             int idx = r.ID % HEALTH_LEN;
             long phealth = friend_healths[idx];
             new_healths[idx] = r.health;
-            switch (((r.location.y - bly) << 4) + (r.location.x - blx)) {
+            outer: switch (r.location.y - bly) {
                 case (0):
-                    tfriend_mask0 |= 1L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask0 |= 1L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask0 |= 2L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask0 |= 4L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask0 |= 8L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 8L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask0 |= 16L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 16L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask0 |= 32L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 32L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask0 |= 64L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 64L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask0 |= 128L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 128L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask0 |= 256L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 256L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask0 |= 512L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 512L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask0 |= 1024L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1024L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (1):
-                    tfriend_mask0 |= 2L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask0 |= 2048L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2048L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask0 |= 4096L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4096L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask0 |= 8192L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 8192L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask0 |= 16384L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 16384L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask0 |= 32768L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 32768L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask0 |= 65536L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 65536L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask0 |= 131072L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 131072L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask0 |= 262144L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 262144L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask0 |= 524288L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 524288L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask0 |= 1048576L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1048576L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask0 |= 2097152L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2097152L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (2):
-                    tfriend_mask0 |= 4L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask0 |= 4194304L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4194304L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask0 |= 8388608L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 8388608L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask0 |= 16777216L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 16777216L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask0 |= 33554432L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 33554432L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask0 |= 67108864L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 67108864L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask0 |= 134217728L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 134217728L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask0 |= 268435456L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 268435456L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask0 |= 536870912L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 536870912L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask0 |= 1073741824L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1073741824L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask0 |= 2147483648L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2147483648L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask0 |= 4294967296L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4294967296L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (3):
-                    tfriend_mask0 |= 8L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask0 |= 8589934592L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 8589934592L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask0 |= 17179869184L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 17179869184L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask0 |= 34359738368L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 34359738368L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask0 |= 68719476736L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 68719476736L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask0 |= 137438953472L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 137438953472L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask0 |= 274877906944L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 274877906944L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask0 |= 549755813888L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 549755813888L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask0 |= 1099511627776L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1099511627776L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask0 |= 2199023255552L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2199023255552L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask0 |= 4398046511104L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4398046511104L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask0 |= 8796093022208L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 8796093022208L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (4):
-                    tfriend_mask0 |= 16L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask0 |= 17592186044416L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 17592186044416L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask0 |= 35184372088832L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 35184372088832L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask0 |= 70368744177664L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 70368744177664L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask0 |= 140737488355328L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 140737488355328L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask0 |= 281474976710656L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 281474976710656L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask0 |= 562949953421312L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 562949953421312L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask0 |= 1125899906842624L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 1125899906842624L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask0 |= 2251799813685248L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 2251799813685248L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask0 |= 4503599627370496L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 4503599627370496L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask0 |= 9007199254740992L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 9007199254740992L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask0 |= 18014398509481984L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask0 |= 18014398509481984L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (5):
-                    tfriend_mask0 |= 32L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 32L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask1 |= 1L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask1 |= 2L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask1 |= 4L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask1 |= 8L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 8L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask1 |= 16L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 16L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask1 |= 32L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 32L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask1 |= 64L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 64L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask1 |= 128L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 128L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask1 |= 256L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 256L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask1 |= 512L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 512L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask1 |= 1024L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1024L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (6):
-                    tfriend_mask0 |= 64L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 64L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask1 |= 2048L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2048L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask1 |= 4096L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4096L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask1 |= 8192L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 8192L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask1 |= 16384L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 16384L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask1 |= 32768L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 32768L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask1 |= 65536L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 65536L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask1 |= 131072L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 131072L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask1 |= 262144L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 262144L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask1 |= 524288L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 524288L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask1 |= 1048576L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1048576L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask1 |= 2097152L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2097152L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (7):
-                    tfriend_mask0 |= 128L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 128L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask1 |= 4194304L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4194304L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask1 |= 8388608L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 8388608L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask1 |= 16777216L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 16777216L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask1 |= 33554432L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 33554432L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask1 |= 67108864L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 67108864L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask1 |= 134217728L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 134217728L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask1 |= 268435456L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 268435456L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask1 |= 536870912L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 536870912L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask1 |= 1073741824L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1073741824L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask1 |= 2147483648L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2147483648L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask1 |= 4294967296L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4294967296L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (8):
-                    tfriend_mask0 |= 256L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 256L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask1 |= 8589934592L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 8589934592L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask1 |= 17179869184L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 17179869184L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask1 |= 34359738368L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 34359738368L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask1 |= 68719476736L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 68719476736L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask1 |= 137438953472L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 137438953472L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask1 |= 274877906944L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 274877906944L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask1 |= 549755813888L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 549755813888L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask1 |= 1099511627776L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1099511627776L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask1 |= 2199023255552L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2199023255552L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask1 |= 4398046511104L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4398046511104L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask1 |= 8796093022208L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 8796093022208L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
                 case (9):
-                    tfriend_mask0 |= 512L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 512L;
+                    switch (r.location.x - blx) {
+                        case (0):
+                            tfriend_mask1 |= 17592186044416L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 17592186044416L;
+                            }
+                            break outer;
+                        case (1):
+                            tfriend_mask1 |= 35184372088832L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 35184372088832L;
+                            }
+                            break outer;
+                        case (2):
+                            tfriend_mask1 |= 70368744177664L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 70368744177664L;
+                            }
+                            break outer;
+                        case (3):
+                            tfriend_mask1 |= 140737488355328L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 140737488355328L;
+                            }
+                            break outer;
+                        case (4):
+                            tfriend_mask1 |= 281474976710656L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 281474976710656L;
+                            }
+                            break outer;
+                        case (5):
+                            tfriend_mask1 |= 562949953421312L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 562949953421312L;
+                            }
+                            break outer;
+                        case (6):
+                            tfriend_mask1 |= 1125899906842624L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 1125899906842624L;
+                            }
+                            break outer;
+                        case (7):
+                            tfriend_mask1 |= 2251799813685248L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 2251799813685248L;
+                            }
+                            break outer;
+                        case (8):
+                            tfriend_mask1 |= 4503599627370496L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 4503599627370496L;
+                            }
+                            break outer;
+                        case (9):
+                            tfriend_mask1 |= 9007199254740992L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 9007199254740992L;
+                            }
+                            break outer;
+                        case (10):
+                            tfriend_mask1 |= 18014398509481984L;
+                            if (r.health + 10 < phealth) {
+                                att_friend_mask1 |= 18014398509481984L;
+                            }
+                            break outer;
+                        default: break outer;
                     }
-                    break;
-                case (10):
-                    tfriend_mask0 |= 1024L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1024L;
-                    }
-                    break;
-                case (16):
-                    tfriend_mask0 |= 2048L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2048L;
-                    }
-                    break;
-                case (17):
-                    tfriend_mask0 |= 4096L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4096L;
-                    }
-                    break;
-                case (18):
-                    tfriend_mask0 |= 8192L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8192L;
-                    }
-                    break;
-                case (19):
-                    tfriend_mask0 |= 16384L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16384L;
-                    }
-                    break;
-                case (20):
-                    tfriend_mask0 |= 32768L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 32768L;
-                    }
-                    break;
-                case (21):
-                    tfriend_mask0 |= 65536L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 65536L;
-                    }
-                    break;
-                case (22):
-                    tfriend_mask0 |= 131072L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 131072L;
-                    }
-                    break;
-                case (23):
-                    tfriend_mask0 |= 262144L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 262144L;
-                    }
-                    break;
-                case (24):
-                    tfriend_mask0 |= 524288L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 524288L;
-                    }
-                    break;
-                case (25):
-                    tfriend_mask0 |= 1048576L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1048576L;
-                    }
-                    break;
-                case (26):
-                    tfriend_mask0 |= 2097152L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2097152L;
-                    }
-                    break;
-                case (32):
-                    tfriend_mask0 |= 4194304L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4194304L;
-                    }
-                    break;
-                case (33):
-                    tfriend_mask0 |= 8388608L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8388608L;
-                    }
-                    break;
-                case (34):
-                    tfriend_mask0 |= 16777216L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 16777216L;
-                    }
-                    break;
-                case (35):
-                    tfriend_mask0 |= 33554432L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 33554432L;
-                    }
-                    break;
-                case (36):
-                    tfriend_mask0 |= 67108864L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 67108864L;
-                    }
-                    break;
-                case (37):
-                    tfriend_mask0 |= 134217728L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 134217728L;
-                    }
-                    break;
-                case (38):
-                    tfriend_mask0 |= 268435456L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 268435456L;
-                    }
-                    break;
-                case (39):
-                    tfriend_mask0 |= 536870912L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 536870912L;
-                    }
-                    break;
-                case (40):
-                    tfriend_mask0 |= 1073741824L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1073741824L;
-                    }
-                    break;
-                case (41):
-                    tfriend_mask0 |= 2147483648L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2147483648L;
-                    }
-                    break;
-                case (42):
-                    tfriend_mask0 |= 4294967296L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4294967296L;
-                    }
-                    break;
-                case (48):
-                    tfriend_mask0 |= 8589934592L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8589934592L;
-                    }
-                    break;
-                case (49):
-                    tfriend_mask0 |= 17179869184L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 17179869184L;
-                    }
-                    break;
-                case (50):
-                    tfriend_mask0 |= 34359738368L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 34359738368L;
-                    }
-                    break;
-                case (51):
-                    tfriend_mask0 |= 68719476736L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 68719476736L;
-                    }
-                    break;
-                case (52):
-                    tfriend_mask0 |= 137438953472L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 137438953472L;
-                    }
-                    break;
-                case (53):
-                    tfriend_mask0 |= 274877906944L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 274877906944L;
-                    }
-                    break;
-                case (54):
-                    tfriend_mask0 |= 549755813888L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 549755813888L;
-                    }
-                    break;
-                case (55):
-                    tfriend_mask0 |= 1099511627776L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1099511627776L;
-                    }
-                    break;
-                case (56):
-                    tfriend_mask0 |= 2199023255552L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2199023255552L;
-                    }
-                    break;
-                case (57):
-                    tfriend_mask0 |= 4398046511104L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4398046511104L;
-                    }
-                    break;
-                case (58):
-                    tfriend_mask0 |= 8796093022208L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 8796093022208L;
-                    }
-                    break;
-                case (64):
-                    tfriend_mask0 |= 17592186044416L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 17592186044416L;
-                    }
-                    break;
-                case (65):
-                    tfriend_mask0 |= 35184372088832L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 35184372088832L;
-                    }
-                    break;
-                case (66):
-                    tfriend_mask0 |= 70368744177664L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 70368744177664L;
-                    }
-                    break;
-                case (67):
-                    tfriend_mask0 |= 140737488355328L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 140737488355328L;
-                    }
-                    break;
-                case (68):
-                    tfriend_mask0 |= 281474976710656L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 281474976710656L;
-                    }
-                    break;
-                case (69):
-                    tfriend_mask0 |= 562949953421312L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 562949953421312L;
-                    }
-                    break;
-                case (70):
-                    tfriend_mask0 |= 1125899906842624L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 1125899906842624L;
-                    }
-                    break;
-                case (71):
-                    tfriend_mask0 |= 2251799813685248L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 2251799813685248L;
-                    }
-                    break;
-                case (72):
-                    tfriend_mask0 |= 4503599627370496L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 4503599627370496L;
-                    }
-                    break;
-                case (73):
-                    tfriend_mask0 |= 9007199254740992L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 9007199254740992L;
-                    }
-                    break;
-                case (74):
-                    tfriend_mask0 |= 18014398509481984L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask0 |= 18014398509481984L;
-                    }
-                    break;
-                case (80):
-                    tfriend_mask1 |= 1L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1L;
-                    }
-                    break;
-                case (81):
-                    tfriend_mask1 |= 2L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2L;
-                    }
-                    break;
-                case (82):
-                    tfriend_mask1 |= 4L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4L;
-                    }
-                    break;
-                case (83):
-                    tfriend_mask1 |= 8L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 8L;
-                    }
-                    break;
-                case (84):
-                    tfriend_mask1 |= 16L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 16L;
-                    }
-                    break;
-                case (85):
-                    tfriend_mask1 |= 32L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 32L;
-                    }
-                    break;
-                case (86):
-                    tfriend_mask1 |= 64L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 64L;
-                    }
-                    break;
-                case (87):
-                    tfriend_mask1 |= 128L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 128L;
-                    }
-                    break;
-                case (88):
-                    tfriend_mask1 |= 256L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 256L;
-                    }
-                    break;
-                case (89):
-                    tfriend_mask1 |= 512L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 512L;
-                    }
-                    break;
-                case (90):
-                    tfriend_mask1 |= 1024L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1024L;
-                    }
-                    break;
-                case (96):
-                    tfriend_mask1 |= 2048L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2048L;
-                    }
-                    break;
-                case (97):
-                    tfriend_mask1 |= 4096L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4096L;
-                    }
-                    break;
-                case (98):
-                    tfriend_mask1 |= 8192L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 8192L;
-                    }
-                    break;
-                case (99):
-                    tfriend_mask1 |= 16384L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 16384L;
-                    }
-                    break;
-                case (100):
-                    tfriend_mask1 |= 32768L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 32768L;
-                    }
-                    break;
-                case (101):
-                    tfriend_mask1 |= 65536L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 65536L;
-                    }
-                    break;
-                case (102):
-                    tfriend_mask1 |= 131072L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 131072L;
-                    }
-                    break;
-                case (103):
-                    tfriend_mask1 |= 262144L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 262144L;
-                    }
-                    break;
-                case (104):
-                    tfriend_mask1 |= 524288L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 524288L;
-                    }
-                    break;
-                case (105):
-                    tfriend_mask1 |= 1048576L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1048576L;
-                    }
-                    break;
-                case (106):
-                    tfriend_mask1 |= 2097152L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2097152L;
-                    }
-                    break;
-                case (112):
-                    tfriend_mask1 |= 4194304L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4194304L;
-                    }
-                    break;
-                case (113):
-                    tfriend_mask1 |= 8388608L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 8388608L;
-                    }
-                    break;
-                case (114):
-                    tfriend_mask1 |= 16777216L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 16777216L;
-                    }
-                    break;
-                case (115):
-                    tfriend_mask1 |= 33554432L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 33554432L;
-                    }
-                    break;
-                case (116):
-                    tfriend_mask1 |= 67108864L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 67108864L;
-                    }
-                    break;
-                case (117):
-                    tfriend_mask1 |= 134217728L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 134217728L;
-                    }
-                    break;
-                case (118):
-                    tfriend_mask1 |= 268435456L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 268435456L;
-                    }
-                    break;
-                case (119):
-                    tfriend_mask1 |= 536870912L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 536870912L;
-                    }
-                    break;
-                case (120):
-                    tfriend_mask1 |= 1073741824L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1073741824L;
-                    }
-                    break;
-                case (121):
-                    tfriend_mask1 |= 2147483648L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2147483648L;
-                    }
-                    break;
-                case (122):
-                    tfriend_mask1 |= 4294967296L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4294967296L;
-                    }
-                    break;
-                case (128):
-                    tfriend_mask1 |= 8589934592L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 8589934592L;
-                    }
-                    break;
-                case (129):
-                    tfriend_mask1 |= 17179869184L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 17179869184L;
-                    }
-                    break;
-                case (130):
-                    tfriend_mask1 |= 34359738368L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 34359738368L;
-                    }
-                    break;
-                case (131):
-                    tfriend_mask1 |= 68719476736L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 68719476736L;
-                    }
-                    break;
-                case (132):
-                    tfriend_mask1 |= 137438953472L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 137438953472L;
-                    }
-                    break;
-                case (133):
-                    tfriend_mask1 |= 274877906944L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 274877906944L;
-                    }
-                    break;
-                case (134):
-                    tfriend_mask1 |= 549755813888L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 549755813888L;
-                    }
-                    break;
-                case (135):
-                    tfriend_mask1 |= 1099511627776L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1099511627776L;
-                    }
-                    break;
-                case (136):
-                    tfriend_mask1 |= 2199023255552L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2199023255552L;
-                    }
-                    break;
-                case (137):
-                    tfriend_mask1 |= 4398046511104L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4398046511104L;
-                    }
-                    break;
-                case (138):
-                    tfriend_mask1 |= 8796093022208L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 8796093022208L;
-                    }
-                    break;
-                case (144):
-                    tfriend_mask1 |= 17592186044416L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 17592186044416L;
-                    }
-                    break;
-                case (145):
-                    tfriend_mask1 |= 35184372088832L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 35184372088832L;
-                    }
-                    break;
-                case (146):
-                    tfriend_mask1 |= 70368744177664L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 70368744177664L;
-                    }
-                    break;
-                case (147):
-                    tfriend_mask1 |= 140737488355328L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 140737488355328L;
-                    }
-                    break;
-                case (148):
-                    tfriend_mask1 |= 281474976710656L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 281474976710656L;
-                    }
-                    break;
-                case (149):
-                    tfriend_mask1 |= 562949953421312L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 562949953421312L;
-                    }
-                    break;
-                case (150):
-                    tfriend_mask1 |= 1125899906842624L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 1125899906842624L;
-                    }
-                    break;
-                case (151):
-                    tfriend_mask1 |= 2251799813685248L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 2251799813685248L;
-                    }
-                    break;
-                case (152):
-                    tfriend_mask1 |= 4503599627370496L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 4503599627370496L;
-                    }
-                    break;
-                case (153):
-                    tfriend_mask1 |= 9007199254740992L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 9007199254740992L;
-                    }
-                    break;
-                case (154):
-                    tfriend_mask1 |= 18014398509481984L;
-                    if (r.health + 10 < phealth) {
-                        att_friend_mask1 |= 18014398509481984L;
-                    }
-                    break;
                 default: 
             }
         }
@@ -784,117 +821,157 @@ public class NeighborTracker {
                 case CARRIER: hasCarriersNear = true;
                 default: continue;
             }
-            switch (((r.location.y - bly) << 4) + (r.location.x - blx)) {
-                case (0): tenemy_mask0 |= 1L; break;
-                case (1): tenemy_mask0 |= 2L; break;
-                case (2): tenemy_mask0 |= 4L; break;
-                case (3): tenemy_mask0 |= 8L; break;
-                case (4): tenemy_mask0 |= 16L; break;
-                case (5): tenemy_mask0 |= 32L; break;
-                case (6): tenemy_mask0 |= 64L; break;
-                case (7): tenemy_mask0 |= 128L; break;
-                case (8): tenemy_mask0 |= 256L; break;
-                case (9): tenemy_mask0 |= 512L; break;
-                case (10): tenemy_mask0 |= 1024L; break;
-                case (16): tenemy_mask0 |= 2048L; break;
-                case (17): tenemy_mask0 |= 4096L; break;
-                case (18): tenemy_mask0 |= 8192L; break;
-                case (19): tenemy_mask0 |= 16384L; break;
-                case (20): tenemy_mask0 |= 32768L; break;
-                case (21): tenemy_mask0 |= 65536L; break;
-                case (22): tenemy_mask0 |= 131072L; break;
-                case (23): tenemy_mask0 |= 262144L; break;
-                case (24): tenemy_mask0 |= 524288L; break;
-                case (25): tenemy_mask0 |= 1048576L; break;
-                case (26): tenemy_mask0 |= 2097152L; break;
-                case (32): tenemy_mask0 |= 4194304L; break;
-                case (33): tenemy_mask0 |= 8388608L; break;
-                case (34): tenemy_mask0 |= 16777216L; break;
-                case (35): tenemy_mask0 |= 33554432L; break;
-                case (36): tenemy_mask0 |= 67108864L; break;
-                case (37): tenemy_mask0 |= 134217728L; break;
-                case (38): tenemy_mask0 |= 268435456L; break;
-                case (39): tenemy_mask0 |= 536870912L; break;
-                case (40): tenemy_mask0 |= 1073741824L; break;
-                case (41): tenemy_mask0 |= 2147483648L; break;
-                case (42): tenemy_mask0 |= 4294967296L; break;
-                case (48): tenemy_mask0 |= 8589934592L; break;
-                case (49): tenemy_mask0 |= 17179869184L; break;
-                case (50): tenemy_mask0 |= 34359738368L; break;
-                case (51): tenemy_mask0 |= 68719476736L; break;
-                case (52): tenemy_mask0 |= 137438953472L; break;
-                case (53): tenemy_mask0 |= 274877906944L; break;
-                case (54): tenemy_mask0 |= 549755813888L; break;
-                case (55): tenemy_mask0 |= 1099511627776L; break;
-                case (56): tenemy_mask0 |= 2199023255552L; break;
-                case (57): tenemy_mask0 |= 4398046511104L; break;
-                case (58): tenemy_mask0 |= 8796093022208L; break;
-                case (64): tenemy_mask0 |= 17592186044416L; break;
-                case (65): tenemy_mask0 |= 35184372088832L; break;
-                case (66): tenemy_mask0 |= 70368744177664L; break;
-                case (67): tenemy_mask0 |= 140737488355328L; break;
-                case (68): tenemy_mask0 |= 281474976710656L; break;
-                case (69): tenemy_mask0 |= 562949953421312L; break;
-                case (70): tenemy_mask0 |= 1125899906842624L; break;
-                case (71): tenemy_mask0 |= 2251799813685248L; break;
-                case (72): tenemy_mask0 |= 4503599627370496L; break;
-                case (73): tenemy_mask0 |= 9007199254740992L; break;
-                case (74): tenemy_mask0 |= 18014398509481984L; break;
-                case (80): tenemy_mask1 |= 1L; break;
-                case (81): tenemy_mask1 |= 2L; break;
-                case (82): tenemy_mask1 |= 4L; break;
-                case (83): tenemy_mask1 |= 8L; break;
-                case (84): tenemy_mask1 |= 16L; break;
-                case (85): tenemy_mask1 |= 32L; break;
-                case (86): tenemy_mask1 |= 64L; break;
-                case (87): tenemy_mask1 |= 128L; break;
-                case (88): tenemy_mask1 |= 256L; break;
-                case (89): tenemy_mask1 |= 512L; break;
-                case (90): tenemy_mask1 |= 1024L; break;
-                case (96): tenemy_mask1 |= 2048L; break;
-                case (97): tenemy_mask1 |= 4096L; break;
-                case (98): tenemy_mask1 |= 8192L; break;
-                case (99): tenemy_mask1 |= 16384L; break;
-                case (100): tenemy_mask1 |= 32768L; break;
-                case (101): tenemy_mask1 |= 65536L; break;
-                case (102): tenemy_mask1 |= 131072L; break;
-                case (103): tenemy_mask1 |= 262144L; break;
-                case (104): tenemy_mask1 |= 524288L; break;
-                case (105): tenemy_mask1 |= 1048576L; break;
-                case (106): tenemy_mask1 |= 2097152L; break;
-                case (112): tenemy_mask1 |= 4194304L; break;
-                case (113): tenemy_mask1 |= 8388608L; break;
-                case (114): tenemy_mask1 |= 16777216L; break;
-                case (115): tenemy_mask1 |= 33554432L; break;
-                case (116): tenemy_mask1 |= 67108864L; break;
-                case (117): tenemy_mask1 |= 134217728L; break;
-                case (118): tenemy_mask1 |= 268435456L; break;
-                case (119): tenemy_mask1 |= 536870912L; break;
-                case (120): tenemy_mask1 |= 1073741824L; break;
-                case (121): tenemy_mask1 |= 2147483648L; break;
-                case (122): tenemy_mask1 |= 4294967296L; break;
-                case (128): tenemy_mask1 |= 8589934592L; break;
-                case (129): tenemy_mask1 |= 17179869184L; break;
-                case (130): tenemy_mask1 |= 34359738368L; break;
-                case (131): tenemy_mask1 |= 68719476736L; break;
-                case (132): tenemy_mask1 |= 137438953472L; break;
-                case (133): tenemy_mask1 |= 274877906944L; break;
-                case (134): tenemy_mask1 |= 549755813888L; break;
-                case (135): tenemy_mask1 |= 1099511627776L; break;
-                case (136): tenemy_mask1 |= 2199023255552L; break;
-                case (137): tenemy_mask1 |= 4398046511104L; break;
-                case (138): tenemy_mask1 |= 8796093022208L; break;
-                case (144): tenemy_mask1 |= 17592186044416L; break;
-                case (145): tenemy_mask1 |= 35184372088832L; break;
-                case (146): tenemy_mask1 |= 70368744177664L; break;
-                case (147): tenemy_mask1 |= 140737488355328L; break;
-                case (148): tenemy_mask1 |= 281474976710656L; break;
-                case (149): tenemy_mask1 |= 562949953421312L; break;
-                case (150): tenemy_mask1 |= 1125899906842624L; break;
-                case (151): tenemy_mask1 |= 2251799813685248L; break;
-                case (152): tenemy_mask1 |= 4503599627370496L; break;
-                case (153): tenemy_mask1 |= 9007199254740992L; break;
-                case (154): tenemy_mask1 |= 18014398509481984L; break;
+            outer: switch (r.location.y - bly) {
+                case (0):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask0 |= 1L; break outer;
+                        case (1): tenemy_mask0 |= 2L; break outer;
+                        case (2): tenemy_mask0 |= 4L; break outer;
+                        case (3): tenemy_mask0 |= 8L; break outer;
+                        case (4): tenemy_mask0 |= 16L; break outer;
+                        case (5): tenemy_mask0 |= 32L; break outer;
+                        case (6): tenemy_mask0 |= 64L; break outer;
+                        case (7): tenemy_mask0 |= 128L; break outer;
+                        case (8): tenemy_mask0 |= 256L; break outer;
+                        case (9): tenemy_mask0 |= 512L; break outer;
+                        case (10): tenemy_mask0 |= 1024L; break outer;
+                        default: break outer;
+                    }
+                case (1):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask0 |= 2048L; break outer;
+                        case (1): tenemy_mask0 |= 4096L; break outer;
+                        case (2): tenemy_mask0 |= 8192L; break outer;
+                        case (3): tenemy_mask0 |= 16384L; break outer;
+                        case (4): tenemy_mask0 |= 32768L; break outer;
+                        case (5): tenemy_mask0 |= 65536L; break outer;
+                        case (6): tenemy_mask0 |= 131072L; break outer;
+                        case (7): tenemy_mask0 |= 262144L; break outer;
+                        case (8): tenemy_mask0 |= 524288L; break outer;
+                        case (9): tenemy_mask0 |= 1048576L; break outer;
+                        case (10): tenemy_mask0 |= 2097152L; break outer;
+                        default: break outer;
+                    }
+                case (2):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask0 |= 4194304L; break outer;
+                        case (1): tenemy_mask0 |= 8388608L; break outer;
+                        case (2): tenemy_mask0 |= 16777216L; break outer;
+                        case (3): tenemy_mask0 |= 33554432L; break outer;
+                        case (4): tenemy_mask0 |= 67108864L; break outer;
+                        case (5): tenemy_mask0 |= 134217728L; break outer;
+                        case (6): tenemy_mask0 |= 268435456L; break outer;
+                        case (7): tenemy_mask0 |= 536870912L; break outer;
+                        case (8): tenemy_mask0 |= 1073741824L; break outer;
+                        case (9): tenemy_mask0 |= 2147483648L; break outer;
+                        case (10): tenemy_mask0 |= 4294967296L; break outer;
+                        default: break outer;
+                    }
+                case (3):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask0 |= 8589934592L; break outer;
+                        case (1): tenemy_mask0 |= 17179869184L; break outer;
+                        case (2): tenemy_mask0 |= 34359738368L; break outer;
+                        case (3): tenemy_mask0 |= 68719476736L; break outer;
+                        case (4): tenemy_mask0 |= 137438953472L; break outer;
+                        case (5): tenemy_mask0 |= 274877906944L; break outer;
+                        case (6): tenemy_mask0 |= 549755813888L; break outer;
+                        case (7): tenemy_mask0 |= 1099511627776L; break outer;
+                        case (8): tenemy_mask0 |= 2199023255552L; break outer;
+                        case (9): tenemy_mask0 |= 4398046511104L; break outer;
+                        case (10): tenemy_mask0 |= 8796093022208L; break outer;
+                        default: break outer;
+                    }
+                case (4):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask0 |= 17592186044416L; break outer;
+                        case (1): tenemy_mask0 |= 35184372088832L; break outer;
+                        case (2): tenemy_mask0 |= 70368744177664L; break outer;
+                        case (3): tenemy_mask0 |= 140737488355328L; break outer;
+                        case (4): tenemy_mask0 |= 281474976710656L; break outer;
+                        case (5): tenemy_mask0 |= 562949953421312L; break outer;
+                        case (6): tenemy_mask0 |= 1125899906842624L; break outer;
+                        case (7): tenemy_mask0 |= 2251799813685248L; break outer;
+                        case (8): tenemy_mask0 |= 4503599627370496L; break outer;
+                        case (9): tenemy_mask0 |= 9007199254740992L; break outer;
+                        case (10): tenemy_mask0 |= 18014398509481984L; break outer;
+                        default: break outer;
+                    }
+                case (5):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask1 |= 1L; break outer;
+                        case (1): tenemy_mask1 |= 2L; break outer;
+                        case (2): tenemy_mask1 |= 4L; break outer;
+                        case (3): tenemy_mask1 |= 8L; break outer;
+                        case (4): tenemy_mask1 |= 16L; break outer;
+                        case (5): tenemy_mask1 |= 32L; break outer;
+                        case (6): tenemy_mask1 |= 64L; break outer;
+                        case (7): tenemy_mask1 |= 128L; break outer;
+                        case (8): tenemy_mask1 |= 256L; break outer;
+                        case (9): tenemy_mask1 |= 512L; break outer;
+                        case (10): tenemy_mask1 |= 1024L; break outer;
+                        default: break outer;
+                    }
+                case (6):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask1 |= 2048L; break outer;
+                        case (1): tenemy_mask1 |= 4096L; break outer;
+                        case (2): tenemy_mask1 |= 8192L; break outer;
+                        case (3): tenemy_mask1 |= 16384L; break outer;
+                        case (4): tenemy_mask1 |= 32768L; break outer;
+                        case (5): tenemy_mask1 |= 65536L; break outer;
+                        case (6): tenemy_mask1 |= 131072L; break outer;
+                        case (7): tenemy_mask1 |= 262144L; break outer;
+                        case (8): tenemy_mask1 |= 524288L; break outer;
+                        case (9): tenemy_mask1 |= 1048576L; break outer;
+                        case (10): tenemy_mask1 |= 2097152L; break outer;
+                        default: break outer;
+                    }
+                case (7):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask1 |= 4194304L; break outer;
+                        case (1): tenemy_mask1 |= 8388608L; break outer;
+                        case (2): tenemy_mask1 |= 16777216L; break outer;
+                        case (3): tenemy_mask1 |= 33554432L; break outer;
+                        case (4): tenemy_mask1 |= 67108864L; break outer;
+                        case (5): tenemy_mask1 |= 134217728L; break outer;
+                        case (6): tenemy_mask1 |= 268435456L; break outer;
+                        case (7): tenemy_mask1 |= 536870912L; break outer;
+                        case (8): tenemy_mask1 |= 1073741824L; break outer;
+                        case (9): tenemy_mask1 |= 2147483648L; break outer;
+                        case (10): tenemy_mask1 |= 4294967296L; break outer;
+                        default: break outer;
+                    }
+                case (8):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask1 |= 8589934592L; break outer;
+                        case (1): tenemy_mask1 |= 17179869184L; break outer;
+                        case (2): tenemy_mask1 |= 34359738368L; break outer;
+                        case (3): tenemy_mask1 |= 68719476736L; break outer;
+                        case (4): tenemy_mask1 |= 137438953472L; break outer;
+                        case (5): tenemy_mask1 |= 274877906944L; break outer;
+                        case (6): tenemy_mask1 |= 549755813888L; break outer;
+                        case (7): tenemy_mask1 |= 1099511627776L; break outer;
+                        case (8): tenemy_mask1 |= 2199023255552L; break outer;
+                        case (9): tenemy_mask1 |= 4398046511104L; break outer;
+                        case (10): tenemy_mask1 |= 8796093022208L; break outer;
+                        default: break outer;
+                    }
+                case (9):
+                    switch (r.location.x - blx) {
+                        case (0): tenemy_mask1 |= 17592186044416L; break outer;
+                        case (1): tenemy_mask1 |= 35184372088832L; break outer;
+                        case (2): tenemy_mask1 |= 70368744177664L; break outer;
+                        case (3): tenemy_mask1 |= 140737488355328L; break outer;
+                        case (4): tenemy_mask1 |= 281474976710656L; break outer;
+                        case (5): tenemy_mask1 |= 562949953421312L; break outer;
+                        case (6): tenemy_mask1 |= 1125899906842624L; break outer;
+                        case (7): tenemy_mask1 |= 2251799813685248L; break outer;
+                        case (8): tenemy_mask1 |= 4503599627370496L; break outer;
+                        case (9): tenemy_mask1 |= 9007199254740992L; break outer;
+                        case (10): tenemy_mask1 |= 18014398509481984L; break outer;
+                        default: break outer;
+                    }
                 default: 
             }
         }
