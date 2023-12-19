@@ -28,6 +28,8 @@ public strictfp class RobotPlayer {
             } finally {
                 Clock.yield();
             }
+            robot.greedyPath.fill();
+            robot.greedyPath.checkCurrent();
             turnCount++;
         }
     }

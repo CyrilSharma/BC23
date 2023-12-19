@@ -9,89 +9,31 @@ import battlecode.common.Team;
 
 public class NeighborTracker {
     RobotController rc;
-    MapLocation prevLocation;
     static final int FE_MASK_WIDTH = 11;
     static final int FE_MASK_HEIGHT = 5;
-    static final int HEALTH_LEN = 31;
     long friend_mask[] = { 0, 0 };
-    long att_friend_mask[] = { 0, 0 };
     long enemy_mask[] = { 0, 0 };
-    long fupdates[][] = { {0, 0}, {0, 0}, {0, 0} };
-    long eupdates[][] = { {0, 0}, {0, 0}, {0, 0} };
-    long friend_healths[] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0
-    };
     public boolean hasLaunchersNear = false;
     public boolean hasCarriersNear = false;
 
     public NeighborTracker(RobotController rc) {
         this.rc = rc;
-        this.prevLocation = null;
     }
 
     void updateNeighbors() throws GameActionException {
         int initial = Clock.getBytecodesLeft();
-        int fe_mask_width = FE_MASK_WIDTH;
-        int fe_mask_height = FE_MASK_HEIGHT;
-        int health_len = HEALTH_LEN;
 
         hasLaunchersNear = false;
         hasCarriersNear = false;
+        int fe_mask_width = FE_MASK_WIDTH;
+        int fe_mask_height = FE_MASK_HEIGHT;
         Team myTeam = rc.getTeam();
-        int new_healths[] = new int[health_len];
 
         // Location of the bottom left corner.
         MapLocation myloc = rc.getLocation();
         int blx = myloc.x - (fe_mask_width / 2);
         int bly = myloc.y - (fe_mask_height);
 
-        // Correct the masks according to our movement.
-        // This is only really useful if we want to mantain
-        // Items that are outside of our vision range.
-        // This is cheaper then it looks.
-        if (prevLocation != null) {
-            int dx = myloc.x - prevLocation.x;
-            int dy = myloc.y - prevLocation.y;
-            if (dx < 0) {
-                int neg = -dx;
-                friend_mask[0] <<= neg;
-                friend_mask[1] <<= neg;
-                enemy_mask[0] <<= neg;
-                enemy_mask[1] <<= neg;
-            } else if (dx > 0) {
-                friend_mask[0] >>= dx;
-                friend_mask[1] >>= dx;
-                enemy_mask[0] >>= dx;
-                enemy_mask[1] >>= dx;
-            }
-            int shift = (fe_mask_height - 1) * (fe_mask_width);
-            while (dy < 0) {
-                int neg = (-dy * fe_mask_width);
-                friend_mask[1] <<= neg;
-                friend_mask[1] |= (friend_mask[0] >> (shift));
-                friend_mask[0] <<= neg;
-                enemy_mask[1] <<= neg;
-                enemy_mask[1] |= (enemy_mask[0] >> (shift));
-                enemy_mask[0] <<= neg;
-                dy++;
-            }
-            while (dy > 0) {
-                int mul = (dy * fe_mask_width);
-                friend_mask[0] >>= mul;
-                friend_mask[0] |= (friend_mask[1] & 0b11111111111) << shift;
-                friend_mask[1] >>= mul;
-                enemy_mask[0] >>= mul;
-                enemy_mask[0] |= (enemy_mask[1] & 0b11111111111) << shift;
-                enemy_mask[1] >>= mul;
-                dy--;
-            }
-        }
-
-        long att_friend_mask0 = 0;
-        long att_friend_mask1 = 0;
         long tfriend_mask0 = 0;
         long tfriend_mask1 = 0;
         long tenemy_mask0 = 0;
@@ -426,82 +368,10 @@ public class NeighborTracker {
             hasLaunchersNear = true;
         }
 
-        //---- Cleanup! ---------
-        for (int i = health_len; i-- > 0;) {
-            friend_healths[i] = new_healths[i];
-        }
-
-        // I should probably be autogenerating these...
-        // 00011111000
-        // 00111111100
-        // 01111111110
-        // 01111111110    
-        // 01111X11110
-        // -> 0001111100000111111100011111111100111111111001111111110
-        // Normal
-
-        // 00000000000
-        // 00000000000
-        // 00000000000
-        // 00001110000
-        // 00001X10000
-        // -> 0000000000000000000000000000000000000111000000001110000
-        // Cloudy
-        // Center 1 (the higher mask)
-
-        // 01111111110
-        // 01111111110
-        // 00111111100
-        // 00011111000
-        // 00000000000
-        // -> 0111111111001111111110001111111000001111100000000000000
-        // Normal
-
-        // 00001110000
-        // 00000000000
-        // 00000000000
-        // 00000000000
-        // 00000000000
-        // -> 0000111000000000000000000000000000000000000000000000000
-        // Cloudy
-        // Center 0 (the lower mask)
-
-        att_friend_mask[0] = att_friend_mask0;
-        att_friend_mask[1] = att_friend_mask1;
-
-        int mod = rc.getRoundNum() % 3;
-        friend_mask[0] &= ~fupdates[mod][0];
-        friend_mask[1] &= ~fupdates[mod][1];
-        enemy_mask[0]  &= ~eupdates[mod][0];
-        enemy_mask[1]  &= ~eupdates[mod][1];
-
-        // Specifies what we can see.
-        // Used to delete entries we no longer see.
-        long center0 = 0;
-        long center1 = 0;
-        if (rc.senseCloud(myloc)) {
-            center0 = 0b0000111000000000000000000000000000000000000000000000000L;
-            center1 = 0b0000000000000000000000000000000000000111000000001110000L;
-        } else {
-            center0 = 0b0111111111001111111110001111111000001111100000000000000L;
-            center1 = 0b0001111100000111111100011111111100111111111001111111110L;
-        }
-
-        friend_mask[0] &= ~center0;
-        friend_mask[1] &= ~center1;
-        enemy_mask[0]  &= ~center0;
-        enemy_mask[1]  &= ~center1;
-
-        friend_mask[0] |= tfriend_mask0;
-        friend_mask[1] |= tfriend_mask1;
-        enemy_mask[0]  |= tenemy_mask0;
-        enemy_mask[1]  |= tenemy_mask1;
-
-        fupdates[mod][0] = tfriend_mask0;
-        fupdates[mod][1] = tfriend_mask1;
-        eupdates[mod][0] = tenemy_mask0;
-        eupdates[mod][1] = tenemy_mask1;
-        prevLocation = rc.getLocation();
+        friend_mask[0] = tfriend_mask0;
+        friend_mask[1] = tfriend_mask1;
+        enemy_mask[0]  = tenemy_mask0;
+        enemy_mask[1]  = tenemy_mask1;
 
         int end = Clock.getBytecodesLeft();
         System.out.println("Tracker Used: " + (initial - end));
@@ -519,33 +389,27 @@ public class NeighborTracker {
      */
 
     Direction advance() throws GameActionException {
-        long[] mask = { 0, 0 };
-        if (att_friend_mask[0] == 0 && att_friend_mask[1] == 0) {
-            mask[0] = friend_mask[0];
-            mask[1] = friend_mask[1];
-        } else {
-            mask[0] = att_friend_mask[0];
-            mask[1] = att_friend_mask[1];
-        }
-        int shift = (FE_MASK_HEIGHT - 1) * (FE_MASK_WIDTH);
+        long mask0 = friend_mask[0];
+        long mask1 = friend_mask[1];
+        int fe_mask_width = FE_MASK_WIDTH;
+        int fe_mask_height = FE_MASK_HEIGHT;
+        int shift = (fe_mask_height - 1) * (fe_mask_width);
         for (int i = 5; i-- > 0;) {
-            mask[0] |= (mask[0] << 1);
-            mask[1] |= (mask[1] << 1);
+            mask0 |= (mask0 << 1);
+            mask1 |= (mask1 << 1);
 
-            mask[0] |= (mask[0] >> 1);
-            mask[1] |= (mask[1] >> 1);
+            mask0 |= (mask0 >> 1);
+            mask1 |= (mask1 >> 1);
 
-            mask[1] |= (mask[1] << FE_MASK_WIDTH);
-            mask[1] |= (mask[0] >> shift);
-            mask[0] |= (mask[0] << FE_MASK_WIDTH);
+            mask1 |= (mask1 << fe_mask_width);
+            mask1 |= (mask0 >> shift);
+            mask0 |= (mask0 << fe_mask_width);
 
-            mask[0] |= (mask[0] >> FE_MASK_WIDTH);
-            mask[0] |= (mask[1] << shift);
-            mask[1] |= (mask[1] >> FE_MASK_WIDTH);
+            mask0 |= (mask0 >> fe_mask_width);
+            mask0 |= (mask1 << shift);
+            mask1 |= (mask1 >> fe_mask_width);
 
-            // some annoying switch statements.
-            // System.out.println("");
-            switch ((int)(mask[1] & 0b0000111000000001110000)) {
+            switch ((int)(mask1 & 0b0000111000000001110000)) {
                 case (0b0000000000000000000000): 
                     break;
                 case (0b0000000000000000010000): 
@@ -868,7 +732,7 @@ public class NeighborTracker {
                     break;
                 default: 
             }
-            switch ((int)(mask[0] >> (FE_MASK_WIDTH * (FE_MASK_HEIGHT - 1)) & 0b00001110000)) {
+            switch ((int)(mask0 >> (shift) & 0b00001110000)) {
                 case (0b00000000000):
                     break;
                 case (0b00000010000):
@@ -904,7 +768,6 @@ public class NeighborTracker {
     }
 
     void displayMap() throws GameActionException {
-        // long[] mask = att_friend_mask;
         long[] mask = friend_mask;
         MapLocation myloc = rc.getLocation();
         for (int i = 0; i < FE_MASK_HEIGHT; i++) {

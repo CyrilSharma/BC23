@@ -282,7 +282,7 @@ task run(type: JavaExec) {
     '-Dbc.game.maps=' + project.property('maps'),
     '-Dbc.server.save-file=' + (project.findProperty('replay') ?: defaultReplay),
     // Enable this when runnning tester.py
-    // '-Dbc.server.websocket=false',
+    '-Dbc.server.websocket=false',
   ]
 }
 

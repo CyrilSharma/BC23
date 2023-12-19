@@ -1,95 +1,30 @@
 package optimizedBot;
 import battlecode.common.*;
 
-// xSquare Control flow.
-// If your squad is not formed, wait.
-// If you have not reached first rendevous, go there.
-// If your homie moves, and you can't see his target, move with him. 
-// -> this takes precedence over attack micro, 
-// -> it's better to move as a group then to greedily maximize your interests.
-// If you see an enemy, use attack micro.
-// If you see an enemy HQ, suffocate it.
-// Also does some stuff with amplifiers but I will ignore that for now.
-
-// Notes:
-// Launchers always arrive with their squad.
-// In essence, HQs should place launchers near each other so the form a cluster.
-// While that cluster is unfinished Launchers should just wait.
-// Turn order is based on spawn order, so HQs should spawn the front of the 
-// Cluster first, then the back of the cluster, so that it can move as a unit.
-// Note the above logic depends on the direction the cluster is intended to go.
-// Also, maybe only one robot should be sent the meetup location, and the rest should just be followers.
-// That's harder to implement though, so I will save off on doing that for now.
-
-// Moving in the same direction as those who moved may actually be kind of stupid.
-// If your cluster gets broken apart, then you will never try to reform it.
-// Instead, move towards the average location of the robots who moved.
-// OR. employ some heuristic, select from the eight direction and choose the square which
-// minimizes the distance to robots who moved. <- [Probably the better option]
-// OR. minimize distance to robots period. but only if you can't see anything to attack.
-// Still stupid because now you're just gonna want to sit in one spot all the time.
-
-// Two potential targets. At first robots path towards some central location.
-// In fact, robots continue to do this unless they see enemies throughout the game.
-// Once they reach their destination, they head to an enemy HQ if it's available (they memorize it at the beginning)
-// Also they don't just stand at HQs, they actively rotate around it, although not sure how important that is.
-// Squads are only informed of one enemy HQ, and they just head to that one.
-
-// Everything attacks outside of clouds if at all possible.
-// Spam rc.canAttack() for all tiles in vision radius ig.
 public class Launcher extends Robot {
-    int born;
-    int fleeTurns = 0;
     boolean hurt = false;
-    int prevEnemyRound = -10;
-    int prevHuntRound = -10;
-    MapLocation prevLocation = null;
-    MapLocation previousEnemy = null;
-    MapLocation previousPos = null;
-    MapLocation enemyHQ = null;
-    boolean okToStray;
-    boolean shouldRendevous = true;
-    boolean neighborsAttacked = false;
-    boolean shouldAvoidClouds = false;
-    MapLocation rendevous;
     MapLocation huntTarget;
-    MapLocation islandTarget;
-    MapLocation harassTarget = null;
-    MapLocation hqTarget;
     MapLocation[] killedHQs = new MapLocation[5];
-    int killedHQInd = 0;
     int advanceTurns = 0;
     NeighborTracker nt;
     RobotInfo[] enemiesSeenBeforeClouds;
 
     enum State {
-        WAIT,
         ADVANCE,
-        CHASE,
         ATTACK,
-        IMPROVE_VISION,
         HUNT,
         HUNT_HQ,
-        HEAL
+        WAIT
     }
 
     public Launcher(RobotController rc) throws GameActionException {
         super(rc);
         communications.findOurHQs();
-        born = rc.getRoundNum();
-        rendevous = communications.getBestRendevous();
         nt = new NeighborTracker(rc);
     }
 
     void run() throws GameActionException {
-        islandTarget = null;
-        huntTarget = null;
-        neighborsAttacked = false;
-        shouldAvoidClouds = false;
         hurt = rc.getHealth() < (RobotType.LAUNCHER.health / 3);
-        if (rc.getRoundNum() % 5 == prevEnemyRound) {
-            previousEnemy = null;
-        }
         if (!rc.senseCloud(rc.getLocation())) {
             enemiesSeenBeforeClouds = rc.senseNearbyRobots(
                 -1, rc.getTeam().opponent()
@@ -97,82 +32,44 @@ public class Launcher extends Robot {
         }
         communications.initial();
         nt.updateNeighbors();
-        prevLocation = rc.getLocation();
         State state = determineState();
         rc.setIndicatorString(state.toString());
-        doAttack(true);
+        while (doAttack(true)) {}
         switch (state) {
-            case WAIT: break;
-            case CHASE: chase(); break;
             case ADVANCE: advance(); break;
             case ATTACK: attack(); break;
-            case IMPROVE_VISION: improve_vision(); break;
             case HUNT: hunt(); break;
             case HUNT_HQ: hunt_hq(); break;
-            case HEAL: heal(); break;
+            case WAIT: break;
         }
-        doAttack(false);
-        updateEnemy();
-        // nt.displayMap();
+        while (doAttack(false)) {}
         communications.last();
-        previousPos = rc.getLocation();
-    }
-
-    void updateEnemy() throws GameActionException {
-        int d = -1;
-        MapLocation best = null;
-        for (RobotInfo e: rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
-            if (e.type != RobotType.HEADQUARTERS) {
-                int cur = rc.getLocation().distanceSquaredTo(e.location);
-                if (cur > d) {
-                    d = cur;
-                    best = e.location;
-                }
-            }
-        }
-        if (best != null) {
-            previousEnemy = best;
-            prevEnemyRound = rc.getRoundNum()%5;
-        }
-    }
-
-    void improve_vision() throws GameActionException {
-        MapLocation m = communications.findClosestHQ();
-        int bestD = 1000000;
-        Direction bestDir = Direction.CENTER;
-        for (Direction d: directions) {
-            int dist = rc.getLocation().add(d).distanceSquaredTo(m);
-            if (dist < bestD && rc.canMove(d)) {
-                bestD = dist;
-                bestDir = d;
-            }
-        }
-        if (rc.canMove(bestDir)) rc.move(bestDir);
     }
  
-    void doAttack(boolean attackers) throws GameActionException {
-        if (rc.getActionCooldownTurns() >= 10) return;
-        MapInfo mi = rc.senseMapInfo(rc.getLocation());
-        if (mi.hasCloud() && !attackers) {
+    boolean doAttack(boolean attackers) throws GameActionException {
+        if (rc.getActionCooldownTurns() >= 10) return false;
+        if (rc.senseCloud(rc.getLocation()) && !attackers) {
             RobotInfo r = findAttackTarget();
             if ((r != null) && (rc.canAttack(r.location))) {
                 rc.attack(r.location);
+                return true;
             }
-            return;
+            return false;
         }
         RobotInfo r = util.getBestAttackTarget();
-        if (r == null && attackers) return;
-        else if (r == null && attackers == false) {
+        if (r == null && attackers) return false;
+        else if (r == null && !attackers) {
             MapLocation[] clouds = rc.senseNearbyCloudLocations(RobotType.LAUNCHER.actionRadiusSquared);
-            if (clouds.length == 0) return;
+            if (clouds.length == 0) return false;
             MapLocation loc = clouds[rng.nextInt(clouds.length)];
             rc.attack(loc);
-            return;
-        }
-        if (attackers && !Util.isAttacker(r.type)) return;
-        if (rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
+            return true;
+        } else if (attackers && !Util.isAttacker(r.type)) return false;
+        else if (rc.canAttack(r.location) && r.type != RobotType.HEADQUARTERS) {
             rc.attack(r.location);
+            return true;
         }
+        return false;
     }
 
     RobotInfo findAttackTarget() throws GameActionException {
@@ -186,16 +83,16 @@ public class Launcher extends Robot {
             }
         }
         if (best != null) return best;
-        if (enemiesSeenBeforeClouds != null) {
-            if (enemiesSeenBeforeClouds.length != 0) {
-                best = enemiesSeenBeforeClouds[0];
-                for (int i = enemiesSeenBeforeClouds.length; i-- > 0;) {
-                    RobotInfo r = enemiesSeenBeforeClouds[i];
-                    if ((best.health > r.health)) {
-                        best = r;
-                    }
+        if (enemiesSeenBeforeClouds == null) return null;
+        if (enemiesSeenBeforeClouds.length != 0) {
+            best = enemiesSeenBeforeClouds[0];
+            for (int i = enemiesSeenBeforeClouds.length; i-- > 0;) {
+                RobotInfo r = enemiesSeenBeforeClouds[i];
+                if ((best.health > r.health)) {
+                    best = r;
                 }
             }
+            enemiesSeenBeforeClouds = null;
         }
         return best;
     }
@@ -210,53 +107,25 @@ public class Launcher extends Robot {
         }
 
         MapLocation target = communications.findBestAttackTarget();
-        boolean hasTargetClose = false;
         if (target != null) {
             int d = rc.getLocation().distanceSquaredTo(target);
-            hasTargetClose = (d <= 64);
-            prevHuntRound = rc.getRoundNum();
-        }
-
-        if (hasTargetClose) {
-            advanceTurns = 5;
-            huntTarget = target;
-            return State.HUNT;
-        }
-
-        // advance if you recently encountered a threat, or neighbor was attacked!.
-        if (advanceTurns > 0 || neighborsAttacked) {
-            return State.ADVANCE;
-        }
-        if (previousEnemy == null && !neighborsAttacked) {
-            return State.HUNT_HQ;
-        }
-        return State.WAIT;
-    }
-
-    void heal() throws GameActionException {
-        greedyPath.move(islandTarget);
-    }
-
-    void findCloseIsland() throws GameActionException {
-        int[] islands = rc.senseNearbyIslands();
-        MapLocation closestTarget = null;
-        int d = 100000;
-        for (int idx: islands) {
-            if (Clock.getBytecodesLeft() < 1000) break;
-            if (rc.senseAnchor(idx) == null) continue;
-            MapLocation[] spots = rc.senseNearbyIslandLocations(idx);
-            for (MapLocation spot: spots) {
-                if (rc.getLocation().distanceSquaredTo(spot) >= d) continue;
-                if (!rc.canSenseLocation(spot)) continue;
-                if (rc.isLocationOccupied(spot)) continue;
-                closestTarget = spot;
+            if (d <= 64) {
+                advanceTurns = 5;
+                huntTarget = target;
+                return State.HUNT;
             }
         }
-        islandTarget = closestTarget;
+
+        // advance if you recently encountered a threat.
+        if (advanceTurns > 0) {
+            return State.ADVANCE;
+        }
+
+        return State.HUNT_HQ;
     }
 
     void hunt_hq() throws GameActionException {
-        hqTarget = communications.getClosestEnemyHQ(killedHQs);
+        MapLocation hqTarget = communications.getClosestEnemyHQ(killedHQs);
         if (hqTarget == null) hqTarget = communications.getClosestEnemyHQ();
         // no nullpointers in theory?
         rc.setIndicatorString("HUNT HQ: "+hqTarget);
@@ -283,7 +152,7 @@ public class Launcher extends Robot {
                     best = a;
                 }
             }
-            if (best != null) greedyPath.move(best, shouldAvoidClouds);
+            if (best != null) greedyPath.move(best);
             return;
         } else if (m.distanceSquaredTo(rc.getLocation()) <= RobotType.LAUNCHER.visionRadiusSquared) {
             int enemyLaunchers = 0;
@@ -312,37 +181,11 @@ public class Launcher extends Robot {
             }
         }
         if (m.distanceSquaredTo(rc.getLocation()) > rad + 10)
-            greedyPath.move(m, shouldAvoidClouds);
+            greedyPath.move(m);
     }
-
-    MapLocation findClosestLivingHQ() throws GameActionException {
-        if (communications.symmetryChecker.getSymmetry() == -1) return null;
-        int bestD = 10000000;
-        MapLocation bestM = null;
-        for (MapLocation e: communications.getEnemyHQs()) {
-            if (e == null) continue;
-            //System.out.println("HI");
-            boolean marked = false;
-            for (MapLocation a : killedHQs) {
-                if (a == null) continue;
-                if (a.equals(e)) marked = true;
-            }
-            if (marked) continue;
-            if (e.distanceSquaredTo(rc.getLocation()) < bestD) {
-                bestM = e;
-                bestD = e.distanceSquaredTo(rc.getLocation());
-            }
-        }
-        System.out.println(bestM);
-        return bestM;
-    }
-
 
     void hunt() throws GameActionException {
-        if (huntTarget != null) {
-            rc.setIndicatorString("HUNT: "+huntTarget);
-            greedyPath.move(huntTarget, shouldAvoidClouds);
-        }
+        greedyPath.move(huntTarget);
     }
 
     void advance() throws GameActionException {
@@ -350,15 +193,6 @@ public class Launcher extends Robot {
         rc.setIndicatorString("Advancing: " + dir);
         if (dir != null) rc.move(dir);
     }
-
-    void chase() throws GameActionException {
-        if (rc.getLocation().distanceSquaredTo(previousEnemy) > 4)
-            greedyPath.move(previousEnemy, true);
-        else if (rc.canSenseLocation(previousEnemy)) {
-            RobotInfo r = rc.senseRobotAtLocation(previousEnemy);
-            if (r == null) previousEnemy = null;
-        }
-    }   
 
     void attack() throws GameActionException {
         if (nt.hasCarriersNear && !nt.hasLaunchersNear) {
@@ -371,13 +205,12 @@ public class Launcher extends Robot {
     }
 
     void follow(MapLocation m) throws GameActionException {
-        ChaseTarget best = null;
+        ChaseTarget best = new ChaseTarget(directions[0], m);
         for (Direction dir: directions) {
             ChaseTarget cur = new ChaseTarget(dir, m);
             if (cur.isBetterThan(best)) best = cur;
         }
-        if (rc.canMove(best.dir))
-            rc.move(best.dir);
+        if (rc.canMove(best.dir)) rc.move(best.dir);
     }
 
 
@@ -449,25 +282,6 @@ public class Launcher extends Robot {
             }
             iters++;
         }
-        /*
-
-        int targets[] = new int[9];
-        for (int i = 0; i < 9; i++) {
-            Direction dir = directions[i];
-            MapLocation cur = myloc.add(dir);
-            boolean canMove = rc.canMove(dir);
-            boolean hasCloud = rc.canSenseLocation(nloc); 
-            targets[i] = (canMove * 2) | hasCloud;
- 
-            action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
-            vision = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
-            
-            // minDistToEnemy will be replaced with a check in the local adjaceny map.
-            targets[i] |= (minDistToEnemy <= action) * 4;
-        }
-
-
-         */
 
         // Needs 1k Bytecode.
         MicroTarget best = microtargets[0];
@@ -481,17 +295,7 @@ public class Launcher extends Robot {
         if (microtargets[7].isBetterThan(best)) best = microtargets[7];
         if (microtargets[8].isBetterThan(best)) best = microtargets[8];
         if (rc.canMove(best.dir)) rc.move(best.dir);
-
         rc.setIndicatorString("ITERS: "+iters);
-        // for (MicroTarget mt: microtargets) {
-        //     switch (mt.safe()) {
-        //         case 1: rc.setIndicatorDot(mt.nloc, 255, 0, 0); break;
-        //         case 2: rc.setIndicatorDot(mt.nloc, 255, 0, 255); break;
-        //         case 3: rc.setIndicatorDot(mt.nloc, 0, 0, 255); break;
-        //         case 4: rc.setIndicatorDot(mt.nloc, 0, 255, 0); break;
-        //         default:
-        //     }
-        // }
     }
     
     // Choose best square to chase a defenseless target.
@@ -508,15 +312,13 @@ public class Launcher extends Robot {
         }
 
         boolean inRange() {
-            return d <= rc.getType().actionRadiusSquared;
+            return d <= RobotType.LAUNCHER.actionRadiusSquared;
         }
 
         boolean isBetterThan(ChaseTarget ct) {
-            if (ct == null) return true;
             if (!canMove) return false;
             if (ct.inRange() && !inRange()) return false;
             if (!ct.inRange() && inRange()) return true;
-            if (ct.inRange() && inRange()) return d >= ct.d;
             else return d <= ct.d;
         }
     }
@@ -546,11 +348,9 @@ public class Launcher extends Robot {
             }
             action = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.actionRadiusSquared;
             vision = (hasCloud) ? GameConstants.CLOUD_VISION_RADIUS_SQUARED : RobotType.LAUNCHER.visionRadiusSquared;
-            // minDistToEnemy = nloc.distanceSquaredTo(previousEnemy);
         }
         
         void addEnemy(RobotInfo r) throws GameActionException {
-            //int start = Clock.getBytecodesLeft();
             if (!canMove) return;
             int d = nloc.distanceSquaredTo(r.location);
             if (d <= Math.min(curVisionRadius, vision)) {
