@@ -34,6 +34,7 @@ public class NeighborTracker {
         int blx = myloc.x - (fe_mask_width / 2);
         int bly = myloc.y - (fe_mask_height);
 
+        int cc = 0;
         long tfriend_mask0 = 0;
         long tfriend_mask1 = 0;
         long tenemy_mask0 = 0;
@@ -42,161 +43,161 @@ public class NeighborTracker {
         for (int j = friends.length; j-- > 0; ) {
             RobotInfo r = friends[j];
             switch (r.type) {
-                case LAUNCHER: break;
+                case LAUNCHER:
+                    switch (r.location.y - bly) {
+                        case (0):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask0 |= 1L; continue;
+                                case (1): tfriend_mask0 |= 2L; continue;
+                                case (2): tfriend_mask0 |= 4L; continue;
+                                case (3): tfriend_mask0 |= 8L; continue;
+                                case (4): tfriend_mask0 |= 16L; continue;
+                                case (5): tfriend_mask0 |= 32L; continue;
+                                case (6): tfriend_mask0 |= 64L; continue;
+                                case (7): tfriend_mask0 |= 128L; continue;
+                                case (8): tfriend_mask0 |= 256L; continue;
+                                case (9): tfriend_mask0 |= 512L; continue;
+                                case (10): tfriend_mask0 |= 1024L; continue;
+                                default: continue;
+                            }
+                        case (1):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask0 |= 2048L; continue;
+                                case (1): tfriend_mask0 |= 4096L; continue;
+                                case (2): tfriend_mask0 |= 8192L; continue;
+                                case (3): tfriend_mask0 |= 16384L; continue;
+                                case (4): tfriend_mask0 |= 32768L; continue;
+                                case (5): tfriend_mask0 |= 65536L; continue;
+                                case (6): tfriend_mask0 |= 131072L; continue;
+                                case (7): tfriend_mask0 |= 262144L; continue;
+                                case (8): tfriend_mask0 |= 524288L; continue;
+                                case (9): tfriend_mask0 |= 1048576L; continue;
+                                case (10): tfriend_mask0 |= 2097152L; continue;
+                                default: continue;
+                            }
+                        case (2):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask0 |= 4194304L; continue;
+                                case (1): tfriend_mask0 |= 8388608L; continue;
+                                case (2): tfriend_mask0 |= 16777216L; continue;
+                                case (3): tfriend_mask0 |= 33554432L; continue;
+                                case (4): tfriend_mask0 |= 67108864L; continue;
+                                case (5): tfriend_mask0 |= 134217728L; continue;
+                                case (6): tfriend_mask0 |= 268435456L; continue;
+                                case (7): tfriend_mask0 |= 536870912L; continue;
+                                case (8): tfriend_mask0 |= 1073741824L; continue;
+                                case (9): tfriend_mask0 |= 2147483648L; continue;
+                                case (10): tfriend_mask0 |= 4294967296L; continue;
+                                default: continue;
+                            }
+                        case (3):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask0 |= 8589934592L; continue;
+                                case (1): tfriend_mask0 |= 17179869184L; continue;
+                                case (2): tfriend_mask0 |= 34359738368L; continue;
+                                case (3): tfriend_mask0 |= 68719476736L; continue;
+                                case (4): tfriend_mask0 |= 137438953472L; continue;
+                                case (5): tfriend_mask0 |= 274877906944L; continue;
+                                case (6): tfriend_mask0 |= 549755813888L; continue;
+                                case (7): tfriend_mask0 |= 1099511627776L; continue;
+                                case (8): tfriend_mask0 |= 2199023255552L; continue;
+                                case (9): tfriend_mask0 |= 4398046511104L; continue;
+                                case (10): tfriend_mask0 |= 8796093022208L; continue;
+                                default: continue;
+                            }
+                        case (4):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask0 |= 17592186044416L; continue;
+                                case (1): tfriend_mask0 |= 35184372088832L; continue;
+                                case (2): tfriend_mask0 |= 70368744177664L; continue;
+                                case (3): tfriend_mask0 |= 140737488355328L; continue;
+                                case (4): tfriend_mask0 |= 281474976710656L; continue;
+                                case (5): tfriend_mask0 |= 562949953421312L; continue;
+                                case (6): tfriend_mask0 |= 1125899906842624L; continue;
+                                case (7): tfriend_mask0 |= 2251799813685248L; continue;
+                                case (8): tfriend_mask0 |= 4503599627370496L; continue;
+                                case (9): tfriend_mask0 |= 9007199254740992L; continue;
+                                case (10): tfriend_mask0 |= 18014398509481984L; continue;
+                                default: continue;
+                            }
+                        case (5):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask1 |= 1L; continue;
+                                case (1): tfriend_mask1 |= 2L; continue;
+                                case (2): tfriend_mask1 |= 4L; continue;
+                                case (3): tfriend_mask1 |= 8L; continue;
+                                case (4): tfriend_mask1 |= 16L; continue;
+                                case (5): tfriend_mask1 |= 32L; continue;
+                                case (6): tfriend_mask1 |= 64L; continue;
+                                case (7): tfriend_mask1 |= 128L; continue;
+                                case (8): tfriend_mask1 |= 256L; continue;
+                                case (9): tfriend_mask1 |= 512L; continue;
+                                case (10): tfriend_mask1 |= 1024L; continue;
+                                default: continue;
+                            }
+                        case (6):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask1 |= 2048L; continue;
+                                case (1): tfriend_mask1 |= 4096L; continue;
+                                case (2): tfriend_mask1 |= 8192L; continue;
+                                case (3): tfriend_mask1 |= 16384L; continue;
+                                case (4): tfriend_mask1 |= 32768L; continue;
+                                case (5): tfriend_mask1 |= 65536L; continue;
+                                case (6): tfriend_mask1 |= 131072L; continue;
+                                case (7): tfriend_mask1 |= 262144L; continue;
+                                case (8): tfriend_mask1 |= 524288L; continue;
+                                case (9): tfriend_mask1 |= 1048576L; continue;
+                                case (10): tfriend_mask1 |= 2097152L; continue;
+                                default: continue;
+                            }
+                        case (7):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask1 |= 4194304L; continue;
+                                case (1): tfriend_mask1 |= 8388608L; continue;
+                                case (2): tfriend_mask1 |= 16777216L; continue;
+                                case (3): tfriend_mask1 |= 33554432L; continue;
+                                case (4): tfriend_mask1 |= 67108864L; continue;
+                                case (5): tfriend_mask1 |= 134217728L; continue;
+                                case (6): tfriend_mask1 |= 268435456L; continue;
+                                case (7): tfriend_mask1 |= 536870912L; continue;
+                                case (8): tfriend_mask1 |= 1073741824L; continue;
+                                case (9): tfriend_mask1 |= 2147483648L; continue;
+                                case (10): tfriend_mask1 |= 4294967296L; continue;
+                                default: continue;
+                            }
+                        case (8):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask1 |= 8589934592L; continue;
+                                case (1): tfriend_mask1 |= 17179869184L; continue;
+                                case (2): tfriend_mask1 |= 34359738368L; continue;
+                                case (3): tfriend_mask1 |= 68719476736L; continue;
+                                case (4): tfriend_mask1 |= 137438953472L; continue;
+                                case (5): tfriend_mask1 |= 274877906944L; continue;
+                                case (6): tfriend_mask1 |= 549755813888L; continue;
+                                case (7): tfriend_mask1 |= 1099511627776L; continue;
+                                case (8): tfriend_mask1 |= 2199023255552L; continue;
+                                case (9): tfriend_mask1 |= 4398046511104L; continue;
+                                case (10): tfriend_mask1 |= 8796093022208L; continue;
+                                default: continue;
+                            }
+                        case (9):
+                            switch (r.location.x - blx) {
+                                case (0): tfriend_mask1 |= 17592186044416L; continue;
+                                case (1): tfriend_mask1 |= 35184372088832L; continue;
+                                case (2): tfriend_mask1 |= 70368744177664L; continue;
+                                case (3): tfriend_mask1 |= 140737488355328L; continue;
+                                case (4): tfriend_mask1 |= 281474976710656L; continue;
+                                case (5): tfriend_mask1 |= 562949953421312L; continue;
+                                case (6): tfriend_mask1 |= 1125899906842624L; continue;
+                                case (7): tfriend_mask1 |= 2251799813685248L; continue;
+                                case (8): tfriend_mask1 |= 4503599627370496L; continue;
+                                case (9): tfriend_mask1 |= 9007199254740992L; continue;
+                                case (10): tfriend_mask1 |= 18014398509481984L; continue;
+                                default: continue;
+                            }
+                    default: 
+                }
                 default: continue;
-            }
-            outer: switch (r.location.y - bly) {
-                case (0):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask0 |= 1L; break outer;
-                        case (1): tfriend_mask0 |= 2L; break outer;
-                        case (2): tfriend_mask0 |= 4L; break outer;
-                        case (3): tfriend_mask0 |= 8L; break outer;
-                        case (4): tfriend_mask0 |= 16L; break outer;
-                        case (5): tfriend_mask0 |= 32L; break outer;
-                        case (6): tfriend_mask0 |= 64L; break outer;
-                        case (7): tfriend_mask0 |= 128L; break outer;
-                        case (8): tfriend_mask0 |= 256L; break outer;
-                        case (9): tfriend_mask0 |= 512L; break outer;
-                        case (10): tfriend_mask0 |= 1024L; break outer;
-                        default: break outer;
-                    }
-                case (1):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask0 |= 2048L; break outer;
-                        case (1): tfriend_mask0 |= 4096L; break outer;
-                        case (2): tfriend_mask0 |= 8192L; break outer;
-                        case (3): tfriend_mask0 |= 16384L; break outer;
-                        case (4): tfriend_mask0 |= 32768L; break outer;
-                        case (5): tfriend_mask0 |= 65536L; break outer;
-                        case (6): tfriend_mask0 |= 131072L; break outer;
-                        case (7): tfriend_mask0 |= 262144L; break outer;
-                        case (8): tfriend_mask0 |= 524288L; break outer;
-                        case (9): tfriend_mask0 |= 1048576L; break outer;
-                        case (10): tfriend_mask0 |= 2097152L; break outer;
-                        default: break outer;
-                    }
-                case (2):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask0 |= 4194304L; break outer;
-                        case (1): tfriend_mask0 |= 8388608L; break outer;
-                        case (2): tfriend_mask0 |= 16777216L; break outer;
-                        case (3): tfriend_mask0 |= 33554432L; break outer;
-                        case (4): tfriend_mask0 |= 67108864L; break outer;
-                        case (5): tfriend_mask0 |= 134217728L; break outer;
-                        case (6): tfriend_mask0 |= 268435456L; break outer;
-                        case (7): tfriend_mask0 |= 536870912L; break outer;
-                        case (8): tfriend_mask0 |= 1073741824L; break outer;
-                        case (9): tfriend_mask0 |= 2147483648L; break outer;
-                        case (10): tfriend_mask0 |= 4294967296L; break outer;
-                        default: break outer;
-                    }
-                case (3):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask0 |= 8589934592L; break outer;
-                        case (1): tfriend_mask0 |= 17179869184L; break outer;
-                        case (2): tfriend_mask0 |= 34359738368L; break outer;
-                        case (3): tfriend_mask0 |= 68719476736L; break outer;
-                        case (4): tfriend_mask0 |= 137438953472L; break outer;
-                        case (5): tfriend_mask0 |= 274877906944L; break outer;
-                        case (6): tfriend_mask0 |= 549755813888L; break outer;
-                        case (7): tfriend_mask0 |= 1099511627776L; break outer;
-                        case (8): tfriend_mask0 |= 2199023255552L; break outer;
-                        case (9): tfriend_mask0 |= 4398046511104L; break outer;
-                        case (10): tfriend_mask0 |= 8796093022208L; break outer;
-                        default: break outer;
-                    }
-                case (4):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask0 |= 17592186044416L; break outer;
-                        case (1): tfriend_mask0 |= 35184372088832L; break outer;
-                        case (2): tfriend_mask0 |= 70368744177664L; break outer;
-                        case (3): tfriend_mask0 |= 140737488355328L; break outer;
-                        case (4): tfriend_mask0 |= 281474976710656L; break outer;
-                        case (5): tfriend_mask0 |= 562949953421312L; break outer;
-                        case (6): tfriend_mask0 |= 1125899906842624L; break outer;
-                        case (7): tfriend_mask0 |= 2251799813685248L; break outer;
-                        case (8): tfriend_mask0 |= 4503599627370496L; break outer;
-                        case (9): tfriend_mask0 |= 9007199254740992L; break outer;
-                        case (10): tfriend_mask0 |= 18014398509481984L; break outer;
-                        default: break outer;
-                    }
-                case (5):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask1 |= 1L; break outer;
-                        case (1): tfriend_mask1 |= 2L; break outer;
-                        case (2): tfriend_mask1 |= 4L; break outer;
-                        case (3): tfriend_mask1 |= 8L; break outer;
-                        case (4): tfriend_mask1 |= 16L; break outer;
-                        case (5): tfriend_mask1 |= 32L; break outer;
-                        case (6): tfriend_mask1 |= 64L; break outer;
-                        case (7): tfriend_mask1 |= 128L; break outer;
-                        case (8): tfriend_mask1 |= 256L; break outer;
-                        case (9): tfriend_mask1 |= 512L; break outer;
-                        case (10): tfriend_mask1 |= 1024L; break outer;
-                        default: break outer;
-                    }
-                case (6):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask1 |= 2048L; break outer;
-                        case (1): tfriend_mask1 |= 4096L; break outer;
-                        case (2): tfriend_mask1 |= 8192L; break outer;
-                        case (3): tfriend_mask1 |= 16384L; break outer;
-                        case (4): tfriend_mask1 |= 32768L; break outer;
-                        case (5): tfriend_mask1 |= 65536L; break outer;
-                        case (6): tfriend_mask1 |= 131072L; break outer;
-                        case (7): tfriend_mask1 |= 262144L; break outer;
-                        case (8): tfriend_mask1 |= 524288L; break outer;
-                        case (9): tfriend_mask1 |= 1048576L; break outer;
-                        case (10): tfriend_mask1 |= 2097152L; break outer;
-                        default: break outer;
-                    }
-                case (7):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask1 |= 4194304L; break outer;
-                        case (1): tfriend_mask1 |= 8388608L; break outer;
-                        case (2): tfriend_mask1 |= 16777216L; break outer;
-                        case (3): tfriend_mask1 |= 33554432L; break outer;
-                        case (4): tfriend_mask1 |= 67108864L; break outer;
-                        case (5): tfriend_mask1 |= 134217728L; break outer;
-                        case (6): tfriend_mask1 |= 268435456L; break outer;
-                        case (7): tfriend_mask1 |= 536870912L; break outer;
-                        case (8): tfriend_mask1 |= 1073741824L; break outer;
-                        case (9): tfriend_mask1 |= 2147483648L; break outer;
-                        case (10): tfriend_mask1 |= 4294967296L; break outer;
-                        default: break outer;
-                    }
-                case (8):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask1 |= 8589934592L; break outer;
-                        case (1): tfriend_mask1 |= 17179869184L; break outer;
-                        case (2): tfriend_mask1 |= 34359738368L; break outer;
-                        case (3): tfriend_mask1 |= 68719476736L; break outer;
-                        case (4): tfriend_mask1 |= 137438953472L; break outer;
-                        case (5): tfriend_mask1 |= 274877906944L; break outer;
-                        case (6): tfriend_mask1 |= 549755813888L; break outer;
-                        case (7): tfriend_mask1 |= 1099511627776L; break outer;
-                        case (8): tfriend_mask1 |= 2199023255552L; break outer;
-                        case (9): tfriend_mask1 |= 4398046511104L; break outer;
-                        case (10): tfriend_mask1 |= 8796093022208L; break outer;
-                        default: break outer;
-                    }
-                case (9):
-                    switch (r.location.x - blx) {
-                        case (0): tfriend_mask1 |= 17592186044416L; break outer;
-                        case (1): tfriend_mask1 |= 35184372088832L; break outer;
-                        case (2): tfriend_mask1 |= 70368744177664L; break outer;
-                        case (3): tfriend_mask1 |= 140737488355328L; break outer;
-                        case (4): tfriend_mask1 |= 281474976710656L; break outer;
-                        case (5): tfriend_mask1 |= 562949953421312L; break outer;
-                        case (6): tfriend_mask1 |= 1125899906842624L; break outer;
-                        case (7): tfriend_mask1 |= 2251799813685248L; break outer;
-                        case (8): tfriend_mask1 |= 4503599627370496L; break outer;
-                        case (9): tfriend_mask1 |= 9007199254740992L; break outer;
-                        case (10): tfriend_mask1 |= 18014398509481984L; break outer;
-                        default: break outer;
-                    }
-                default: 
             }
         }
         
@@ -205,169 +206,167 @@ public class NeighborTracker {
         for (int j = enemies.length; j-- > 0; ) {
             RobotInfo r = enemies[j];
             switch (r.type) {
-                case LAUNCHER: break;
-                case CARRIER: hasCarriersNear = true;
+                case LAUNCHER:
+                    switch (r.location.y - bly) {
+                    case (0):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask0 |= 1L; continue;
+                            case (1): tenemy_mask0 |= 2L; continue;
+                            case (2): tenemy_mask0 |= 4L; continue;
+                            case (3): tenemy_mask0 |= 8L; continue;
+                            case (4): tenemy_mask0 |= 16L; continue;
+                            case (5): tenemy_mask0 |= 32L; continue;
+                            case (6): tenemy_mask0 |= 64L; continue;
+                            case (7): tenemy_mask0 |= 128L; continue;
+                            case (8): tenemy_mask0 |= 256L; continue;
+                            case (9): tenemy_mask0 |= 512L; continue;
+                            case (10): tenemy_mask0 |= 1024L; continue;
+                            default: continue;
+                        }
+                    case (1):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask0 |= 2048L; continue;
+                            case (1): tenemy_mask0 |= 4096L; continue;
+                            case (2): tenemy_mask0 |= 8192L; continue;
+                            case (3): tenemy_mask0 |= 16384L; continue;
+                            case (4): tenemy_mask0 |= 32768L; continue;
+                            case (5): tenemy_mask0 |= 65536L; continue;
+                            case (6): tenemy_mask0 |= 131072L; continue;
+                            case (7): tenemy_mask0 |= 262144L; continue;
+                            case (8): tenemy_mask0 |= 524288L; continue;
+                            case (9): tenemy_mask0 |= 1048576L; continue;
+                            case (10): tenemy_mask0 |= 2097152L; continue;
+                            default: continue;
+                        }
+                    case (2):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask0 |= 4194304L; continue;
+                            case (1): tenemy_mask0 |= 8388608L; continue;
+                            case (2): tenemy_mask0 |= 16777216L; continue;
+                            case (3): tenemy_mask0 |= 33554432L; continue;
+                            case (4): tenemy_mask0 |= 67108864L; continue;
+                            case (5): tenemy_mask0 |= 134217728L; continue;
+                            case (6): tenemy_mask0 |= 268435456L; continue;
+                            case (7): tenemy_mask0 |= 536870912L; continue;
+                            case (8): tenemy_mask0 |= 1073741824L; continue;
+                            case (9): tenemy_mask0 |= 2147483648L; continue;
+                            case (10): tenemy_mask0 |= 4294967296L; continue;
+                            default: continue;
+                        }
+                    case (3):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask0 |= 8589934592L; continue;
+                            case (1): tenemy_mask0 |= 17179869184L; continue;
+                            case (2): tenemy_mask0 |= 34359738368L; continue;
+                            case (3): tenemy_mask0 |= 68719476736L; continue;
+                            case (4): tenemy_mask0 |= 137438953472L; continue;
+                            case (5): tenemy_mask0 |= 274877906944L; continue;
+                            case (6): tenemy_mask0 |= 549755813888L; continue;
+                            case (7): tenemy_mask0 |= 1099511627776L; continue;
+                            case (8): tenemy_mask0 |= 2199023255552L; continue;
+                            case (9): tenemy_mask0 |= 4398046511104L; continue;
+                            case (10): tenemy_mask0 |= 8796093022208L; continue;
+                            default: continue;
+                        }
+                    case (4):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask0 |= 17592186044416L; continue;
+                            case (1): tenemy_mask0 |= 35184372088832L; continue;
+                            case (2): tenemy_mask0 |= 70368744177664L; continue;
+                            case (3): tenemy_mask0 |= 140737488355328L; continue;
+                            case (4): tenemy_mask0 |= 281474976710656L; continue;
+                            case (5): tenemy_mask0 |= 562949953421312L; continue;
+                            case (6): tenemy_mask0 |= 1125899906842624L; continue;
+                            case (7): tenemy_mask0 |= 2251799813685248L; continue;
+                            case (8): tenemy_mask0 |= 4503599627370496L; continue;
+                            case (9): tenemy_mask0 |= 9007199254740992L; continue;
+                            case (10): tenemy_mask0 |= 18014398509481984L; continue;
+                            default: continue;
+                        }
+                    case (5):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask1 |= 1L; continue;
+                            case (1): tenemy_mask1 |= 2L; continue;
+                            case (2): tenemy_mask1 |= 4L; continue;
+                            case (3): tenemy_mask1 |= 8L; continue;
+                            case (4): tenemy_mask1 |= 16L; continue;
+                            case (5): tenemy_mask1 |= 32L; continue;
+                            case (6): tenemy_mask1 |= 64L; continue;
+                            case (7): tenemy_mask1 |= 128L; continue;
+                            case (8): tenemy_mask1 |= 256L; continue;
+                            case (9): tenemy_mask1 |= 512L; continue;
+                            case (10): tenemy_mask1 |= 1024L; continue;
+                            default: continue;
+                        }
+                    case (6):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask1 |= 2048L; continue;
+                            case (1): tenemy_mask1 |= 4096L; continue;
+                            case (2): tenemy_mask1 |= 8192L; continue;
+                            case (3): tenemy_mask1 |= 16384L; continue;
+                            case (4): tenemy_mask1 |= 32768L; continue;
+                            case (5): tenemy_mask1 |= 65536L; continue;
+                            case (6): tenemy_mask1 |= 131072L; continue;
+                            case (7): tenemy_mask1 |= 262144L; continue;
+                            case (8): tenemy_mask1 |= 524288L; continue;
+                            case (9): tenemy_mask1 |= 1048576L; continue;
+                            case (10): tenemy_mask1 |= 2097152L; continue;
+                            default: continue;
+                        }
+                    case (7):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask1 |= 4194304L; continue;
+                            case (1): tenemy_mask1 |= 8388608L; continue;
+                            case (2): tenemy_mask1 |= 16777216L; continue;
+                            case (3): tenemy_mask1 |= 33554432L; continue;
+                            case (4): tenemy_mask1 |= 67108864L; continue;
+                            case (5): tenemy_mask1 |= 134217728L; continue;
+                            case (6): tenemy_mask1 |= 268435456L; continue;
+                            case (7): tenemy_mask1 |= 536870912L; continue;
+                            case (8): tenemy_mask1 |= 1073741824L; continue;
+                            case (9): tenemy_mask1 |= 2147483648L; continue;
+                            case (10): tenemy_mask1 |= 4294967296L; continue;
+                            default: continue;
+                        }
+                    case (8):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask1 |= 8589934592L; continue;
+                            case (1): tenemy_mask1 |= 17179869184L; continue;
+                            case (2): tenemy_mask1 |= 34359738368L; continue;
+                            case (3): tenemy_mask1 |= 68719476736L; continue;
+                            case (4): tenemy_mask1 |= 137438953472L; continue;
+                            case (5): tenemy_mask1 |= 274877906944L; continue;
+                            case (6): tenemy_mask1 |= 549755813888L; continue;
+                            case (7): tenemy_mask1 |= 1099511627776L; continue;
+                            case (8): tenemy_mask1 |= 2199023255552L; continue;
+                            case (9): tenemy_mask1 |= 4398046511104L; continue;
+                            case (10): tenemy_mask1 |= 8796093022208L; continue;
+                            default: continue;
+                        }
+                    case (9):
+                        switch (r.location.x - blx) {
+                            case (0): tenemy_mask1 |= 17592186044416L; continue;
+                            case (1): tenemy_mask1 |= 35184372088832L; continue;
+                            case (2): tenemy_mask1 |= 70368744177664L; continue;
+                            case (3): tenemy_mask1 |= 140737488355328L; continue;
+                            case (4): tenemy_mask1 |= 281474976710656L; continue;
+                            case (5): tenemy_mask1 |= 562949953421312L; continue;
+                            case (6): tenemy_mask1 |= 1125899906842624L; continue;
+                            case (7): tenemy_mask1 |= 2251799813685248L; continue;
+                            case (8): tenemy_mask1 |= 4503599627370496L; continue;
+                            case (9): tenemy_mask1 |= 9007199254740992L; continue;
+                            case (10): tenemy_mask1 |= 18014398509481984L; continue;
+                            default: continue;
+                        }
+                    default: 
+                }
+                case CARRIER: cc++;
                 default: continue;
             }
-            outer: switch (r.location.y - bly) {
-                case (0):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask0 |= 1L; break outer;
-                        case (1): tenemy_mask0 |= 2L; break outer;
-                        case (2): tenemy_mask0 |= 4L; break outer;
-                        case (3): tenemy_mask0 |= 8L; break outer;
-                        case (4): tenemy_mask0 |= 16L; break outer;
-                        case (5): tenemy_mask0 |= 32L; break outer;
-                        case (6): tenemy_mask0 |= 64L; break outer;
-                        case (7): tenemy_mask0 |= 128L; break outer;
-                        case (8): tenemy_mask0 |= 256L; break outer;
-                        case (9): tenemy_mask0 |= 512L; break outer;
-                        case (10): tenemy_mask0 |= 1024L; break outer;
-                        default: break outer;
-                    }
-                case (1):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask0 |= 2048L; break outer;
-                        case (1): tenemy_mask0 |= 4096L; break outer;
-                        case (2): tenemy_mask0 |= 8192L; break outer;
-                        case (3): tenemy_mask0 |= 16384L; break outer;
-                        case (4): tenemy_mask0 |= 32768L; break outer;
-                        case (5): tenemy_mask0 |= 65536L; break outer;
-                        case (6): tenemy_mask0 |= 131072L; break outer;
-                        case (7): tenemy_mask0 |= 262144L; break outer;
-                        case (8): tenemy_mask0 |= 524288L; break outer;
-                        case (9): tenemy_mask0 |= 1048576L; break outer;
-                        case (10): tenemy_mask0 |= 2097152L; break outer;
-                        default: break outer;
-                    }
-                case (2):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask0 |= 4194304L; break outer;
-                        case (1): tenemy_mask0 |= 8388608L; break outer;
-                        case (2): tenemy_mask0 |= 16777216L; break outer;
-                        case (3): tenemy_mask0 |= 33554432L; break outer;
-                        case (4): tenemy_mask0 |= 67108864L; break outer;
-                        case (5): tenemy_mask0 |= 134217728L; break outer;
-                        case (6): tenemy_mask0 |= 268435456L; break outer;
-                        case (7): tenemy_mask0 |= 536870912L; break outer;
-                        case (8): tenemy_mask0 |= 1073741824L; break outer;
-                        case (9): tenemy_mask0 |= 2147483648L; break outer;
-                        case (10): tenemy_mask0 |= 4294967296L; break outer;
-                        default: break outer;
-                    }
-                case (3):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask0 |= 8589934592L; break outer;
-                        case (1): tenemy_mask0 |= 17179869184L; break outer;
-                        case (2): tenemy_mask0 |= 34359738368L; break outer;
-                        case (3): tenemy_mask0 |= 68719476736L; break outer;
-                        case (4): tenemy_mask0 |= 137438953472L; break outer;
-                        case (5): tenemy_mask0 |= 274877906944L; break outer;
-                        case (6): tenemy_mask0 |= 549755813888L; break outer;
-                        case (7): tenemy_mask0 |= 1099511627776L; break outer;
-                        case (8): tenemy_mask0 |= 2199023255552L; break outer;
-                        case (9): tenemy_mask0 |= 4398046511104L; break outer;
-                        case (10): tenemy_mask0 |= 8796093022208L; break outer;
-                        default: break outer;
-                    }
-                case (4):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask0 |= 17592186044416L; break outer;
-                        case (1): tenemy_mask0 |= 35184372088832L; break outer;
-                        case (2): tenemy_mask0 |= 70368744177664L; break outer;
-                        case (3): tenemy_mask0 |= 140737488355328L; break outer;
-                        case (4): tenemy_mask0 |= 281474976710656L; break outer;
-                        case (5): tenemy_mask0 |= 562949953421312L; break outer;
-                        case (6): tenemy_mask0 |= 1125899906842624L; break outer;
-                        case (7): tenemy_mask0 |= 2251799813685248L; break outer;
-                        case (8): tenemy_mask0 |= 4503599627370496L; break outer;
-                        case (9): tenemy_mask0 |= 9007199254740992L; break outer;
-                        case (10): tenemy_mask0 |= 18014398509481984L; break outer;
-                        default: break outer;
-                    }
-                case (5):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask1 |= 1L; break outer;
-                        case (1): tenemy_mask1 |= 2L; break outer;
-                        case (2): tenemy_mask1 |= 4L; break outer;
-                        case (3): tenemy_mask1 |= 8L; break outer;
-                        case (4): tenemy_mask1 |= 16L; break outer;
-                        case (5): tenemy_mask1 |= 32L; break outer;
-                        case (6): tenemy_mask1 |= 64L; break outer;
-                        case (7): tenemy_mask1 |= 128L; break outer;
-                        case (8): tenemy_mask1 |= 256L; break outer;
-                        case (9): tenemy_mask1 |= 512L; break outer;
-                        case (10): tenemy_mask1 |= 1024L; break outer;
-                        default: break outer;
-                    }
-                case (6):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask1 |= 2048L; break outer;
-                        case (1): tenemy_mask1 |= 4096L; break outer;
-                        case (2): tenemy_mask1 |= 8192L; break outer;
-                        case (3): tenemy_mask1 |= 16384L; break outer;
-                        case (4): tenemy_mask1 |= 32768L; break outer;
-                        case (5): tenemy_mask1 |= 65536L; break outer;
-                        case (6): tenemy_mask1 |= 131072L; break outer;
-                        case (7): tenemy_mask1 |= 262144L; break outer;
-                        case (8): tenemy_mask1 |= 524288L; break outer;
-                        case (9): tenemy_mask1 |= 1048576L; break outer;
-                        case (10): tenemy_mask1 |= 2097152L; break outer;
-                        default: break outer;
-                    }
-                case (7):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask1 |= 4194304L; break outer;
-                        case (1): tenemy_mask1 |= 8388608L; break outer;
-                        case (2): tenemy_mask1 |= 16777216L; break outer;
-                        case (3): tenemy_mask1 |= 33554432L; break outer;
-                        case (4): tenemy_mask1 |= 67108864L; break outer;
-                        case (5): tenemy_mask1 |= 134217728L; break outer;
-                        case (6): tenemy_mask1 |= 268435456L; break outer;
-                        case (7): tenemy_mask1 |= 536870912L; break outer;
-                        case (8): tenemy_mask1 |= 1073741824L; break outer;
-                        case (9): tenemy_mask1 |= 2147483648L; break outer;
-                        case (10): tenemy_mask1 |= 4294967296L; break outer;
-                        default: break outer;
-                    }
-                case (8):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask1 |= 8589934592L; break outer;
-                        case (1): tenemy_mask1 |= 17179869184L; break outer;
-                        case (2): tenemy_mask1 |= 34359738368L; break outer;
-                        case (3): tenemy_mask1 |= 68719476736L; break outer;
-                        case (4): tenemy_mask1 |= 137438953472L; break outer;
-                        case (5): tenemy_mask1 |= 274877906944L; break outer;
-                        case (6): tenemy_mask1 |= 549755813888L; break outer;
-                        case (7): tenemy_mask1 |= 1099511627776L; break outer;
-                        case (8): tenemy_mask1 |= 2199023255552L; break outer;
-                        case (9): tenemy_mask1 |= 4398046511104L; break outer;
-                        case (10): tenemy_mask1 |= 8796093022208L; break outer;
-                        default: break outer;
-                    }
-                case (9):
-                    switch (r.location.x - blx) {
-                        case (0): tenemy_mask1 |= 17592186044416L; break outer;
-                        case (1): tenemy_mask1 |= 35184372088832L; break outer;
-                        case (2): tenemy_mask1 |= 70368744177664L; break outer;
-                        case (3): tenemy_mask1 |= 140737488355328L; break outer;
-                        case (4): tenemy_mask1 |= 281474976710656L; break outer;
-                        case (5): tenemy_mask1 |= 562949953421312L; break outer;
-                        case (6): tenemy_mask1 |= 1125899906842624L; break outer;
-                        case (7): tenemy_mask1 |= 2251799813685248L; break outer;
-                        case (8): tenemy_mask1 |= 4503599627370496L; break outer;
-                        case (9): tenemy_mask1 |= 9007199254740992L; break outer;
-                        case (10): tenemy_mask1 |= 18014398509481984L; break outer;
-                        default: break outer;
-                    }
-                default: 
-            }
         }
 
-        if ((tenemy_mask0 | tenemy_mask1) > 0) {
-            hasLaunchersNear = true;
-        }
-
+        if ((tenemy_mask0 | tenemy_mask1) > 0) hasLaunchersNear = true;
+        if (cc > 0) hasCarriersNear = true;
         friend_mask[0] = tfriend_mask0;
         friend_mask[1] = tfriend_mask1;
         enemy_mask[0]  = tenemy_mask0;
