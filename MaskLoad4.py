@@ -1,4 +1,5 @@
-# Is it worth optimizing this much? Probably not, but I'm bored.
+# I have spent far too much time on this.
+
 MAX_HEIGHT = 60
 MAX_WIDTH = 60
 FE_MASK_WIDTH = 9
@@ -11,30 +12,37 @@ indent = ' ' * 4
 # 2. Use 16-bit addition to do assignments in 1 bytecode.
 def printmask(name):
     tname = "t" + name
-    print("switch (r.location.y) {")
-    for ym in range(VISION):
-        print(f"{indent}case {ym}: ", end="")
-        for y in range(ym + VISION, MAX_HEIGHT, VISION):
-            print(f"case {y}: ", end="")
-        print()
-        print(f"{indent * 2}switch (r.location.x) {{")
+    # set of equivalence classes
+    nums = [[] for i in range(VISION * VISION)]
+    for y in range(MAX_HEIGHT):
         for x in range(MAX_WIDTH):
-            print(f"{indent * 3}case {x}: ", end="")
-            num = (ym * VISION + x) % (VISION * VISION)
-            index = (num) % (16)
-            block = (num) // 16;
-            if (index < 15):
-                print(f"{tname}{block} += {1 << index}; continue;")
-            else:
-                # The 15th bit cannot be used directly because of the sign-bit
-                # Without special handling, this would compile into 4 vs. 2 bytecode.
+            idx = (y * VISION + x) % (VISION * VISION)
+            nums[idx].append((y, x))
+
+    print("switch (r.location.hashCode()) {")
+    for idx in range(VISION * VISION):
+        count = 0
+        print(f"{indent}", end="")
+        for (y, x) in nums[idx]:
+            # print(f"case {(x << 16) + y}: ", end="")
+            print(f"case {(1 << 16) * x + y + (1 << 15)}: ", end="")
+            count += 1
+            if (count != (len(nums[idx])) and count % 6 == 0):
                 print()
-                print(f"{indent*4}{tname}{block} += {1 << 14};")
-                print(f"{indent*4}{tname}{block} += {1 << 14};")
-                print(f"{indent*4}continue;")
-        print(f"{indent * 3}default: continue;")
-        print(f"{indent * 2}}}")
-    print(f"{indent}default: ")
+                print(indent, end="")
+        print()
+
+        index = (idx) % (16)
+        block = (idx) // 16;
+        if (index < 15):
+            print(f"{indent*2}{tname}{block} += {1 << index}; continue;")
+        else:
+            # The 15th bit cannot be used directly because of the sign-bit
+            # Without special handling, this would compile into 4 vs. 2 bytecode.
+            print(f"{indent*2}{tname}{block} += {1 << 14};")
+            print(f"{indent*2}{tname}{block} += {1 << 14};")
+            print(f"{indent*2}continue;")
+    print(f"{indent}default: continue;")
     print("}")
 
 def lshift(name, amount):
@@ -121,7 +129,7 @@ def fusemask(name):
     print(f"{indent}default: ")
     print("}")
 
-# printmask("friend_mask")
+printmask("friend_mask")
 # printmask("enemy_mask")
-fusemask("friend_mask")
+# fusemask("friend_mask")
 # fusemask("enemy_mask")
